@@ -1,0 +1,95 @@
+<header
+  class="self-stretch shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] bg-color-white-solid border-color-grey-91 border-solid border-b-stroke-weight-1 flex items-start py-[0rem] px-[22rem] top-[0] z-[99] sticky text-left text-[1.213rem] text-color-azure-11 font-font-family-font-1 mq450:pl-[1.25rem] mq450:pr-[1.25rem] mq450:box-border mq900:pl-[5.5rem] mq900:pr-[5.5rem] mq900:box-border mq1325:pl-[11rem] mq1325:pr-[11rem] mq1325:box-border"
+  [style.flex-direction]="headerFlexDirection()"
+>
+  <div
+    class="h-[4rem] flex-1 flex items-center justify-between gap-[1.25rem]"
+    [style.flex]="navFlex()"
+    [style.justify-content]="navJustifyContent()"
+    [style.gap]="navGap()"
+    [style.margin]="navMargin()"
+    [style.align-self]="navAlignSelf()"
+  >
+    <div class="flex items-center shrink-0">
+      <img
+        class="h-[2rem] w-[2rem] relative"
+        alt=""
+        src="assets/images/SVG.svg"
+      />
+      <div class="flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem]">
+        <b class="relative leading-[1.75rem]">CropAnalytics</b>
+      </div>
+    </div>
+    <nav
+      class="m-0 flex items-center py-[1.25rem] px-[0rem] shrink-0 text-left text-[0.825rem] text-color-azure-27 font-font-family-font-1 mq900:hidden"
+    >
+      <div
+        class="flex flex-col items-start text-[0.831rem] text-color-azure-53"
+      >
+        <div class="relative leading-[1.25rem]" (click)="onHomeTextClick()()">
+          Home
+        </div>
+      </div>
+      <div class="flex flex-col items-start py-[0rem] pl-[2rem] pr-[0rem]">
+        <div class="flex flex-col items-start">
+          <div
+            class="relative leading-[1.25rem] cursor-pointer"
+            (click)="onDashboardTextClick1()"
+          >
+            Dashboard
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col items-start py-[0rem] pl-[2rem] pr-[0rem]">
+        <div class="flex flex-col items-start">
+          <div
+            class="relative leading-[1.25rem] cursor-pointer"
+            (click)="onUploadDataTextClick()"
+          >
+            Upload Data
+          </div>
+        </div>
+      </div>
+      <div
+        class="flex flex-col items-start py-[0rem] pl-[1.937rem] pr-[0rem] text-[0.813rem]"
+      >
+        <div class="flex flex-col items-start">
+          <div
+            class="relative leading-[1.25rem] cursor-pointer"
+            (click)="onAnalyticsTextClick()()"
+          >
+            Analytics
+          </div>
+        </div>
+      </div>
+      <div
+        class="flex flex-col items-start py-[0rem] pl-[2rem] pr-[0rem] text-[0.806rem]"
+      >
+        <div class="flex flex-col items-start">
+          <div
+            class="relative leading-[1.25rem] cursor-pointer"
+            (click)="onUploadDataTextClick()"
+          >
+            About
+          </div>
+        </div>
+      </div>
+    </nav>
+    <button
+      class="cursor-pointer [border:none] py-[0.5rem] px-[1rem] bg-color-azure-53 h-[2.5rem] rounded-md flex items-center justify-center box-border gap-[0.5rem] shrink-0 hover:bg-[#4d8aff]"
+      (click)="onDashboardTextClick1()"
+    >
+      <img
+        class="h-[1rem] w-[1.5rem]"
+        alt=""
+        src="assets/images/SVG-margin.svg"
+      />
+      <div
+        class="relative text-[0.825rem] leading-[1.25rem] font-font-family-font-1 text-color-grey-98 text-center cursor-pointer"
+        (click)="onDashboardTextClick()()"
+      >
+        Go to Dashboard
+      </div>
+    </button>
+  </div>
+</header>

@@ -1,0 +1,577 @@
+<main
+  class="w-[80rem] flex flex-col items-start p-[2rem] box-border gap-[2rem] max-w-[80rem] text-left text-[1.819rem] text-color-azure-11 font-font-family-font-1 mq900:gap-[1rem] mq900:pt-[1.25rem] mq900:pb-[1.25rem] mq900:box-border mq1325:pt-[1.313rem] mq1325:pb-[1.313rem] mq1325:box-border mq1325:max-w-full"
+>
+  <div class="self-stretch flex flex-col items-start gap-[0.5rem]">
+    <div class="self-stretch flex flex-col items-start">
+      <h1
+        class="m-0 self-stretch relative text-[length:inherit] leading-[2.25rem] font-font-weight-700 font-[inherit] mq450:text-[1.438rem] mq450:leading-[1.813rem]"
+      >
+        Comparative Analysis
+      </h1>
+    </div>
+    <div
+      class="self-stretch flex flex-col items-start text-[0.931rem] text-color-azure-34"
+    >
+      <div class="self-stretch relative leading-[1.5rem]">
+        Compare crop performance across different plots and seed varieties
+      </div>
+    </div>
+  </div>
+  <section
+    class="self-stretch shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg bg-color-white-solid border-color-grey-91 border-solid border-stroke-weight-1 box-border flex flex-col items-center pt-[1.5rem] px-[0rem] pb-[0rem] gap-[1.5rem] max-w-full text-left text-[1.463rem] text-color-azure-5 font-font-family-font-1"
+  >
+    <div class="w-[72.875rem] flex items-center">
+      <img
+        class="h-[1.25rem] w-[1.25rem] relative"
+        alt=""
+        src="assets/images/SVG5.svg"
+      />
+      <div class="flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem]">
+        <h3
+          class="m-0 relative text-[length:inherit] tracking-letter-spacing-0-6 leading-[1.5rem] font-font-weight-700 font-[inherit] mq450:text-[1.188rem] mq450:leading-[1.188rem]"
+        >
+          Plot Comparison Setup
+        </h3>
+      </div>
+    </div>
+    <div
+      class="w-[75.875rem] flex flex-col items-start pt-[0rem] px-[1.5rem] pb-[1.5rem] box-border gap-[1rem] max-w-full text-[0.831rem] text-color-blue-40"
+    >
+      <form
+        class="m-0 self-stretch flex items-end gap-[1rem] max-w-full mq1325:flex-wrap"
+      >
+        <container
+          [plotA]="'Plot A'"
+          [northFieldAMaizeXG2]="'North Field A (Maize-XG2)'"
+        >
+        </container
+        ><container
+          [plotA]="'Plot B'"
+          [northFieldAMaizeXG2]="'South Field C (Wheat-Premium)'"
+        >
+        </container>
+        <button
+          class="cursor-pointer [border:none] py-[0.5rem] px-[7.875rem] bg-color-azure-53 h-[2.5rem] rounded-md flex items-center justify-center box-border max-w-full hover:bg-[#4d8aff] mq450:pl-[1.25rem] mq450:pr-[1.25rem] mq450:box-border"
+          type="submit"
+        >
+          <div
+            class="relative text-[0.819rem] leading-[1.25rem] font-font-family-font-1 text-color-grey-98 text-center"
+          >
+            Update Comparison
+          </div>
+        </button>
+      </form>
+      <div
+        class="self-stretch rounded-lg bg-color-grey-97 flex flex-col items-start p-[0.75rem]"
+      >
+        <div class="self-stretch flex flex-col items-start">
+          <div class="self-stretch relative leading-[1.25rem]">
+            <b>Comparing:</b>
+            <span> JAL-113A vs. JAL-205C</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section
+    class="self-stretch flex items-start justify-center gap-[2rem] max-w-full text-left text-[1.444rem] text-color-azure-5 font-font-family-font-1 mq900:gap-[1rem] mq1325:flex-wrap"
+  >
+    <div
+      class="self-stretch w-[37rem] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg bg-color-white-solid border-color-grey-91 border-solid border-stroke-weight-1 box-border flex flex-col items-start pt-[1.5rem] px-[1.5rem] pb-[2.5rem] gap-[1.5rem] max-w-full mq450:pt-[1.25rem] mq450:pb-[1.625rem] mq450:box-border"
+    >
+      <div class="w-[33.875rem] flex items-center">
+        <img
+          class="h-[1.25rem] w-[1.25rem] relative"
+          alt=""
+          src="assets/images/SVG7.svg"
+        />
+        <div class="flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem]">
+          <h3
+            class="m-0 relative text-[length:inherit] tracking-letter-spacing-0-6 leading-[1.5rem] font-font-weight-700 font-[inherit] mq450:text-[1.125rem] mq450:leading-[1.188rem]"
+          >
+            Growth Over Time (cm)
+          </h3>
+        </div>
+      </div>
+      <div
+        class="w-[33.875rem] h-[16rem] rounded-lg [background:linear-gradient(135deg,_#eff6ff,_#eff6ff)] flex items-center justify-center p-[1rem] box-border text-[0.838rem] text-color-azure-27"
+      >
+        <div
+          class="self-stretch flex-1 flex flex-col items-start pt-[1.4rem] px-[4.687rem] pb-[2.8rem] box-border relative isolate max-w-full mq900:pl-[2.313rem] mq900:pr-[2.313rem] mq900:box-border"
+        >
+          <img
+            class="w-[87.84%] h-full absolute !!m-[0 important] top-[0rem] right-[6.08%] bottom-[0rem] left-[6.08%] max-w-full overflow-hidden max-h-full shrink-0"
+            alt=""
+          />
+          <div class="w-[21.7rem] h-[9.8rem] relative shrink-0">
+            <div class="absolute top-[0rem] left-[0rem] w-full h-full">
+              <div class="absolute top-[0rem] left-[0rem] w-full h-full">
+                <img
+                  class="absolute top-[0rem] left-[0rem] w-[0.138rem] h-[9.8rem] z-[1]"
+                  alt=""
+                  src="assets/images/Plot-Metrics.svg"
+                />
+                <div
+                  class="absolute top-[0.7rem] left-[14.7rem] flex items-start z-[1]"
+                >
+                  <div
+                    class="w-[7rem] flex flex-col items-start pt-[0.281rem] px-[0.375rem] pb-[0.4rem] box-border relative isolate gap-[0.118rem]"
+                  >
+                    <img
+                      class="w-full h-full absolute !!m-[0 important] top-[0rem] right-[0rem] bottom-[0rem] left-[0rem] max-w-full overflow-hidden max-h-full shrink-0"
+                      alt=""
+                      src="assets/images/Raw-Data-Display.svg"
+                    />
+                    <div class="flex items-start gap-[0.418rem] shrink-0">
+                      <div
+                        class="flex flex-col items-start pt-[0.281rem] px-[0rem] pb-[0rem]"
+                      >
+                        <img
+                          class="w-[0.563rem] h-[0.563rem] relative z-[1]"
+                          loading="lazy"
+                          alt=""
+                          src="assets/images/Date-Cells.svg"
+                        />
+                      </div>
+                      <div
+                        class="h-[1rem] w-[2.375rem] relative inline-block z-[1]"
+                      >
+                        Plot A
+                      </div>
+                    </div>
+                    <div class="flex items-start gap-[0.418rem] shrink-0">
+                      <div
+                        class="flex flex-col items-start pt-[0.281rem] px-[0rem] pb-[0rem]"
+                      >
+                        <img
+                          class="w-[0.563rem] h-[0.563rem] relative z-[1]"
+                          loading="lazy"
+                          alt=""
+                          src="assets/images/Background-Highlight.svg"
+                        />
+                      </div>
+                      <div
+                        class="h-[1rem] w-[2.438rem] relative inline-block z-[1]"
+                      >
+                        Plot C
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="absolute top-[3.919rem] left-[3.919rem] w-[14.563rem] h-[4.619rem]"
+              >
+                <div
+                  class="absolute top-[0rem] left-[2.8rem] w-[11.763rem] h-[4.131rem]"
+                >
+                  <img
+                    class="absolute top-[0rem] left-[11.2rem] w-[0.563rem] h-[2.169rem] z-[3]"
+                    loading="lazy"
+                    alt=""
+                    src="assets/images/Group.svg"
+                  />
+                  <div
+                    class="absolute top-[0.7rem] left-[0rem] w-[8.963rem] h-[3.431rem]"
+                  >
+                    <img
+                      class="absolute top-[0rem] left-[8.4rem] w-[0.563rem] h-[1.963rem] z-[3]"
+                      loading="lazy"
+                      alt=""
+                      src="assets/images/Group.svg"
+                    />
+                    <img
+                      class="absolute top-[0.7rem] left-[5.6rem] w-[0.563rem] h-[1.75rem] z-[3]"
+                      loading="lazy"
+                      alt=""
+                      src="assets/images/Group.svg"
+                    />
+                    <div
+                      class="absolute top-[1.4rem] left-[0rem] w-[3.363rem] h-[2.031rem]"
+                    >
+                      <img
+                        class="absolute top-[0.7rem] left-[0rem] w-[0.563rem] h-[1.331rem] z-[3]"
+                        loading="lazy"
+                        alt=""
+                        src="assets/images/Group.svg"
+                      />
+                      <img
+                        class="absolute top-[0rem] left-[2.8rem] w-[0.563rem] h-[1.538rem] z-[3]"
+                        loading="lazy"
+                        alt=""
+                        src="assets/images/Group.svg"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <img
+                  class="absolute top-[3.5rem] left-[0rem] w-[0.563rem] h-[1.119rem] z-[3]"
+                  loading="lazy"
+                  alt=""
+                  src="assets/images/Group.svg"
+                />
+              </div>
+            </div>
+            <img
+              class="absolute top-[8.119rem] left-[1.119rem] w-[0.563rem] h-[0.913rem] z-[3]"
+              alt=""
+              src="assets/images/Group.svg"
+            />
+          </div>
+          <img
+            class="w-[52.71%] h-[30%] absolute !!m-[0 important] top-[40%] right-[28.04%] bottom-[30%] left-[19.25%] max-w-full overflow-hidden max-h-full z-[1] shrink-0"
+            alt=""
+            src="assets/images/Vector5.svg"
+          />
+          <img
+            class="w-[52.71%] h-1/4 absolute !!m-[0 important] top-[47.5%] right-[28.04%] bottom-[27.5%] left-[19.25%] max-w-full overflow-hidden max-h-full z-[2] shrink-0"
+            alt=""
+            src="assets/images/Vector6.svg"
+          />
+          <img
+            class="w-[22.4rem] h-[0.138rem] relative max-h-full z-[1] shrink-0"
+            alt=""
+            src="assets/images/Vector4.svg"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="self-stretch w-[37rem] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg bg-color-white-solid border-color-grey-91 border-solid border-stroke-weight-1 box-border flex flex-col items-start p-[1.5rem] gap-[1.5rem] max-w-full text-[1.456rem] mq450:pt-[1.25rem] mq450:pb-[1.25rem] mq450:box-border"
+    >
+      <div class="w-[33.875rem] flex items-center">
+        <img
+          class="h-[1.25rem] w-[1.25rem] relative"
+          alt=""
+          src="assets/images/SVG6.svg"
+        />
+        <div class="flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem]">
+          <h3
+            class="m-0 relative text-[length:inherit] tracking-letter-spacing-0-6 leading-[1.5rem] font-font-weight-700 font-[inherit] mq450:text-[1.188rem] mq450:leading-[1.188rem]"
+          >
+            Key Performance Indicators (KPIs)
+          </h3>
+        </div>
+      </div>
+      <div
+        class="w-[33.875rem] flex flex-col items-start gap-[1rem] text-[0.831rem] text-color-azure-27"
+      >
+        @for (item of container1Items(); track $index) {
+        <container1
+          [averageYield]="item.averageYield"
+          [averageYieldFontSize]="item.averageYieldFontSize"
+          [kgha]="item.kgha"
+          [haFontSize]="item.haFontSize"
+          [prop]="item.prop"
+          [bFontSize]="item.bFontSize"
+          [marginMinWidth]="item.marginMinWidth"
+          [prop1]="item.prop1"
+          [bFontSize1]="item.bFontSize1"
+          [marginMinWidth1]="item.marginMinWidth1"
+          [backgroundWidth]="item.backgroundWidth"
+          [backgroundRight]="item.backgroundRight"
+        ></container1>
+        }
+      </div>
+    </div>
+  </section>
+  <div
+    class="self-stretch shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg bg-color-white-solid border-color-grey-91 border-solid border-stroke-weight-1 flex flex-col items-center pt-[0rem] px-[0rem] pb-[1.5rem] text-[0.819rem] text-color-azure-47"
+  >
+    <section
+      class="w-[75.875rem] flex items-center justify-between p-[1.5rem] box-border gap-[1.25rem] text-left text-[1.463rem] text-color-azure-5 font-font-family-font-1"
+    >
+      <div class="flex flex-col items-start">
+        <h3
+          class="m-0 relative text-[length:inherit] tracking-letter-spacing-0-6 leading-[1.5rem] font-font-weight-700 font-[inherit] mq450:text-[1.188rem] mq450:leading-[1.188rem]"
+        >
+          Raw Comparison Data
+        </h3>
+      </div>
+      <div
+        class="h-[2.625rem] flex flex-col items-start pt-[0.375rem] px-[0rem] pb-[0rem] box-border"
+      >
+        <button
+          class="cursor-pointer border-color-grey-91 border-solid border-stroke-weight-1 py-[0rem] px-[0.75rem] bg-color-white-solid h-[2.25rem] rounded-md box-border flex items-center justify-center gap-[0.5rem] hover:bg-[#e6e6e6] hover:border-[#cccfd1] hover:border-solid hover:hover:border-stroke-weight-1 hover:box-border"
+        >
+          <img
+            class="h-[1rem] w-[1.5rem]"
+            alt=""
+            src="assets/images/SVG-margin2.svg"
+          />
+          <div
+            class="relative text-[0.825rem] leading-[1.25rem] font-font-family-font-1 text-color-azure-5 text-center"
+          >
+            Export Data
+          </div>
+        </button>
+      </div>
+    </section>
+    <div class="w-[72.875rem] overflow-auto flex flex-col items-start">
+      <div
+        class="self-stretch border-color-grey-91 border-solid border-b-stroke-weight-1 overflow-x-auto flex items-start justify-center"
+      >
+        <div
+          class="w-[12.338rem] shrink-0 flex flex-col items-start pt-[0.862rem] px-[1rem] pb-[0.893rem] box-border"
+        >
+          <div class="relative leading-[1.25rem]">Date</div>
+        </div>
+        <div
+          class="w-[17.85rem] shrink-0 flex flex-col items-start pt-[0.862rem] px-[1rem] pb-[0.893rem] box-border"
+        >
+          <div class="relative leading-[1.25rem]">Plot A Growth (cm)</div>
+        </div>
+        <div
+          class="w-[17.938rem] shrink-0 flex flex-col items-start pt-[0.862rem] px-[1rem] pb-[0.893rem] box-border text-[0.825rem]"
+        >
+          <div class="relative leading-[1.25rem]">Plot C Growth (cm)</div>
+        </div>
+        <div
+          class="w-[11.4rem] shrink-0 flex flex-col items-start pt-[0.862rem] px-[1rem] pb-[0.893rem] box-border text-[0.813rem]"
+        >
+          <div class="relative leading-[1.25rem]">Difference</div>
+        </div>
+        <div
+          class="w-[13.344rem] shrink-0 flex flex-col items-start pt-[0.862rem] px-[1rem] pb-[0.893rem] box-border text-[0.813rem]"
+        >
+          <div class="relative leading-[1.25rem]">Status</div>
+        </div>
+      </div>
+      <section
+        class="self-stretch flex flex-col items-start mt-[-0.063rem] relative text-left text-[0.875rem] text-color-azure-5 font-font-family-font-1"
+      >
+        <div
+          class="self-stretch border-color-grey-91 border-solid border-b-stroke-weight-1 overflow-x-auto flex items-start justify-center"
+        >
+          <div
+            class="w-[12.338rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-[0.806rem]"
+          >
+            <div class="relative leading-[1.25rem]">2025-10-01</div>
+          </div>
+          <div
+            class="w-[17.85rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">12.5</div>
+          </div>
+          <div
+            class="w-[17.938rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">11.8</div>
+          </div>
+          <div
+            class="w-[11.4rem] shrink-0 flex flex-col items-start py-[1.093rem] pl-[0.937rem] pr-[0.875rem] box-border text-[0.831rem] text-color-spring-green-36"
+          >
+            <div class="relative leading-[1.25rem]">+0.7</div>
+          </div>
+          <div
+            class="w-[13.344rem] shrink-0 flex flex-col items-start py-[1.031rem] px-[1rem] box-border text-[0.738rem] text-color-grey-98"
+          >
+            <div
+              class="rounded-[9999px] bg-color-azure-11 flex items-center py-[0.125rem] px-[0.625rem]"
+            >
+              <b class="relative leading-[1rem]">A Leading</b>
+            </div>
+          </div>
+        </div>
+        <div
+          class="self-stretch border-color-grey-91 border-solid border-b-stroke-weight-1 overflow-x-auto flex items-start justify-center mt-[-0.063rem] relative text-[0.781rem]"
+        >
+          <div
+            class="w-[12.338rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">2025-10-03</div>
+          </div>
+          <div
+            class="w-[17.85rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-[0.875rem]"
+          >
+            <div class="relative leading-[1.25rem]">13.2</div>
+          </div>
+          <div
+            class="w-[17.938rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-[0.863rem]"
+          >
+            <div class="relative leading-[1.25rem]">12.4</div>
+          </div>
+          <div
+            class="w-[11.4rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-[0.813rem] text-color-spring-green-36"
+          >
+            <div class="relative leading-[1.25rem]">+0.8</div>
+          </div>
+          <div
+            class="w-[13.344rem] shrink-0 flex flex-col items-start py-[1.031rem] px-[1rem] box-border text-[0.738rem] text-color-grey-98"
+          >
+            <div
+              class="rounded-[9999px] bg-color-azure-11 flex items-center py-[0.125rem] px-[0.625rem]"
+            >
+              <b class="relative leading-[1rem]">A Leading</b>
+            </div>
+          </div>
+        </div>
+        <div
+          class="self-stretch border-color-grey-91 border-solid border-b-stroke-weight-1 overflow-x-auto flex items-start justify-center mt-[-0.063rem] relative"
+        >
+          <div
+            class="w-[12.338rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-[0.788rem]"
+          >
+            <div class="relative leading-[1.25rem]">2025-10-05</div>
+          </div>
+          <div
+            class="w-[17.85rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">14.1</div>
+          </div>
+          <div
+            class="w-[17.938rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">13</div>
+          </div>
+          <div
+            class="w-[11.4rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-color-spring-green-36"
+          >
+            <div class="relative leading-[1.25rem]">+1.1</div>
+          </div>
+          <div
+            class="w-[13.344rem] shrink-0 flex flex-col items-start py-[1.031rem] px-[1rem] box-border text-[0.738rem] text-color-grey-98"
+          >
+            <div
+              class="rounded-[9999px] bg-color-azure-11 flex items-center py-[0.125rem] px-[0.625rem]"
+            >
+              <b class="relative leading-[1rem]">A Leading</b>
+            </div>
+          </div>
+        </div>
+        <div
+          class="self-stretch border-color-grey-91 border-solid border-b-stroke-weight-1 overflow-x-auto flex items-start justify-center mt-[-0.063rem] relative"
+        >
+          <div
+            class="w-[12.338rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-[0.794rem]"
+          >
+            <div class="relative leading-[1.25rem]">2025-10-07</div>
+          </div>
+          <div
+            class="w-[17.85rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">15</div>
+          </div>
+          <div
+            class="w-[17.938rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">13.8</div>
+          </div>
+          <div
+            class="w-[11.4rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-color-spring-green-36"
+          >
+            <div class="relative leading-[1.25rem]">+1.2</div>
+          </div>
+          <div
+            class="w-[13.344rem] shrink-0 flex flex-col items-start py-[1.031rem] px-[1rem] box-border text-[0.738rem] text-color-grey-98"
+          >
+            <div
+              class="rounded-[9999px] bg-color-azure-11 flex items-center py-[0.125rem] px-[0.625rem]"
+            >
+              <b class="relative leading-[1rem]">A Leading</b>
+            </div>
+          </div>
+        </div>
+        <div
+          class="self-stretch border-color-grey-91 border-solid border-b-stroke-weight-1 overflow-x-auto flex items-start justify-center mt-[-0.063rem] relative"
+        >
+          <div
+            class="w-[12.338rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-[0.781rem]"
+          >
+            <div class="relative leading-[1.25rem]">2025-10-09</div>
+          </div>
+          <div
+            class="w-[17.85rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">15.8</div>
+          </div>
+          <div
+            class="w-[17.938rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">14.5</div>
+          </div>
+          <div
+            class="w-[11.4rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-color-spring-green-36"
+          >
+            <div class="relative leading-[1.25rem]">+1.3</div>
+          </div>
+          <div
+            class="w-[13.344rem] shrink-0 flex flex-col items-start py-[1.031rem] px-[1rem] box-border text-[0.738rem] text-color-grey-98"
+          >
+            <div
+              class="rounded-[9999px] bg-color-azure-11 flex items-center py-[0.125rem] px-[0.625rem]"
+            >
+              <b class="relative leading-[1rem]">A Leading</b>
+            </div>
+          </div>
+        </div>
+        <div
+          class="self-stretch border-color-grey-91 border-solid border-b-stroke-weight-1 overflow-x-auto flex items-start justify-center mt-[-0.063rem] relative"
+        >
+          <div
+            class="w-[12.338rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-[0.831rem]"
+          >
+            <div class="relative leading-[1.25rem]">2025-10-11</div>
+          </div>
+          <div
+            class="w-[17.85rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">16.7</div>
+          </div>
+          <div
+            class="w-[17.938rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">15.2</div>
+          </div>
+          <div
+            class="w-[11.4rem] shrink-0 flex flex-col items-start py-[1.093rem] px-[1rem] box-border text-color-spring-green-36"
+          >
+            <div class="relative leading-[1.25rem]">+1.5</div>
+          </div>
+          <div
+            class="w-[13.344rem] shrink-0 flex flex-col items-start py-[1.031rem] px-[1rem] box-border text-[0.738rem] text-color-grey-98"
+          >
+            <div
+              class="rounded-[9999px] bg-color-azure-11 flex items-center py-[0.125rem] px-[0.625rem]"
+            >
+              <b class="relative leading-[1rem]">A Leading</b>
+            </div>
+          </div>
+        </div>
+        <div
+          class="self-stretch flex items-start justify-center [row-gap:20px] mt-[-0.063rem] relative mq1325:flex-wrap"
+        >
+          <div
+            class="w-[12.338rem] flex flex-col items-start pt-[1.093rem] px-[1rem] pb-[1.062rem] box-border text-[0.806rem]"
+          >
+            <div class="relative leading-[1.25rem]">2025-10-12</div>
+          </div>
+          <div
+            class="w-[17.85rem] flex flex-col items-start pt-[1.093rem] px-[1rem] pb-[1.062rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">17.2</div>
+          </div>
+          <div
+            class="w-[17.938rem] flex flex-col items-start pt-[1.093rem] px-[1rem] pb-[1.062rem] box-border"
+          >
+            <div class="relative leading-[1.25rem]">15.8</div>
+          </div>
+          <div
+            class="w-[11.4rem] flex flex-col items-start pt-[1.093rem] px-[1rem] pb-[1.062rem] box-border text-[0.869rem] text-color-spring-green-36"
+          >
+            <div class="relative leading-[1.25rem]">+1.4</div>
+          </div>
+          <div
+            class="w-[13.344rem] flex flex-col items-start p-[1rem] box-border text-[0.738rem] text-color-grey-98"
+          >
+            <div
+              class="rounded-[9999px] bg-color-azure-11 flex items-center py-[0.125rem] px-[0.625rem]"
+            >
+              <b class="relative leading-[1rem]">A Leading</b>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
