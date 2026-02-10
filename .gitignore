@@ -76,13 +76,12 @@ node_modules/
 
 # Build y Compilación
 dist/
-/dist
-/tmp
-/out-tsc
-/bazel-out
-/connect.lock
-/coverage
-/typings
+tmp/
+out-tsc/
+bazel-out/
+connect.lock
+coverage/
+typings/
 __screenshots__/
 
 # Angular Cache

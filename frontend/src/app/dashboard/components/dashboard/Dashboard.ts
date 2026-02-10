@@ -12,13 +12,7 @@ import { Footer } from "../../../shared/components/footer/Footer";
   host: { "[style.display]": "'contents'" },
 })
 export class Dashboard {
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
-  onHomeTextClick() {
-    this.router.navigate(["/1920w-light"]);
-  }
 
-  onAnalyticsTextClick() {
-    this.router.navigate(["/1920w-light1"]);
-  }
 }

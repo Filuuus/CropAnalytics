@@ -6,7 +6,7 @@ import { CommonModule } from "@angular/common";
 @Component({
   selector: "main-1",
 
-  imports: [CommonModule, Container, Container1],
+  imports: [CommonModule, Container1],
   templateUrl: "./Main.html",
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { "[style.display]": "'contents'" },

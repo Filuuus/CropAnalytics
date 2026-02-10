@@ -1,4 +1,4 @@
-import { Component, input, ChangeDetectionStrategy } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
 
@@ -11,33 +11,17 @@ import { Router } from "@angular/router";
   host: { "[style.display]": "'contents'" },
 })
 export class Header {
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
-  /** Style props */
-  headerFlexDirection = input<string | number | undefined>("");
-  navFlex = input<string | number | undefined>("");
-  navJustifyContent = input<string | number | undefined>("");
-  navGap = input<string | number | undefined>("");
-  navMargin = input<string | number | undefined>("");
-  navAlignSelf = input<string | number | undefined>("");
-  containerMargin = input<string | number | undefined>("");
-  homeColor = input<string | number | undefined>("");
-  dashboardColor = input<string | number | undefined>("");
-  analyticsColor = input<string | number | undefined>("");
-  /** Action props */
-  onHomeTextClick = input<() => void>(() => {});
-  onAnalyticsTextClick = input<() => void>(() => {});
-  onDashboardTextClick = input<() => void>(() => {});
-
-  onDashboardTextClick1() {
-    this.router.navigate(["/1920w-light2"]);
+  onHomeClick() {
+    this.router.navigate(["/"]);
   }
 
-  onUploadDataTextClick() {
-    // Please sync "1920w light" to the project
+  onDashboardClick() {
+    this.router.navigate(["/dashboard"]);
   }
 
-  onAnalyticsTextClick1() {
-    this.router.navigate(["/1920w-light1"]);
+  onAnalyticsClick() {
+    this.router.navigate(["/analytics"]);
   }
 }

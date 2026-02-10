@@ -1,136 +1,70 @@
-<div
-  class="w-full relative rounded-sm bg-color-white-solid border-[rgba(0,0,0,0.1)] border-solid border-[1px] box-border flex flex-col items-start py-[6.125rem] px-[6.187rem] leading-[normal] tracking-[normal] mq900:pl-[1.5rem] mq900:pr-[1.5rem] mq900:box-border mq1325:pl-[3.063rem] mq1325:pr-[3.063rem] mq1325:box-border"
->
-  <main
-    class="self-stretch bg-color-white-solid overflow-y-auto flex flex-col items-start max-w-full"
-  >
-    <section
-      class="self-stretch bg-color-grey-98 flex flex-col items-start min-h-[75rem] max-w-full"
-    >
-      <header-1
-        [onAnalyticsTextClick]="onAnalyticsTextClick"
-        [onDashboardTextClick]="onGoToDashboardClick"
-      >
-      </header-1>
-      <main
-        class="self-stretch flex flex-col items-start max-w-full text-center text-[3.638rem] text-color-azure-11 font-font-family-font-1"
-      >
-        <div
-          class="self-stretch [background:linear-gradient(135deg,_#eff6ff,_#eff6ff)] flex flex-col items-start py-[5rem] px-[20rem] mq450:py-[3.25rem] mq450:px-[1.25rem] mq450:box-border mq900:pl-[5rem] mq900:pr-[5rem] mq900:box-border mq1325:pl-[10rem] mq1325:pr-[10rem] mq1325:box-border"
-        >
-          <div
-            class="w-full flex flex-col items-center py-[0rem] px-[2rem] box-border gap-[1.5rem] max-w-[80rem] mq1325:max-w-full"
-          >
-            <div class="self-stretch flex flex-col items-center">
-              <h1
-                class="m-0 self-stretch relative text-[length:inherit] leading-[3.75rem] font-font-weight-700 font-[inherit] mq450:text-[2.188rem] mq450:leading-[2.25rem] mq900:text-[2.938rem] mq900:leading-[3rem]"
-              >
-                <span>Intelligent Insights for </span>
-                <span
-                  class="text-transparent !bg-clip-text [background:linear-gradient(90deg,_#2563eb,_#16a34a)] [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]"
-                  >Modern Agriculture</span
-                >
-              </h1>
-            </div>
-            <div
-              class="w-[48rem] flex flex-col items-center pt-[0rem] px-[0rem] pb-[0.5rem] box-border max-w-[48rem] text-[1.163rem] text-color-azure-27 mq900:max-w-full"
-            >
-              <div class="relative leading-[2.031rem]">
-                An advanced platform for analyzing crop performance, comparing
-                seed variants, and<br />predicting yields using real-time data.
-              </div>
-            </div>
-            <button
-              class="cursor-pointer [border:none] py-[0.5rem] px-[2rem] bg-color-azure-53 rounded-md flex items-center justify-center hover:bg-[#4d8aff]"
-            >
-              <div
-                class="relative text-[1.063rem] leading-[1.75rem] font-font-family-font-1 text-color-grey-98 text-center cursor-pointer"
-                (click)="onGoToDashboardClick()"
-              >
-                Go to Dashboard
-              </div>
-            </button>
-          </div>
+<div class="flex flex-col min-h-screen bg-gray-50">
+  <header-1></header-1>
+  <main class="flex-grow">
+    <!-- Hero Section -->
+    <section class="bg-blue-50 py-20 px-4">
+      <div class="container mx-auto max-w-6xl text-center">
+        <h1 class="text-5xl font-bold text-gray-900 mb-6 leading-tight">
+          Intelligent Insights for
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">
+            Modern Agriculture
+          </span>
+        </h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          An advanced platform for analyzing crop performance, comparing seed
+          variants, and predicting yields using real-time data.
+        </p>
+        <button
+          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-md transition-colors duration-200 cursor-pointer"
+          (click)="onGoToDashboardClick()">
+          Go to Dashboard
+        </button>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 px-4 bg-white">
+      <div class="container mx-auto max-w-6xl">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl font-bold text-gray-900 mb-4">
+            Powerful Features for Agricultural Analysis
+          </h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Leverage cutting-edge technology to make data-driven decisions for
+            optimal crop performance.
+          </p>
         </div>
-        <div
-          class="self-stretch bg-color-white-solid flex flex-col items-start py-[5rem] px-[20rem] box-border max-w-full mq450:pl-[1.25rem] mq450:pr-[1.25rem] mq450:box-border mq900:py-[3.25rem] mq900:px-[5rem] mq900:box-border mq1325:pl-[10rem] mq1325:pr-[10rem] mq1325:box-border"
-        >
-          <div
-            class="w-full flex flex-col items-start py-[0rem] px-[2rem] box-border gap-[4rem] max-w-[80rem] mq450:gap-[1rem] mq900:gap-[2rem] mq1325:max-w-full"
-          >
-            <section
-              class="self-stretch flex flex-col items-center gap-[1rem] text-center text-[1.831rem] text-color-azure-11 font-font-family-font-1"
-            >
-              <div class="self-stretch flex flex-col items-center">
-                <h2
-                  class="m-0 self-stretch relative text-[length:inherit] leading-[2.25rem] font-font-weight-700 font-[inherit] mq450:text-[1.438rem] mq450:leading-[1.813rem]"
-                >
-                  Powerful Features for Agricultural Analysis
-                </h2>
-              </div>
-              <div
-                class="w-[42rem] flex flex-col items-center max-w-[42rem] text-[1.031rem] text-color-azure-34 mq900:max-w-full"
-              >
-                <div class="relative leading-[1.75rem]">
-                  Leverage cutting-edge technology to make data-driven decisions
-                  for optimal crop<br />performance.
-                </div>
-              </div>
-            </section>
-            <section
-              class="self-stretch flex items-start justify-center gap-[2rem] max-w-full mq900:gap-[1rem] mq1750:flex-wrap"
-            >
-              @for (item of backgroundBorderShadowItems(); track $index) {
-              <background-border-shadow
-                [containerHeight]="item.containerHeight"
-                [containerPadding]="item.containerPadding"
-                [container]="item.container"
-                [frameDivGap]="item.frameDivGap"
-                [interactiveMapAnalysis]="item.interactiveMapAnalysis"
-                [interactiveMapAnalysisFontSize]="item.interactiveMapAnalysisFontSize"
-                [containerWidth]="item.containerWidth"
-                [visualizeAndSelectCropPlots]="item.visualizeAndSelectCropPlots"
-                [visualizeAndSelectFontSize]="item.visualizeAndSelectFontSize"
-              ></background-border-shadow>
-              }
-            </section>
-          </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          @for (item of backgroundBorderShadowItems(); track $index) {
+          <background-border-shadow [containerHeight]="item.containerHeight" [containerPadding]="item.containerPadding"
+            [container]="item.container" [frameDivGap]="item.frameDivGap"
+            [interactiveMapAnalysis]="item.interactiveMapAnalysis"
+            [interactiveMapAnalysisFontSize]="item.interactiveMapAnalysisFontSize"
+            [containerWidth]="item.containerWidth" [visualizeAndSelectCropPlots]="item.visualizeAndSelectCropPlots"
+            [visualizeAndSelectFontSize]="item.visualizeAndSelectFontSize"
+            class="flex justify-center"></background-border-shadow>
+          }
         </div>
-        <div
-          class="self-stretch bg-color-azure-11 flex flex-col items-start py-[4rem] px-[20rem] text-[1.838rem] text-color-white-solid mq450:pl-[1.25rem] mq450:pr-[1.25rem] mq450:box-border mq900:pl-[5rem] mq900:pr-[5rem] mq900:box-border mq1325:pl-[10rem] mq1325:pr-[10rem] mq1325:box-border"
-        >
-          <div
-            class="w-full flex flex-col items-center py-[0rem] px-[2rem] box-border gap-[1rem] max-w-[80rem] mq1325:max-w-full"
-          >
-            <div class="self-stretch flex flex-col items-center">
-              <h2
-                class="m-0 self-stretch relative text-[length:inherit] leading-[2.25rem] font-font-weight-700 font-[inherit] mq450:text-[1.5rem] mq450:leading-[1.813rem]"
-              >
-                Ready to Transform Your Agricultural Analysis?
-              </h2>
-            </div>
-            <div
-              class="self-stretch flex flex-col items-center pt-[0rem] px-[0rem] pb-[1rem] text-[1.15rem] text-color-azure-84"
-            >
-              <div class="self-stretch relative leading-[1.75rem]">
-                Start exploring your crop data with our advanced analytics
-                platform.
-              </div>
-            </div>
-            <button
-              class="cursor-pointer border-color-white-solid border-solid border-stroke-weight-1 py-[0.687rem] px-[2rem] bg-color-white-solid rounded-md flex items-center justify-center hover:bg-[#e6e6e6] hover:border-[#e6e6e6] hover:border-solid hover:hover:border-stroke-weight-1 hover:box-border"
-            >
-              <div
-                class="relative text-[0.813rem] leading-[1.25rem] font-font-family-font-1 text-color-white-solid text-center cursor-pointer"
-                (click)="onGoToDashboardClick()"
-              >
-                Get Started Now
-              </div>
-            </button>
-          </div>
-        </div>
-      </main>
-      <footer-1> </footer-1>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="bg-gray-900 py-20 px-4 text-center">
+      <div class="container mx-auto max-w-4xl">
+        <h2 class="text-3xl font-bold text-white mb-6">
+          Ready to Transform Your Agricultural Analysis?
+        </h2>
+        <p class="text-xl text-gray-300 mb-8">
+          Start exploring your crop data with our advanced analytics platform.
+        </p>
+        <button
+          class="bg-white hover:bg-gray-100 text-gray-900 font-medium py-3 px-8 rounded-md transition-colors duration-200 border border-transparent hover:border-gray-200 cursor-pointer"
+          (click)="onGoToDashboardClick()">
+          Get Started Now
+        </button>
+      </div>
     </section>
   </main>
+  <footer-1></footer-1>
 </div>

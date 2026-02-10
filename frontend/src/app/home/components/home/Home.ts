@@ -14,14 +14,12 @@ import { CommonModule } from "@angular/common";
   host: { "[style.display]": "'contents'" },
 })
 export class Home {
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
-  onAnalyticsTextClick() {
-    this.router.navigate(["/1920w-light1"]);
-  }
+
 
   onGoToDashboardClick() {
-    this.router.navigate(["/1920w-light2"]);
+    this.router.navigate(["/dashboard"]);
   }
   backgroundBorderShadowItems = signal([
     {
