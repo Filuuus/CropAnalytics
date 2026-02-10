@@ -1,0 +1,77 @@
+<div
+  class="self-stretch flex flex-col items-start gap-[0.5rem] text-left text-[0.831rem] text-color-azure-27 font-font-family-font-1"
+>
+  <div
+    class="self-stretch flex items-center justify-between gap-[1.25rem] mq450:flex-wrap mq450:gap-[1.25rem]"
+  >
+    <div class="flex flex-col items-start">
+      <div
+        class="relative leading-[1.25rem]"
+        [style.font-size]="averageYieldFontSize()"
+      >
+        {{averageYield()}}
+      </div>
+    </div>
+    <div class="flex flex-col items-start text-[0.694rem] text-color-grey-46">
+      <div class="relative leading-[1rem]" [style.font-size]="haFontSize()">
+        {{kgha()}}
+      </div>
+    </div>
+  </div>
+  <div
+    class="self-stretch flex flex-col items-start gap-[0.25rem] text-color-azure-34"
+  >
+    <div class="self-stretch flex items-center [row-gap:20px] mq900:flex-wrap">
+      <div
+        class="h-[0.75rem] w-[0.75rem] relative rounded bg-color-azure-60"
+      ></div>
+      <div class="flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem]">
+        <div class="relative leading-[1.25rem]">Plot A:</div>
+      </div>
+      <div
+        class="flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem] text-[0.881rem] text-color-azure-5"
+      >
+        <b class="relative leading-[1.5rem]" [style.font-size]="bFontSize()"
+          >{{prop()}}</b
+        >
+      </div>
+      <div
+        class="h-[0.5rem] flex-1 flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem] box-border min-w-[17.938rem]"
+        [style.min-width]="marginMinWidth()"
+      >
+        <div
+          class="self-stretch h-[0.5rem] relative rounded-[9999px] bg-color-azure-60"
+        ></div>
+      </div>
+    </div>
+    <div class="self-stretch flex items-center [row-gap:20px] mq900:flex-wrap">
+      <div
+        class="h-[0.75rem] w-[0.75rem] relative rounded bg-color-spring-green-45"
+      ></div>
+      <div class="flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem]">
+        <div class="relative leading-[1.25rem]">Plot C:</div>
+      </div>
+      <div
+        class="flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem] text-[0.906rem] text-color-azure-5"
+      >
+        <b class="relative leading-[1.5rem]" [style.font-size]="bFontSize1()"
+          >{{prop1()}}</b
+        >
+      </div>
+      <div
+        class="h-[0.5rem] flex-1 flex flex-col items-start py-[0rem] pl-[0.5rem] pr-[0rem] box-border min-w-[17.875rem]"
+        [style.min-width]="marginMinWidth1()"
+      >
+        <div
+          class="self-stretch h-[0.5rem] relative rounded-[9999px] bg-color-grey-91"
+        >
+          <div
+            class="absolute w-[92.25%] top-[0rem] right-[7.75%] left-[0%] rounded-[9999px] bg-color-spring-green-45 h-[0.5rem]"
+            [style.width]="backgroundWidth()"
+            [style.right]="backgroundRight()"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

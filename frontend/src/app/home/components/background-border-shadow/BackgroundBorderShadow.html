@@ -1,0 +1,39 @@
+<div
+  class="self-stretch w-[24rem] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg bg-color-white-solid border-color-grey-91 border-solid border-stroke-weight-1 box-border flex flex-col items-start max-w-full text-center text-[1.081rem] text-color-azure-11 font-font-family-font-1"
+>
+  <div
+    class="w-[23.875rem] h-[12.594rem] flex flex-col items-start pt-[1.5rem] px-[1.5rem] pb-[1.506rem] box-border gap-[1rem]"
+    [style.height]="containerHeight()"
+    [style.padding]="containerPadding()"
+  >
+    <img
+      class="w-[20.875rem] h-[3.5rem]"
+      loading="lazy"
+      alt=""
+      [src]="container()"
+    />
+    <div
+      class="flex flex-col items-start gap-[0.462rem]"
+      [style.gap]="frameDivGap()"
+    >
+      <div class="w-[20.875rem] flex flex-col items-center">
+        <b
+          class="relative leading-[1.75rem]"
+          [style.font-size]="interactiveMapAnalysisFontSize()"
+          >{{interactiveMapAnalysis()}}</b
+        >
+      </div>
+      <div
+        class="flex flex-col items-center text-[0.8rem] text-color-azure-34"
+        [style.width]="containerWidth()"
+      >
+        <div
+          class="relative leading-[1.425rem]"
+          [style.font-size]="visualizeAndSelectFontSize()"
+        >
+          {{visualizeAndSelectCropPlots()}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

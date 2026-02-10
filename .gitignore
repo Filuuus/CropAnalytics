@@ -37,13 +37,11 @@ frontend/.gemini/settings.json
 
 # Visual Studio Code
 .vscode/*
-# ! significa "No ignorar" (Es decir, subir al repo)
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-# mcp.json suele tener tokens, mejor ignorarlo por seguridad
-.vscode/mcp.json
+!.vscode/mcp.json
 
 # ==============================================
 #   4. BACKEND (PYTHON / DJANGO)
@@ -78,22 +76,17 @@ node_modules/
 
 # Build y Compilación
 dist/
-/dist
-/tmp
-/out-tsc
-/bazel-out
-/connect.lock
-/coverage
-/typings
+tmp/
+out-tsc/
+bazel-out/
+connect.lock
+coverage/
+typings/
 __screenshots__/
 
 # Angular Cache
-/.angular/cache
+frontend/.angular/cache
 .sass-cache/
-
-# Nota: package-lock.json SÍ se suele subir para consistencia de versiones.
-# Si prefieres no subirlo, descomenta la siguiente línea:
-# package-lock.json
 
 # ==============================================
 #   6. LOCOFY & HERRAMIENTAS DE IA

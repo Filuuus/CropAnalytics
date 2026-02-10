@@ -1,0 +1,70 @@
+<div class="flex flex-col min-h-screen bg-gray-50">
+  <header-1></header-1>
+  <main class="flex-grow">
+    <!-- Hero Section -->
+    <section class="bg-blue-50 py-20 px-4">
+      <div class="container mx-auto max-w-6xl text-center">
+        <h1 class="text-5xl font-bold text-gray-900 mb-6 leading-tight">
+          Intelligent Insights for
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">
+            Modern Agriculture
+          </span>
+        </h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          An advanced platform for analyzing crop performance, comparing seed
+          variants, and predicting yields using real-time data.
+        </p>
+        <button
+          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-md transition-colors duration-200 cursor-pointer"
+          (click)="onGoToDashboardClick()">
+          Go to Dashboard
+        </button>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 px-4 bg-white">
+      <div class="container mx-auto max-w-6xl">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl font-bold text-gray-900 mb-4">
+            Powerful Features for Agricultural Analysis
+          </h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Leverage cutting-edge technology to make data-driven decisions for
+            optimal crop performance.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          @for (item of backgroundBorderShadowItems(); track $index) {
+          <background-border-shadow [containerHeight]="item.containerHeight" [containerPadding]="item.containerPadding"
+            [container]="item.container" [frameDivGap]="item.frameDivGap"
+            [interactiveMapAnalysis]="item.interactiveMapAnalysis"
+            [interactiveMapAnalysisFontSize]="item.interactiveMapAnalysisFontSize"
+            [containerWidth]="item.containerWidth" [visualizeAndSelectCropPlots]="item.visualizeAndSelectCropPlots"
+            [visualizeAndSelectFontSize]="item.visualizeAndSelectFontSize"
+            class="flex justify-center"></background-border-shadow>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="bg-gray-900 py-20 px-4 text-center">
+      <div class="container mx-auto max-w-4xl">
+        <h2 class="text-3xl font-bold text-white mb-6">
+          Ready to Transform Your Agricultural Analysis?
+        </h2>
+        <p class="text-xl text-gray-300 mb-8">
+          Start exploring your crop data with our advanced analytics platform.
+        </p>
+        <button
+          class="bg-white hover:bg-gray-100 text-gray-900 font-medium py-3 px-8 rounded-md transition-colors duration-200 border border-transparent hover:border-gray-200 cursor-pointer"
+          (click)="onGoToDashboardClick()">
+          Get Started Now
+        </button>
+      </div>
+    </section>
+  </main>
+  <footer-1></footer-1>
+</div>

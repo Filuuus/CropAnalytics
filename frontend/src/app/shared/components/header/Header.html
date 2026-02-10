@@ -1,0 +1,28 @@
+<header class="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
+  <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+    <!-- Logo -->
+    <div class="flex items-center gap-2 cursor-pointer" (click)="onHomeClick()">
+      <img src="assets/images/SVG.svg" class="w-8 h-8" alt="Logo" />
+      <span class="font-bold text-xl text-gray-800">CropAnalytics</span>
+    </div>
+
+    <!-- Nav -->
+    <nav class="hidden md:flex items-center gap-8">
+      <a (click)="onHomeClick()"
+        class="text-gray-600 hover:text-blue-600 font-medium cursor-pointer transition-colors">Home</a>
+      <a (click)="onDashboardClick()"
+        class="text-gray-600 hover:text-blue-600 font-medium cursor-pointer transition-colors">Dashboard</a>
+      <a (click)="onAnalyticsClick()"
+        class="text-gray-600 hover:text-blue-600 font-medium cursor-pointer transition-colors">Analytics</a>
+      <a class="text-gray-600 hover:text-blue-600 font-medium cursor-pointer transition-colors">Upload Data</a>
+      <a class="text-gray-600 hover:text-blue-600 font-medium cursor-pointer transition-colors">About</a>
+    </nav>
+
+    <!-- Action Button -->
+    <button (click)="onDashboardClick()"
+      class="hidden sm:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors cursor-pointer">
+      <img src="assets/images/SVG-margin.svg" class="w-4 h-4" />
+      <span>Go to Dashboard</span>
+    </button>
+  </div>
+</header>
