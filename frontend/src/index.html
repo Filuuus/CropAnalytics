@@ -4,13 +4,25 @@
     <meta charset="utf-8" />
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000" />
+    <meta name="theme-color" content="#0f172a" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("theme");
+          var preference = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
+          var isDark = preference === "dark" || (preference !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var root = document.documentElement;
+          root.classList.toggle("dark", isDark);
+          root.style.colorScheme = isDark ? "dark" : "light";
+        } catch (_) {}
+      })();
+    </script>
     <link
       href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css"
       rel="stylesheet"
     />
     <meta name="description" content="Web site created using Locofy" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="assets/images/imgs/icon.ico" />
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
       rel="stylesheet"
@@ -22,7 +34,7 @@
 
     <title>Crop Analytics</title>
   </head>
-  <body style="margin: 0; line-height: normal">
+  <body>
     <app-root></app-root>
   </body>
 </html>
