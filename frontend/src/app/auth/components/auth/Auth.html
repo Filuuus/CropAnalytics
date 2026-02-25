@@ -1,0 +1,236 @@
+<div class="flex min-h-screen flex-col bg-gray-50">
+  <header-1></header-1>
+
+  <main class="flex flex-1 items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+    <section class="w-full max-w-6xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+      <div class="grid md:grid-cols-2">
+        <div
+          class="relative hidden flex-col overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-green-600 p-10 text-white md:flex">
+
+          <!-- Decorativos -->
+          <div class="absolute -right-14 -top-14 h-48 w-48 rounded-full bg-white/10"></div>
+          <div class="absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-white/10"></div>
+
+          <!-- ===== 🌽 ANIMACIÓN FULL (FONDO) ===== -->
+          <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+
+            <!-- capa suave para que el texto se lea siempre -->
+            <div class="absolute inset-0 bg-gradient-to-b from-black/15 via-black/10 to-black/25"></div>
+
+            <section class="ca-scene ca-scene--full absolute inset-0">
+
+              <!-- Cielo -->
+              <div class="ca-sky">
+                <div class="ca-sun"></div>
+                <div class="ca-cloud ca-cloud--1"></div>
+                <div class="ca-cloud ca-cloud--2"></div>
+                <div class="ca-cloud ca-cloud--3"></div>
+              </div>
+
+              <!-- Colinas -->
+              <div class="ca-hills">
+                <div class="ca-hill ca-hill--back"></div>
+                <div class="ca-hill ca-hill--mid"></div>
+                <div class="ca-hill ca-hill--front"></div>
+              </div>
+
+              <!-- Campo -->
+              <div class="ca-field">
+                <div class="ca-rows ca-rows--1"></div>
+                <div class="ca-rows ca-rows--2"></div>
+                <div class="ca-dust"></div>
+              </div>
+
+              <!-- Elote -->
+              <div class="ca-walker">
+                <div class="elote" role="img" aria-label="Elote caminando">
+                  <div class="elote__shadow"></div>
+
+                  <div class="elote__body">
+                    <div class="elote__husks">
+                      <span class="husk husk--l"></span>
+                      <span class="husk husk--r"></span>
+                    </div>
+
+                    <div class="elote__cob">
+                      <div class="kernels"></div>
+                      <div class="shine"></div>
+
+                      <div class="face">
+                        <span class="eye eye--l"></span>
+                        <span class="eye eye--r"></span>
+                        <span class="mouth"></span>
+                        <span class="blush blush--l"></span>
+                        <span class="blush blush--r"></span>
+                      </div>
+                    </div>
+
+                    <div class="arms">
+                      <span class="arm arm--l"></span>
+                      <span class="arm arm--r"></span>
+                    </div>
+
+                    <div class="legs">
+                      <span class="leg leg--l"><i class="foot"></i></span>
+                      <span class="leg leg--r"><i class="foot"></i></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </section>
+          </div>
+
+          <!-- ===== CONTENIDO SUPERIOR (GLASS) ===== -->
+          <div class="relative z-10 max-w-md rounded-2xl border border-white/15 bg-white/10 p-6
+         text-gray-900 dark:text-white
+         dark:border-white/15 dark:bg-white/10">
+
+            <p class="text-sm uppercase tracking-[0.2em] text-grey-700/80 dark:text-blue-100">
+              CropAnalytics
+            </p>
+
+            <h1 class="mt-4 text-4xl font-bold leading-tight text-gray-900 dark:text-white">
+              @if (isRegisterMode()) {
+              Crea tu cuenta
+              } @else {
+              Bienvenido de vuelta
+              }
+            </h1>
+
+            <p class="mt-4 text-base text-gray-700 dark:text-white/85">
+              @if (isRegisterMode()) {
+              Registra tu cuenta para comenzar a usar la plataforma de analitica agricola.
+            } @else {
+            Inicia sesion para continuar con tus analisis y reportes de cultivos.
+            }
+            </p>
+          </div>
+
+          <!-- Espacio para respirar (deja el elote visible abajo) -->
+          <div class="flex-1"></div>
+        </div>
+
+        <div class="p-6 sm:p-10">
+          <div class="mx-auto w-full max-w-md">
+            <div class="mb-6">
+              <h2 class="text-3xl font-bold text-gray-900">
+                @if (isRegisterMode()) {
+                Registro
+                } @else {
+                Login
+                }
+              </h2>
+              <p class="mt-2 text-sm text-gray-600">
+                @if (isRegisterMode()) {
+                Completa los datos para crear tu cuenta.
+                } @else {
+                Accede con tu correo y contrasena.
+                }
+              </p>
+            </div>
+
+            <div class="mb-6 flex rounded-lg border border-gray-200 bg-gray-100 p-1">
+              <button type="button" class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                [class.bg-white]="mode() === 'login'" [class.text-gray-900]="mode() === 'login'"
+                [class.shadow-sm]="mode() === 'login'" [class.text-gray-500]="mode() !== 'login'"
+                (click)="onSwitchMode('login')">
+                Login
+              </button>
+              <button type="button" class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                [class.bg-white]="mode() === 'register'" [class.text-gray-900]="mode() === 'register'"
+                [class.shadow-sm]="mode() === 'register'" [class.text-gray-500]="mode() !== 'register'"
+                (click)="onSwitchMode('register')">
+                Registro
+              </button>
+            </div>
+
+            <form [formGroup]="authForm" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+              @if (isRegisterMode()) {
+              <div>
+                <label for="name" class="mb-1 block text-sm font-medium text-gray-700">Nombre completo</label>
+                <input id="name" type="text" formControlName="name" autocomplete="name"
+                  class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 outline-none transition"
+                  [class.border-red-500]="isControlInvalid('name')" [class.border-gray-300]="!isControlInvalid('name')"
+                  [class.focus:border-blue-600]="!isControlInvalid('name')"
+                  [class.focus:ring-2]="!isControlInvalid('name')"
+                  [class.focus:ring-blue-100]="!isControlInvalid('name')"
+                  [class.focus:border-red-500]="isControlInvalid('name')"
+                  [class.focus:ring-red-100]="isControlInvalid('name')" placeholder="Ingresa tu nombre" />
+                @if (isControlInvalid('name')) {
+                <p class="mt-1 text-xs text-red-600">Escribe un nombre valido (minimo 2 caracteres).</p>
+                }
+              </div>
+              }
+
+              <div>
+                <label for="email" class="mb-1 block text-sm font-medium text-gray-700">Correo electronico</label>
+                <input id="email" type="email" formControlName="email" autocomplete="email"
+                  class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 outline-none transition"
+                  [class.border-red-500]="isControlInvalid('email')"
+                  [class.border-gray-300]="!isControlInvalid('email')"
+                  [class.focus:border-blue-600]="!isControlInvalid('email')"
+                  [class.focus:ring-2]="!isControlInvalid('email')"
+                  [class.focus:ring-blue-100]="!isControlInvalid('email')"
+                  [class.focus:border-red-500]="isControlInvalid('email')"
+                  [class.focus:ring-red-100]="isControlInvalid('email')" placeholder="correo@ejemplo.com" />
+                @if (isControlInvalid('email')) {
+                <p class="mt-1 text-xs text-red-600">Ingresa un correo electronico valido.</p>
+                }
+              </div>
+
+              <div>
+                <label for="password" class="mb-1 block text-sm font-medium text-gray-700">Contrasena</label>
+                <input id="password" type="password" formControlName="password" autocomplete="current-password"
+                  class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 outline-none transition"
+                  [class.border-red-500]="isControlInvalid('password')"
+                  [class.border-gray-300]="!isControlInvalid('password')"
+                  [class.focus:border-blue-600]="!isControlInvalid('password')"
+                  [class.focus:ring-2]="!isControlInvalid('password')"
+                  [class.focus:ring-blue-100]="!isControlInvalid('password')"
+                  [class.focus:border-red-500]="isControlInvalid('password')"
+                  [class.focus:ring-red-100]="isControlInvalid('password')" placeholder="Minimo 8 caracteres" />
+                @if (isControlInvalid('password')) {
+                <p class="mt-1 text-xs text-red-600">La contrasena debe tener al menos 8 caracteres.</p>
+                }
+              </div>
+
+              <button type="submit"
+                class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                @if (isRegisterMode()) {
+                Crear cuenta
+                } @else {
+                Iniciar sesion
+                }
+              </button>
+            </form>
+
+            @if (emailVerificationNotice()) {
+            <div class="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+              Registro de diseno completado. Se enviara un correo para verificacion cuando se conecte con el backend.
+            </div>
+            }
+
+            @if (loginNotice()) {
+            <div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+              Login de diseno completado. La autenticacion real se conectara en la siguiente fase.
+            </div>
+            }
+
+            <p class="mt-6 text-center text-sm text-gray-600">
+              @if (isRegisterMode()) {
+              Ya tienes cuenta?
+              <a routerLink="/auth/login" class="font-semibold text-blue-600 hover:text-blue-700">Inicia sesion</a>
+              } @else {
+              No tienes cuenta?
+              <a routerLink="/auth/register" class="font-semibold text-blue-600 hover:text-blue-700">Registrate</a>
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer-1></footer-1>
+</div>

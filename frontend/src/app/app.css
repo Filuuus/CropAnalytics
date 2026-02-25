@@ -1,0 +1,768 @@
+/* =========================================================
+   🌽 CropAnalytics Aesthetic Scene
+   ✅ Light/Dark controlado por Tailwind: .dark
+========================================================= */
+
+/* ============ Base ============ */
+.ca-scene {
+    position: relative;
+    margin: 0;
+    border-radius: 24px;
+    overflow: hidden;
+    isolation: isolate;
+    /* evita mezclas raras de z-index */
+}
+
+/* =========================================================
+   🌤️ LIGHT MODE (default)
+   ✅ Pasto más real + menos neón
+========================================================= */
+.ca-scene {
+    /* cielo */
+    --bg1: #d8f0ff;
+    /* cielo arriba */
+    --bg2: #7bc9ff;
+    /* cielo abajo */
+
+    /* acentos del cielo (muy suave) */
+    --sky1: rgba(37, 99, 235, .14);
+    --sky2: rgba(29, 78, 216, .10);
+    --sky3: rgba(22, 163, 74, .10);
+
+    /* ✅ VERDES NATURALES (día) */
+    --green1: #7fd36a;
+    /* pasto luz (más natural) */
+    --green2: #2e8f4f;
+    /* pasto sombra */
+    --green3: #1f6f3e;
+    /* profundidad */
+
+    /* sombras suelo */
+    --soilShade1: rgba(0, 0, 0, .08);
+    --soilShade2: rgba(0, 0, 0, .14);
+
+    /* elote (día) */
+    --corn1: #ffe7a6;
+    --corn2: #ffd36a;
+    --corn3: #ffb02b;
+
+    /* hojas (día) */
+    --husk1: #93e252;
+    /* verde hoja iluminada */
+    --husk2: #258b2c;
+    /* verde profundo natural */
+
+    /* nubes (día) */
+    --cloud: rgba(255, 255, 255, .34);
+    --cloud-border: rgba(255, 255, 255, .42);
+
+    /* sombras generales */
+    --shadow: rgba(0, 0, 0, .14);
+
+    /* viñeta día (muy leve) */
+    --vignette: rgba(0, 0, 0, .14);
+}
+
+/* =========================================================
+   🌙 DARK MODE (cuando <html class="dark">)
+========================================================= */
+.dark .ca-scene {
+    --bg1: #071827;
+    --bg2: #0b2a3d;
+
+    --sky1: rgba(37, 99, 235, .28);
+    --sky2: rgba(29, 78, 216, .22);
+    --sky3: rgba(22, 163, 74, .18);
+
+    --green1: #1e8f6b;
+    --green2: #0f5f47;
+    --green3: #0a3f31;
+
+    --soilShade1: rgba(0, 0, 0, .18);
+    --soilShade2: rgba(0, 0, 0, .32);
+
+    --corn1: #ffd66b;
+    --corn2: #ffbf2f;
+    --corn3: #f7a61a;
+
+    --husk1: #6dc36b;
+    --husk2: #1f6a3c;
+
+    --cloud: rgba(255, 255, 255, .14);
+    --cloud-border: rgba(255, 255, 255, .16);
+
+    --shadow: rgba(0, 0, 0, .25);
+
+    --vignette: rgba(0, 0, 0, .35);
+}
+
+/* =========================================================
+   BACKGROUNDS (FULL y BOTTOM)
+========================================================= */
+
+/* ===== FULL: ocupa TODO el cuadro ===== */
+.ca-scene.ca-scene--full {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+
+    background:
+        radial-gradient(1100px 520px at 70% 18%, rgba(255, 255, 255, .48), transparent 60%),
+        radial-gradient(900px 480px at 15% 10%, var(--sky1), transparent 65%),
+        radial-gradient(1000px 600px at 85% 0%, var(--sky2), transparent 70%),
+        radial-gradient(1000px 620px at 50% 100%, var(--sky3), transparent 72%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+}
+
+/* ===== BOTTOM (por si reusas) ===== */
+.ca-scene.ca-scene--bottom {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 18px 18px 0 0;
+    position: relative;
+    border: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
+
+    background:
+        radial-gradient(800px 240px at 70% 18%, rgba(255, 255, 255, .18) 0%, transparent 55%),
+        radial-gradient(600px 240px at 20% 10%, var(--sky1) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(0, 0, 0, .06)),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+}
+
+/* viñeta */
+.ca-scene::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120% 90% at 50% 20%, transparent 45%, var(--vignette) 100%);
+    pointer-events: none;
+    z-index: 40;
+}
+
+/* =========================================================
+   CAPAS / Z-INDEX
+========================================================= */
+.ca-sky {
+    position: absolute;
+    inset: 0 0 35% 0;
+    z-index: 12;
+}
+
+.ca-hills {
+    position: absolute;
+    inset: 35% 0 18% 0;
+    z-index: 10;
+}
+
+.ca-field {
+    position: absolute;
+    inset: 82% 0 0 0;
+    z-index: 8;
+}
+
+.ca-walker {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    z-index: 20;
+}
+
+.ca-scene--bottom .ca-walker {
+    bottom: 10px;
+}
+
+/* =========================================================
+   SUN
+========================================================= */
+.ca-sun {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    right: 7%;
+    top: 8%;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 35% 35%,
+            rgba(255, 255, 255, .95) 0%,
+            rgba(255, 246, 196, .95) 22%,
+            rgba(255, 211, 107, .60) 52%,
+            transparent 78%);
+    opacity: .60;
+    filter: blur(.6px);
+    animation: sunPulse 6s ease-in-out infinite;
+    z-index: 13;
+}
+
+.dark .ca-sun {
+    opacity: .48;
+    transform: scale(.95);
+}
+
+@keyframes sunPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* =========================================================
+   CLOUDS
+========================================================= */
+.ca-cloud {
+    position: absolute;
+    width: 200px;
+    height: 64px;
+    background: var(--cloud);
+    border: 1px solid var(--cloud-border);
+    backdrop-filter: blur(10px);
+    border-radius: 999px;
+    filter: drop-shadow(0 12px 20px var(--shadow));
+    z-index: 15;
+}
+
+.ca-cloud::before,
+.ca-cloud::after {
+    content: "";
+    position: absolute;
+    background: var(--cloud);
+    border: 1px solid var(--cloud-border);
+    border-radius: 999px;
+}
+
+.ca-cloud::before {
+    width: 80px;
+    height: 80px;
+    left: 24px;
+    top: -18px;
+}
+
+.ca-cloud::after {
+    width: 96px;
+    height: 96px;
+    right: 18px;
+    top: -30px;
+}
+
+.ca-cloud--1 {
+    left: -30%;
+    top: 18%;
+    animation: drift 22s linear infinite;
+    --s: .95;
+}
+
+.ca-cloud--2 {
+    left: -40%;
+    top: 44%;
+    animation: drift 28s linear infinite;
+    --s: .78;
+    opacity: .92;
+}
+
+.ca-cloud--3 {
+    left: -35%;
+    top: 8%;
+    animation: drift 34s linear infinite;
+    --s: .62;
+    opacity: .80;
+}
+
+@keyframes drift {
+    from {
+        transform: translateX(-40%) scale(var(--s, 1));
+    }
+
+    to {
+        transform: translateX(160%) scale(var(--s, 1));
+    }
+}
+
+/* =========================================================
+   ✅ HILLS (pasto más real en claro)
+========================================================= */
+.ca-hill {
+    position: absolute;
+    left: -10%;
+    width: 130%;
+    height: 120%;
+    border-radius: 999px;
+    filter: blur(.1px);
+}
+
+/* back: más deslavado */
+.ca-hill--back {
+    bottom: -35%;
+    background:
+        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .14), transparent 62%),
+        linear-gradient(180deg, color-mix(in srgb, var(--green1) 70%, white 30%), var(--green2));
+    opacity: .70;
+}
+
+/* mid */
+.ca-hill--mid {
+    bottom: -48%;
+    background:
+        radial-gradient(circle at 55% 35%, rgba(255, 255, 255, .10), transparent 60%),
+        linear-gradient(180deg, var(--green1), var(--green2));
+    opacity: .88;
+    transform: translateX(-2%);
+}
+
+/* front: más profundo + sombra suave */
+.ca-hill--front {
+    bottom: -62%;
+    background:
+        radial-gradient(circle at 60% 10%, rgba(255, 255, 255, .08), transparent 64%),
+        linear-gradient(180deg, var(--green1), var(--green3));
+    opacity: 1;
+    transform: translateX(3%);
+}
+
+/* fallback por si color-mix no está soportado */
+@supports not (color-mix(in srgb, #000 50%, #fff 50%)) {
+    .ca-hill--back {
+        background:
+            radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .14), transparent 62%),
+            linear-gradient(180deg, #a7e18e, var(--green2));
+    }
+}
+
+/* =========================================================
+   ✅ FIELD / ROWS / DUST (pasto menos “neón” en claro)
+========================================================= */
+.ca-field {
+    /* una capa de “pasto” real como base */
+    background:
+        radial-gradient(900px 260px at 50% 0%, rgba(255, 255, 255, .10), transparent 60%),
+        linear-gradient(180deg,
+            color-mix(in srgb, var(--green1) 80%, white 20%),
+            var(--green2) 65%,
+            var(--green3));
+}
+
+/* sombras abajo */
+.ca-field::before {
+    content: "";
+    position: absolute;
+    inset: -40px 0 0 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0), var(--soilShade1) 60%, var(--soilShade2));
+    pointer-events: none;
+    z-index: 9;
+}
+
+/* líneas del campo */
+.ca-rows {
+    position: absolute;
+    inset: -80px -30% -30px -30%;
+    background:
+        repeating-linear-gradient(75deg,
+            rgba(255, 255, 255, .18) 0px,
+            rgba(255, 255, 255, .18) 8px,
+            rgba(0, 0, 0, 0) 8px,
+            rgba(0, 0, 0, 0) 26px);
+    transform: skewY(-6deg);
+    mix-blend-mode: soft-light;
+    /* ✅ natural en claro */
+    opacity: .20;
+}
+
+.dark .ca-rows {
+    mix-blend-mode: screen;
+    opacity: .18;
+}
+
+.ca-rows--1 {
+    animation: rowsMove 2.6s linear infinite;
+}
+
+.ca-rows--2 {
+    opacity: .14;
+    filter: blur(1px);
+    animation: rowsMove 3.4s linear infinite reverse;
+}
+
+@keyframes rowsMove {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 220px 0;
+    }
+}
+
+/* polvito */
+.ca-dust {
+    position: absolute;
+    inset: -120px 0 0 0;
+    background:
+        radial-gradient(circle at 20% 60%, rgba(255, 255, 255, .10), transparent 38%),
+        radial-gradient(circle at 38% 70%, rgba(255, 255, 255, .08), transparent 40%),
+        radial-gradient(circle at 70% 66%, rgba(255, 255, 255, .09), transparent 42%);
+    opacity: .18;
+    animation: dustFloat 5.5s ease-in-out infinite;
+}
+
+.dark .ca-dust {
+    opacity: .22;
+}
+
+@keyframes dustFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+        opacity: .16;
+    }
+
+    50% {
+        transform: translateY(-10px);
+        opacity: .24;
+    }
+}
+
+/* =========================================================
+   ELOTE WALKER (igual, nomás armonizado con sombras)
+========================================================= */
+.elote {
+    position: relative;
+    width: clamp(160px, 22vw, 210px);
+    height: clamp(210px, 28vw, 270px);
+    animation: bob 1s ease-in-out infinite;
+    transform-origin: 50% 100%;
+}
+
+.ca-scene--full .elote {
+    transform: scale(1.06);
+}
+
+@keyframes bob {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.elote__shadow {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    width: 118px;
+    height: 26px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, var(--shadow), transparent 70%);
+    filter: blur(2px);
+    animation: shadow 1s ease-in-out infinite;
+}
+
+@keyframes shadow {
+
+    0%,
+    100% {
+        transform: translateX(-50%) scale(1);
+        opacity: .45;
+    }
+
+    50% {
+        transform: translateX(-50%) scale(.88);
+        opacity: .32;
+    }
+}
+
+.elote__body {
+    position: absolute;
+    inset: 12px 18px 0 18px;
+}
+
+.elote__cob {
+    position: absolute;
+    left: 50%;
+    top: 18px;
+    transform: translateX(-50%);
+    width: 96px;
+    height: 150px;
+    border-radius: 55px;
+    background: linear-gradient(180deg, var(--corn1), var(--corn2) 55%, var(--corn3));
+    box-shadow: 0 10px 24px var(--shadow);
+    border: 1px solid rgba(255, 255, 255, .12);
+    overflow: hidden;
+}
+
+.kernels {
+    position: absolute;
+    inset: 10px 10px 14px 10px;
+    background:
+        radial-gradient(circle at 8px 8px, rgba(255, 255, 255, .22) 0 3px, transparent 4px) 0 0 / 16px 18px,
+        radial-gradient(circle at 8px 8px, rgba(0, 0, 0, .10) 0 4px, transparent 5px) 2px 4px / 16px 18px;
+    opacity: .60;
+    filter: blur(.2px);
+}
+
+.shine {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 36px;
+    height: 120px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0));
+    border-radius: 999px;
+    transform: rotate(8deg);
+    opacity: .26;
+}
+
+.elote__husks {
+    position: absolute;
+    left: 50%;
+    top: 50px;
+    width: 140px;
+    height: 150px;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.husk {
+    position: absolute;
+    width: 74px;
+    height: 150px;
+    background:
+        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .25), transparent 60%),
+        linear-gradient(180deg, var(--husk1), var(--husk2));
+    border-radius: 80px;
+    filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .18));
+    opacity: .96;
+}
+
+.husk--l {
+    left: 0;
+    transform: rotate(-16deg);
+    clip-path: polygon(0 0, 100% 0, 75% 100%, 0 85%);
+    animation: huskWave 1.2s ease-in-out infinite;
+    --r: -16deg;
+}
+
+.husk--r {
+    right: 0;
+    transform: rotate(16deg);
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 25% 100%);
+    animation: huskWave 1.2s ease-in-out infinite reverse;
+    --r: 16deg;
+}
+
+@keyframes huskWave {
+
+    0%,
+    100% {
+        transform: rotate(var(--r)) translateY(0);
+    }
+
+    50% {
+        transform: rotate(calc(var(--r) + 2deg)) translateY(-2px);
+    }
+}
+
+.face {
+    position: absolute;
+    left: 50%;
+    top: 70px;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 56px;
+}
+
+.eye {
+    position: absolute;
+    top: 10px;
+    width: 10px;
+    height: 14px;
+    background: rgba(11, 16, 32, .75);
+    border-radius: 999px;
+    box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .12);
+    animation: blink 4.2s infinite;
+}
+
+.eye--l {
+    left: 14px;
+}
+
+.eye--r {
+    right: 14px;
+    animation-delay: .12s;
+}
+
+@keyframes blink {
+
+    0%,
+    92%,
+    100% {
+        transform: scaleY(1);
+    }
+
+    94% {
+        transform: scaleY(.08);
+    }
+
+    96% {
+        transform: scaleY(1);
+    }
+}
+
+.mouth {
+    position: absolute;
+    left: 50%;
+    top: 30px;
+    width: 18px;
+    height: 10px;
+    transform: translateX(-50%);
+    border: 2px solid rgba(11, 16, 32, .55);
+    border-top: 0;
+    border-radius: 0 0 14px 14px;
+    opacity: .9;
+}
+
+.blush {
+    position: absolute;
+    top: 28px;
+    width: 12px;
+    height: 8px;
+    background: rgba(255, 120, 170, .18);
+    border-radius: 999px;
+    filter: blur(.2px);
+}
+
+.blush--l {
+    left: 4px;
+}
+
+.blush--r {
+    right: 4px;
+}
+
+.arms {
+    position: absolute;
+    left: 50%;
+    top: 88px;
+    width: 170px;
+    height: 70px;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.arm {
+    position: absolute;
+    width: 48px;
+    height: 10px;
+    background: rgba(15, 95, 71, .60);
+    border-radius: 999px;
+    transform-origin: 6px 50%;
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .18));
+}
+
+.arm--l {
+    left: 0;
+    transform: rotate(18deg);
+    animation: armSwing 1s ease-in-out infinite;
+}
+
+.arm--r {
+    right: 0;
+    transform: rotate(-18deg);
+    animation: armSwing 1s ease-in-out infinite reverse;
+}
+
+@keyframes armSwing {
+
+    0%,
+    100% {
+        transform: rotate(18deg) translateY(0);
+    }
+
+    50% {
+        transform: rotate(34deg) translateY(-2px);
+    }
+}
+
+.legs {
+    position: absolute;
+    left: 50%;
+    top: 158px;
+    width: 140px;
+    height: 60px;
+    transform: translateX(-50%);
+}
+
+.leg {
+    position: absolute;
+    bottom: 0;
+    width: 14px;
+    height: 44px;
+    background: rgba(11, 16, 32, .68);
+    border-radius: 999px;
+    transform-origin: 50% 6px;
+    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .18));
+}
+
+.leg--l {
+    left: 44px;
+    animation: walk 0.8s ease-in-out infinite;
+}
+
+.leg--r {
+    right: 44px;
+    animation: walk 0.8s ease-in-out infinite reverse;
+}
+
+.foot {
+    position: absolute;
+    left: 50%;
+    bottom: -2px;
+    width: 24px;
+    height: 10px;
+    transform: translateX(-50%);
+    background: rgba(11, 16, 32, .68);
+    border-radius: 999px;
+}
+
+@keyframes walk {
+    0% {
+        transform: rotate(22deg) translateY(0);
+    }
+
+    50% {
+        transform: rotate(-18deg) translateY(-2px);
+    }
+
+    100% {
+        transform: rotate(22deg) translateY(0);
+    }
+}
+
+/* label opcional */
+.elote__label {
+    position: absolute;
+    left: 50%;
+    top: 2px;
+    transform: translateX(-50%);
+    padding: 6px 10px;
+    font: 600 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    letter-spacing: .2px;
+    color: rgba(247, 251, 255, .92);
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .16);
+    backdrop-filter: blur(8px);
+    border-radius: 999px;
+    box-shadow: 0 10px 24px var(--shadow);
+}

@@ -93,3 +93,5 @@ frontend/.angular/cache
 # ==============================================
 .locofy
 locofy.config.json
+
+backend/venv312

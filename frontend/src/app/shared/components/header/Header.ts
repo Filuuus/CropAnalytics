@@ -24,4 +24,8 @@ export class Header {
   onAnalyticsClick() {
     this.router.navigate(["/analytics"]);
   }
+
+  onLoginClick() {
+    this.router.navigate(["/auth/login"]);
+  }
 }
