@@ -93,3 +93,8 @@ frontend/.angular/cache
 # ==============================================
 .locofy
 locofy.config.json
+
+# Ignorar datos locales y CSVs
+data/*
+!data/README.md
+*.csv
