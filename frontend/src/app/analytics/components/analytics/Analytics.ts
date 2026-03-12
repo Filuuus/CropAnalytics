@@ -244,6 +244,11 @@ export class Analytics implements OnInit {
     this.currentPage.set(1);
   }
 
+  limpiarBusqueda() {
+    this.searchTerm.set('');
+    this.currentPage.set(1);
+  }
+
   getValidLabMetrics(labInfo: any) {
     if (!labInfo) return [];
     const excludedKeys = ['id', 'ciclo', 'metodologia'];
@@ -270,6 +275,10 @@ export class Analytics implements OnInit {
     this.currentPage.set(1);
   }
 
+  limpiarSelecciones() {
+    this.selectedCiclosIds.set(new Set<number>());
+  }
+
   toggleHybridExpansion(name: string) {
     const expanded = new Set(this.expandedHybrids());
     if (expanded.has(name)) {
@@ -278,6 +287,86 @@ export class Analytics implements OnInit {
       expanded.add(name);
     }
     this.expandedHybrids.set(expanded);
+  }
+
+  enfocarEnTabla(hibrido_nombre: string) {
+    const expanded = new Set(this.expandedHybrids());
+    if (!expanded.has(hibrido_nombre)) {
+      expanded.add(hibrido_nombre);
+      this.expandedHybrids.set(expanded);
+    }
+    
+    setTimeout(() => {
+      const element = document.getElementById('row-' + hibrido_nombre);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // highlight briefly
+        element.style.transition = 'background-color 0.5s';
+        element.style.backgroundColor = '#e8f5e9'; // light green
+        setTimeout(() => element.style.backgroundColor = '', 1500);
+      }
+    }, 100);
+  }
+
+  hibridosSeleccionados = computed(() => {
+    const selectedIds = this.selectedCiclosIds();
+    if (selectedIds.size === 0) return [];
+    
+    const hybMap = new Map<string, any>();
+    
+    // Group all globally matched cycles that are specifically selected
+    this.groupedHibridos().forEach(h => {
+      const selectedCyclesOfHybrid = h.ciclos_detalle.filter((c: any) => selectedIds.has(c.id));
+      if (selectedCyclesOfHybrid.length > 0) {
+         hybMap.set(h.hibrido_nombre, { ...h, selected_ciclos: selectedCyclesOfHybrid });
+      }
+    });
+
+    const result: any[] = [];
+    hybMap.forEach((hyb, nombre) => {
+       let msSum = 0, pcSum = 0, fdnSum = 0, cnfSum = 0;
+       let msCount = 0, pcCount = 0, fdnCount = 0, cnfCount = 0;
+
+       hyb.selected_ciclos.forEach((c: any) => {
+         const lab = c.laboratorio_info;
+         if (lab) {
+           if (typeof lab.ms === 'number') { msSum += lab.ms; msCount++; }
+           if (typeof lab.pc === 'number') { pcSum += lab.pc; pcCount++; }
+           if (typeof lab.fdn === 'number') { fdnSum += lab.fdn; fdnCount++; }
+           if (typeof lab.cnf === 'number') { cnfSum += lab.cnf; cnfCount++; }
+         }
+       });
+
+       const promedio = {
+         ms: msCount > 0 ? (msSum / msCount).toFixed(2) : '--',
+         pc: pcCount > 0 ? (pcSum / pcCount).toFixed(2) : '--',
+         fdn: fdnCount > 0 ? (fdnSum / fdnCount).toFixed(2) : '--',
+         cnf: cnfCount > 0 ? (cnfSum / cnfCount).toFixed(2) : '--'
+       };
+       
+       result.push({ ...hyb, promedio });
+    });
+    
+    return result;
+  });
+
+  toggleSeleccion(hibridoInput: any) {
+    const nombre = hibridoInput.hibrido_nombre || hibridoInput.hibrido || hibridoInput;
+    const hibrido = this.groupedHibridos().find((h: any) => h.hibrido_nombre === nombre);
+    if (!hibrido) return;
+
+    const isFullySelected = hibrido.ciclos_detalle.every((c: any) => this.selectedCiclosIds().has(c.id));
+    const current = new Set(this.selectedCiclosIds());
+
+    hibrido.ciclos_detalle.forEach((c: any) => {
+      if (isFullySelected) {
+        current.delete(c.id);
+      } else {
+        current.add(c.id);
+      }
+    });
+    
+    this.selectedCiclosIds.set(current);
   }
 
   toggleRowExpansion(id: number, event: Event) {
