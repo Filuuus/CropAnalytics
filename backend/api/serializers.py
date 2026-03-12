@@ -18,8 +18,15 @@ class TerrenoGeoSerializer(GeoFeatureModelSerializer):
         geo_field = 'ubicacion_geo' # Le dice a DRF cuál es la coordenada
         fields = ['id', 'altitud', 'municipio_info']
 
+class ResultadoLaboratorioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultadoLaboratorio
+        fields = '__all__'
+
 class CicloSerializer(serializers.ModelSerializer):
     hibrido_nombre = serializers.CharField(source='hibrido.nombre', read_only=True)
+    hibrido_marca = serializers.CharField(source='hibrido.marca', read_only=True)
+    laboratorio_info = ResultadoLaboratorioSerializer(source='laboratorio', read_only=True)
     
     class Meta:
         model = Ciclo

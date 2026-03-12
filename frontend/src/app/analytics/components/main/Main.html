@@ -9,58 +9,36 @@
     </p>
   </div>
 
-  <!-- Configuration Panel -->
+  <!-- Selected Comparison Info -->
+  @if (selectedCiclos() && selectedCiclos().length > 0) {
   <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <div class="flex items-center gap-2 mb-6">
+    <div class="flex items-center gap-2 mb-4">
       <img src="assets/images/SVG5.svg" class="w-5 h-5" alt="Setup" />
-      <h3 class="text-lg font-bold text-gray-800">Plot Comparison Setup</h3>
+      <h3 class="text-lg font-bold text-gray-800">Active Comparison</h3>
     </div>
-
-    <div class="flex flex-col lg:flex-row gap-6 items-end">
-      <!-- Plot A Selection -->
-      <div class="flex-1 w-full">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Plot A</label>
-        <div class="relative">
-          <select
-            class="w-full appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>North Field A (Maize-XG2)</option>
-          </select>
-          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Plot B Selection -->
-      <div class="flex-1 w-full">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Plot B</label>
-        <div class="relative">
-          <select
-            class="w-full appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>South Field C (Wheat-Premium)</option>
-          </select>
-          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Update Button -->
-      <button
-        class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition-colors duration-200 cursor-pointer h-[38px] whitespace-nowrap">
-        Update Comparison
-      </button>
-    </div>
-
-    <!-- Active Comparison Info -->
-    <div class="mt-4 bg-gray-50 rounded p-3 text-sm text-gray-600">
-      <span class="font-bold">Comparing:</span> JAL-113A vs. JAL-205C
+    <div class="bg-gray-50 rounded p-4 text-sm text-gray-700">
+      <div class="font-bold mb-2 text-gray-900 border-b border-gray-200 pb-2">Híbridos Seleccionados ({{
+        selectedCiclos().length }}):</div>
+      <ul class="list-disc list-inside space-y-1 mt-2">
+        @for (ciclo of selectedCiclos(); track ciclo.id) {
+        <li><span class="font-semibold text-blue-700">ID: {{ ciclo.id }}</span> - {{ ciclo.hibrido_nombre }} ({{
+          ciclo.year }})</li>
+        }
+      </ul>
     </div>
   </section>
+  } @else {
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center gap-2 text-gray-500">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span class="text-sm">Selecciona uno o más ciclos en la tabla inferior para habilitar las métricas de
+        comparación.</span>
+    </div>
+  </section>
+  }
 
   <!-- Charts & KPIs Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -97,114 +75,5 @@
     </section>
   </div>
 
-  <!-- Raw Data Table -->
-  <section class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-      <h3 class="text-lg font-bold text-gray-800">Raw Comparison Data</h3>
-      <button
-        class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50 cursor-pointer">
-        <img src="assets/images/SVG-margin2.svg" class="w-4 h-4" />
-        Export Data
-      </button>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm text-gray-600">
-        <thead class="bg-gray-50 text-gray-900 font-medium">
-          <tr>
-            <th class="px-6 py-4">Date</th>
-            <th class="px-6 py-4">Plot A Growth (cm)</th>
-            <th class="px-6 py-4">Plot C Growth (cm)</th>
-            <th class="px-6 py-4">Difference</th>
-            <th class="px-6 py-4">Status</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-          <!-- Row 1 -->
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">2025-10-01</td>
-            <td class="px-6 py-4">12.5</td>
-            <td class="px-6 py-4">11.8</td>
-            <td class="px-6 py-4 text-green-600 font-medium">+0.7</td>
-            <td class="px-6 py-4">
-              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                A Leading
-              </span>
-            </td>
-          </tr>
-          <!-- Row 2 -->
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">2025-10-03</td>
-            <td class="px-6 py-4">13.2</td>
-            <td class="px-6 py-4">12.4</td>
-            <td class="px-6 py-4 text-green-600 font-medium">+0.8</td>
-            <td class="px-6 py-4">
-              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                A Leading
-              </span>
-            </td>
-          </tr>
-          <!-- Row 3 -->
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">2025-10-05</td>
-            <td class="px-6 py-4">14.1</td>
-            <td class="px-6 py-4">13.0</td>
-            <td class="px-6 py-4 text-green-600 font-medium">+1.1</td>
-            <td class="px-6 py-4">
-              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                A Leading
-              </span>
-            </td>
-          </tr>
-          <!-- Row 4 -->
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">2025-10-07</td>
-            <td class="px-6 py-4">15.0</td>
-            <td class="px-6 py-4">13.8</td>
-            <td class="px-6 py-4 text-green-600 font-medium">+1.2</td>
-            <td class="px-6 py-4">
-              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                A Leading
-              </span>
-            </td>
-          </tr>
-          <!-- Row 5 -->
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">2025-10-09</td>
-            <td class="px-6 py-4">15.8</td>
-            <td class="px-6 py-4">14.5</td>
-            <td class="px-6 py-4 text-green-600 font-medium">+1.3</td>
-            <td class="px-6 py-4">
-              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                A Leading
-              </span>
-            </td>
-          </tr>
-          <!-- Row 6 -->
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">2025-10-11</td>
-            <td class="px-6 py-4">16.7</td>
-            <td class="px-6 py-4">15.2</td>
-            <td class="px-6 py-4 text-green-600 font-medium">+1.5</td>
-            <td class="px-6 py-4">
-              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                A Leading
-              </span>
-            </td>
-          </tr>
-          <!-- Row 7 -->
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">2025-10-12</td>
-            <td class="px-6 py-4">17.2</td>
-            <td class="px-6 py-4">15.8</td>
-            <td class="px-6 py-4 text-green-600 font-medium">+1.4</td>
-            <td class="px-6 py-4">
-              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                A Leading
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+
 </div>
