@@ -1,7 +1,10 @@
 import { Component, signal, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { ChartConfiguration, ChartData, ChartType, Chart } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(annotationPlugin);
 
 @Component({
   selector: 'main-1',
@@ -26,61 +29,102 @@ export class Main {
     { key: 'cnf', label: 'Carbohidratos (CNF)', unit: '%' }
   ];
 
-  public scatterChartOptions: ChartConfiguration['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: 'Rendimiento Seco (ms %)',
-          color: '#4B5563',
-          font: { weight: 'bold' },
+  showHeatmap = signal<boolean>(false);
+
+  toggleHeatmap() {
+    this.showHeatmap.update(v => !v);
+  }
+
+  public scatterChartOptions = computed<ChartConfiguration['options']>(() => {
+    const show = this.showHeatmap();
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Rendimiento Seco (ms %)',
+            color: '#4B5563',
+            font: { weight: 'bold' },
+          },
+          grid: { color: '#E5E7EB' },
+          ticks: { color: '#6B7280' },
         },
-        grid: { color: '#E5E7EB' },
-        ticks: { color: '#6B7280' },
-      },
-      y: {
-        title: {
-          display: true,
-          text: 'Proteína Cruda (pc %)',
-          color: '#4B5563',
-          font: { weight: 'bold' },
+        y: {
+          title: {
+            display: true,
+            text: 'Proteína Cruda (pc %)',
+            color: '#4B5563',
+            font: { weight: 'bold' },
+          },
+          grid: { color: '#E5E7EB' },
+          ticks: { color: '#6B7280' },
         },
-        grid: { color: '#E5E7EB' },
-        ticks: { color: '#6B7280' },
       },
-    },
-    plugins: {
-      legend: {
-        display: false, // Using custom title/header instead
-      },
-      tooltip: {
-        callbacks: {
-          label: (context) => {
-            const index = context.dataIndex;
-            const dataPoint = context.dataset.data[index] as any;
-            return `Híbrido: ${dataPoint.hibrido} | MS: ${dataPoint.x}% | PC: ${dataPoint.y}%`;
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const index = context.dataIndex;
+              const dataPoint = context.dataset.data[index] as any;
+              return `Híbrido: ${dataPoint.hibrido} | MS: ${dataPoint.x}% | PC: ${dataPoint.y}%`;
+            },
           },
         },
+        annotation: show ? {
+          annotations: {
+            box1: {
+              type: 'box',
+              xMin: 40,
+              yMin: 6.5,
+              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              borderWidth: 0,
+            },
+            box2: {
+              type: 'box',
+              xMax: 40,
+              yMax: 6.5,
+              backgroundColor: 'rgba(244, 67, 54, 0.1)',
+              borderWidth: 0,
+            },
+            box3: {
+              type: 'box',
+              xMin: 40,
+              yMax: 6.5,
+              backgroundColor: 'rgba(255, 193, 7, 0.1)',
+              borderWidth: 0,
+            },
+            box4: {
+              type: 'box',
+              xMax: 40,
+              yMin: 6.5,
+              backgroundColor: 'rgba(255, 152, 0, 0.1)',
+              borderWidth: 0,
+            }
+          }
+        } : undefined
       },
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'xy',
-      intersect: false,
-    },
-    onClick: (e, elements, chart) => {
-      if (elements && elements.length > 0) {
-        const index = elements[0].index;
-        const datasetIndex = elements[0].datasetIndex;
-        const dataPoint = chart.data.datasets[datasetIndex].data[index] as any;
-        if (dataPoint && dataPoint.hibrido) {
-          this.hybridToggled.emit(dataPoint.hibrido);
+      interaction: {
+        mode: 'nearest',
+        axis: 'xy',
+        intersect: false,
+      },
+      onClick: (e, elements, chart) => {
+        if (elements && elements.length > 0) {
+          const index = elements[0].index;
+          const datasetIndex = elements[0].datasetIndex;
+          const dataPoint = chart.data.datasets[datasetIndex].data[index] as any;
+          if (dataPoint && dataPoint.hibrido) {
+            this.hybridToggled.emit(dataPoint.hibrido);
+          }
         }
-      }
-    },
-  };
+      },
+    };
+  });
 
   public scatterChartType: ChartType = 'scatter';
 

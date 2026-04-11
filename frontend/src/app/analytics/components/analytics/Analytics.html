@@ -27,86 +27,146 @@
             <!-- Filter by Terreno -->
             <div class="relative flex items-center gap-2">
               <label class="text-gray-500 font-medium">Ubicación:</label>
-              <select
-                (change)="onLocationFilterChange($event)"
-                class="bg-white text-sm text-gray-700 rounded border border-gray-300 px-3 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[200px] transition-colors appearance-none"
-              >
-                <option value="">Todas</option>
-                @for (op of estadoMunicipioOptions(); track op.label) {
-                  <option [value]="op.label">{{ op.label }}</option>
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown('location')"
+                  class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[200px] text-left transition-colors truncate"
+                >
+                  {{ selectedLocation().length === 0 ? 'Todas' : selectedLocation().length + ' seleccionada(s)' }}
+                </button>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                @if (locationDropdownOpen()) {
+                  <div class="absolute z-10 mt-1 w-[200px] bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                    <div class="p-2 flex flex-col gap-1">
+                      @for (op of estadoMunicipioOptions(); track op.label) {
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                          <input 
+                            type="checkbox" 
+                            class="text-[#2E7D32] rounded border-gray-300 focus:ring-[#2E7D32]"
+                            [checked]="isLocSelected(op.label)"
+                            (change)="toggleLocationSelection(op)"
+                          >
+                          <span class="truncate">{{ op.label }}</span>
+                        </label>
+                      }
+                    </div>
+                  </div>
                 }
-              </select>
-              <svg
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              </div>
             </div>
 
             <!-- Filter by Year -->
             <div class="relative flex items-center gap-2">
               <label class="text-gray-500 font-medium">Año:</label>
-              <select
-                (change)="onYearFilterChange($event)"
-                class="bg-white text-sm text-gray-700 rounded border border-gray-300 px-3 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[120px] transition-colors appearance-none"
-              >
-                <option value="">Todos</option>
-                @for (year of aniosDisponibles(); track year) {
-                  <option [value]="year">{{ year }}</option>
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown('year')"
+                  class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[140px] text-left transition-colors truncate"
+                >
+                  {{ selectedYear().length === 0 ? 'Todos' : selectedYear().length + ' seleccionado(s)' }}
+                </button>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                @if (yearDropdownOpen()) {
+                  <div class="absolute z-10 mt-1 w-[140px] bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                    <div class="p-2 flex flex-col gap-1">
+                      @for (year of aniosDisponibles(); track year) {
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                          <input 
+                            type="checkbox" 
+                            class="text-[#2E7D32] rounded border-gray-300 focus:ring-[#2E7D32]"
+                            [checked]="isYearSelected(year)"
+                            (change)="toggleYearSelection(year)"
+                          >
+                          {{ year }}
+                        </label>
+                      }
+                    </div>
+                  </div>
                 }
-              </select>
-              <svg
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              </div>
             </div>
 
             <!-- Filter by Brand -->
             <div class="relative flex items-center gap-2">
               <label class="text-gray-500 font-medium">Marca:</label>
-              <select
-                (change)="onMarcaFilterChange($event)"
-                class="bg-white text-sm text-gray-700 rounded border border-gray-300 px-3 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[140px] transition-colors appearance-none"
-              >
-                <option value="">Todas</option>
-                @for (marca of marcasDisponibles; track marca) {
-                  <option [value]="marca">{{ marca }}</option>
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown('marca')"
+                  class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[160px] text-left transition-colors truncate"
+                >
+                  {{ selectedMarca().length === 0 ? 'Todas' : selectedMarca().length + ' seleccionada(s)' }}
+                </button>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                @if (marcaDropdownOpen()) {
+                  <div class="absolute z-10 mt-1 w-[160px] bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                    <div class="p-2 flex flex-col gap-1">
+                      @for (marca of marcasDisponibles; track marca) {
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                          <input 
+                            type="checkbox" 
+                            class="text-[#2E7D32] rounded border-gray-300 focus:ring-[#2E7D32]"
+                            [checked]="isMarcaSelected(marca)"
+                            (change)="toggleMarcaSelection(marca)"
+                          >
+                          <span class="truncate">{{ marca }}</span>
+                        </label>
+                      }
+                    </div>
+                  </div>
                 }
-              </select>
-              <svg
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              </div>
             </div>
+
+            <!-- Filter by Condición -->
+            <div class="relative flex items-center gap-2">
+              <label class="text-gray-500 font-medium">Condición:</label>
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown('condicion')"
+                  class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[160px] text-left transition-colors truncate"
+                >
+                  {{ selectedCondicion().length === 0 ? 'Todas' : selectedCondicion().length + ' seleccionada(s)' }}
+                </button>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                @if (condicionDropdownOpen()) {
+                  <div class="absolute z-10 mt-1 right-0 w-[180px] bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                    <div class="p-2 flex flex-col gap-1">
+                      @for (cond of condicionesDisponibles; track cond) {
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                          <input 
+                            type="checkbox" 
+                            class="text-[#2E7D32] rounded border-gray-300 focus:ring-[#2E7D32]"
+                            [checked]="isCondicionSelected(cond)"
+                            (change)="toggleCondicionSelection(cond)"
+                          >
+                          <span class="truncate">{{ cond }}</span>
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <button
+              (click)="limpiarFiltros()"
+              class="text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors ml-2 underline decoration-transparent hover:decoration-red-400"
+              title="Restablecer todos los filtros"
+            >
+              Limpiar Filtros
+            </button>
           </div>
           <div class="relative flex items-center gap-3">
             <div class="relative text-gray-500 focus-within:text-gray-700">

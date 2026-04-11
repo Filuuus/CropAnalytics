@@ -71,11 +71,19 @@ export class Analytics implements OnInit {
   });
 
   marcasDisponibles: string[] = [];
+  condicionesDisponibles: string[] = [];
 
-  // State Signals
-  selectedLocation = signal<{ label: string, terrenoIds: number[] } | null>(null);
-  selectedYear = signal<number | null>(null);
-  selectedMarca = signal<string | null>(null);
+  // Dropdown UI States
+  locationDropdownOpen = signal<boolean>(false);
+  yearDropdownOpen = signal<boolean>(false);
+  marcaDropdownOpen = signal<boolean>(false);
+  condicionDropdownOpen = signal<boolean>(false);
+
+  // State Signals (Multi-select)
+  selectedLocation = signal<{ label: string, terrenoIds: number[] }[]>([]);
+  selectedYear = signal<number[]>([]);
+  selectedMarca = signal<string[]>([]);
+  selectedCondicion = signal<string[]>([]);
   searchTerm = signal<string>('');
 
   // Pagination
@@ -95,23 +103,33 @@ export class Analytics implements OnInit {
   filteredCiclos = computed(() => {
     let c = this.ciclos();
     
-    // Filter by Brand
-    const marca = this.selectedMarca();
-    if (marca) {
-      c = c.filter(ciclo => ciclo.hibrido_marca === marca);
-    }
-    
-    // Filter by Location
-    const loc = this.selectedLocation();
-    if (loc) {
-      c = c.filter(ciclo => loc.terrenoIds.includes(ciclo.terreno));
-    }
-    
-    // Filter by Year
-    const year = this.selectedYear();
-    if (year !== null) {
-      c = c.filter(ciclo => ciclo.year === year);
-    }
+    const marcas = this.selectedMarca();
+    const locs = this.selectedLocation();
+    const years = this.selectedYear();
+    const conds = this.selectedCondicion();
+
+    c = c.filter(ciclo => {
+      let match = true;
+      
+      if (marcas.length > 0) {
+        match = match && marcas.includes(ciclo.hibrido_marca);
+      }
+      
+      if (locs.length > 0) {
+        const isLocMatch = locs.some(l => l.terrenoIds.includes(ciclo.terreno));
+        match = match && isLocMatch;
+      }
+      
+      if (years.length > 0) {
+        match = match && years.includes(ciclo.year);
+      }
+
+      if (conds.length > 0) {
+        match = match && conds.includes(ciclo.condicion);
+      }
+      
+      return match;
+    });
 
     // Filter by Search Term
     const term = this.searchTerm().toLowerCase();
@@ -197,44 +215,83 @@ export class Analytics implements OnInit {
         const ciclosArray = data.results ? data.results : (Array.isArray(data) ? data : [data]);
         this.ciclos.set(ciclosArray);
         this.marcasDisponibles = Array.from(new Set(ciclosArray.map((c: any) => c.hibrido_marca).filter((m: any) => m))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
+        this.condicionesDisponibles = Array.from(new Set(ciclosArray.map((c: any) => c.condicion).filter((c: any) => c))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
       },
       error: (error) => console.error('Error al obtener Ciclos:', error)
     });
   }
 
   // Interaction Methods
-  onLocationFilterChange(event: Event) {
-    const selectElement = event.target as HTMLSelectElement;
-    const label = selectElement.value;
+  toggleDropdown(dropdown: 'location' | 'year' | 'marca' | 'condicion') {
+    if (dropdown === 'location') this.locationDropdownOpen.update(v => !v);
+    if (dropdown === 'year') this.yearDropdownOpen.update(v => !v);
+    if (dropdown === 'marca') this.marcaDropdownOpen.update(v => !v);
+    if (dropdown === 'condicion') this.condicionDropdownOpen.update(v => !v);
+  }
 
-    if (!label) {
-      this.selectedLocation.set(null);
+  toggleLocationSelection(option: { label: string, terrenoIds: number[] }) {
+    const current = this.selectedLocation();
+    const exists = current.find(l => l.label === option.label);
+    if (exists) {
+      this.selectedLocation.set(current.filter(l => l.label !== option.label));
     } else {
-      const option = this.estadoMunicipioOptions().find(o => o.label === label);
-      this.selectedLocation.set(option || null);
+      this.selectedLocation.set([...current, option]);
     }
     this.currentPage.set(1);
   }
 
-  onYearFilterChange(event: Event) {
-    const selectElement = event.target as HTMLSelectElement;
-    const val = selectElement.value;
-    if (val) {
-      this.selectedYear.set(Number(val));
+  toggleYearSelection(year: number) {
+    const current = this.selectedYear();
+    if (current.includes(year)) {
+      this.selectedYear.set(current.filter(y => y !== year));
     } else {
-      this.selectedYear.set(null);
+      this.selectedYear.set([...current, year]);
     }
     this.currentPage.set(1);
   }
 
-  onMarcaFilterChange(event: Event) {
-    const selectElement = event.target as HTMLSelectElement;
-    const val = selectElement.value;
-    if (val) {
-      this.selectedMarca.set(val);
+  toggleMarcaSelection(marca: string) {
+    const current = this.selectedMarca();
+    if (current.includes(marca)) {
+      this.selectedMarca.set(current.filter(m => m !== marca));
     } else {
-      this.selectedMarca.set(null);
+      this.selectedMarca.set([...current, marca]);
     }
+    this.currentPage.set(1);
+  }
+
+  toggleCondicionSelection(cond: string) {
+    const current = this.selectedCondicion();
+    if (current.includes(cond)) {
+      this.selectedCondicion.set(current.filter(c => c !== cond));
+    } else {
+      this.selectedCondicion.set([...current, cond]);
+    }
+    this.currentPage.set(1);
+  }
+
+  isLocSelected(label: string): boolean {
+    return this.selectedLocation().some(l => l.label === label);
+  }
+
+  isYearSelected(year: number): boolean {
+    return this.selectedYear().includes(year);
+  }
+
+  isMarcaSelected(marca: string): boolean {
+    return this.selectedMarca().includes(marca);
+  }
+
+  isCondicionSelected(cond: string): boolean {
+    return this.selectedCondicion().includes(cond);
+  }
+
+  limpiarFiltros() {
+    this.selectedLocation.set([]);
+    this.selectedYear.set([]);
+    this.selectedMarca.set([]);
+    this.selectedCondicion.set([]);
+    this.searchTerm.set('');
     this.currentPage.set(1);
   }
 
