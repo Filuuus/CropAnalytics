@@ -1,4 +1,4 @@
-<div class="flex flex-col min-h-screen bg-gray-50">
+<div class="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
   <header-1></header-1>
   <div class="flex-grow flex flex-col p-6 overflow-y-auto">
     <!-- Dashboard Content -->
@@ -17,13 +17,13 @@
 
     <!-- Ciclos List -->
     <section
-      class="bg-white rounded-lg mt-8 overflow-hidden pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.05)] mb-8 border border-gray-200"
+      class="bg-white dark:bg-slate-900 rounded-lg mt-8 overflow-hidden pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.05)] mb-8 border border-gray-200 dark:border-slate-700"
     >
       <div class="p-6">
-        <h3 class="text-xl font-medium text-gray-800 mb-6 tracking-wide">Ciclos Agrícolas Table</h3>
+        <h3 class="text-xl font-medium text-gray-800 dark:text-slate-100 mb-6 tracking-wide">Ciclos Agrícolas Table</h3>
 
         <div class="flex justify-between items-center mb-4">
-          <div class="flex gap-4 text-sm text-gray-600">
+          <div class="flex gap-4 text-sm text-gray-600 dark:text-slate-300">
             <!-- Filter by Terreno -->
             <div class="relative flex items-center gap-2">
               <label class="text-gray-500 font-medium">Ubicación:</label>
@@ -31,7 +31,7 @@
                 <button
                   type="button"
                   (click)="toggleDropdown('location')"
-                  class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[200px] text-left transition-colors truncate"
+                  class="bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-slate-200 rounded border border-gray-300 dark:border-slate-700 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[200px] text-left transition-colors truncate"
                 >
                   {{ selectedLocation().length === 0 ? 'Todas' : selectedLocation().length + ' seleccionada(s)' }}
                 </button>
@@ -39,13 +39,13 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
                 @if (locationDropdownOpen()) {
-                  <div class="absolute z-10 mt-1 w-[200px] bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                  <div class="absolute z-10 mt-1 w-[200px] bg-white dark:bg-slate-800 rounded-md shadow-lg border border-gray-200 dark:border-slate-700 max-h-60 overflow-auto">
                     <div class="p-2 flex flex-col gap-1">
                       @for (op of estadoMunicipioOptions(); track op.label) {
-                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded cursor-pointer text-sm text-gray-700 dark:text-slate-300">
                           <input 
                             type="checkbox" 
-                            class="text-[#2E7D32] rounded border-gray-300 focus:ring-[#2E7D32]"
+                            class="text-[#2E7D32] rounded border-gray-300 dark:border-slate-600 focus:ring-[#2E7D32]"
                             [checked]="isLocSelected(op.label)"
                             (change)="toggleLocationSelection(op)"
                           >
@@ -65,7 +65,7 @@
                 <button
                   type="button"
                   (click)="toggleDropdown('year')"
-                  class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[140px] text-left transition-colors truncate"
+                  class="bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-slate-200 rounded border border-gray-300 dark:border-slate-700 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[140px] text-left transition-colors truncate"
                 >
                   {{ selectedYear().length === 0 ? 'Todos' : selectedYear().length + ' seleccionado(s)' }}
                 </button>
@@ -73,13 +73,13 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
                 @if (yearDropdownOpen()) {
-                  <div class="absolute z-10 mt-1 w-[140px] bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                  <div class="absolute z-10 mt-1 w-[140px] bg-white dark:bg-slate-800 rounded-md shadow-lg border border-gray-200 dark:border-slate-700 max-h-60 overflow-auto">
                     <div class="p-2 flex flex-col gap-1">
                       @for (year of aniosDisponibles(); track year) {
-                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded cursor-pointer text-sm text-gray-700 dark:text-slate-300">
                           <input 
                             type="checkbox" 
-                            class="text-[#2E7D32] rounded border-gray-300 focus:ring-[#2E7D32]"
+                            class="text-[#2E7D32] rounded border-gray-300 dark:border-slate-600 focus:ring-[#2E7D32]"
                             [checked]="isYearSelected(year)"
                             (change)="toggleYearSelection(year)"
                           >
@@ -99,7 +99,7 @@
                 <button
                   type="button"
                   (click)="toggleDropdown('marca')"
-                  class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[160px] text-left transition-colors truncate"
+                  class="bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-slate-200 rounded border border-gray-300 dark:border-slate-700 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[160px] text-left transition-colors truncate"
                 >
                   {{ selectedMarca().length === 0 ? 'Todas' : selectedMarca().length + ' seleccionada(s)' }}
                 </button>
@@ -107,13 +107,13 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
                 @if (marcaDropdownOpen()) {
-                  <div class="absolute z-10 mt-1 w-[160px] bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                  <div class="absolute z-10 mt-1 w-[160px] bg-white dark:bg-slate-800 rounded-md shadow-lg border border-gray-200 dark:border-slate-700 max-h-60 overflow-auto">
                     <div class="p-2 flex flex-col gap-1">
                       @for (marca of marcasDisponibles; track marca) {
-                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded cursor-pointer text-sm text-gray-700 dark:text-slate-300">
                           <input 
                             type="checkbox" 
-                            class="text-[#2E7D32] rounded border-gray-300 focus:ring-[#2E7D32]"
+                            class="text-[#2E7D32] rounded border-gray-300 dark:border-slate-600 focus:ring-[#2E7D32]"
                             [checked]="isMarcaSelected(marca)"
                             (change)="toggleMarcaSelection(marca)"
                           >
@@ -133,7 +133,7 @@
                 <button
                   type="button"
                   (click)="toggleDropdown('condicion')"
-                  class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[160px] text-left transition-colors truncate"
+                  class="bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-slate-200 rounded border border-gray-300 dark:border-slate-700 pl-3 pr-8 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[160px] text-left transition-colors truncate"
                 >
                   {{ selectedCondicion().length === 0 ? 'Todas' : selectedCondicion().length + ' seleccionada(s)' }}
                 </button>
@@ -141,13 +141,13 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
                 @if (condicionDropdownOpen()) {
-                  <div class="absolute z-10 mt-1 right-0 w-[180px] bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                  <div class="absolute z-10 mt-1 right-0 w-[180px] bg-white dark:bg-slate-800 rounded-md shadow-lg border border-gray-200 dark:border-slate-700 max-h-60 overflow-auto">
                     <div class="p-2 flex flex-col gap-1">
                       @for (cond of condicionesDisponibles; track cond) {
-                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded cursor-pointer text-sm text-gray-700 dark:text-slate-300">
                           <input 
                             type="checkbox" 
-                            class="text-[#2E7D32] rounded border-gray-300 focus:ring-[#2E7D32]"
+                            class="text-[#2E7D32] rounded border-gray-300 dark:border-slate-600 focus:ring-[#2E7D32]"
                             [checked]="isCondicionSelected(cond)"
                             (change)="toggleCondicionSelection(cond)"
                           >
@@ -189,7 +189,7 @@
                 (input)="onSearch($event)"
                 [value]="searchTerm()"
                 placeholder="Buscar..."
-                class="bg-white text-sm text-gray-700 rounded border border-gray-300 pl-9 pr-12 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[220px] transition-colors"
+                class="bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-slate-200 rounded border border-gray-300 dark:border-slate-700 pl-9 pr-12 py-2.5 focus:outline-none focus:border-[#2E7D32] focus:ring-1 focus:ring-[#2E7D32] w-[220px] transition-colors placeholder-gray-400 dark:placeholder-slate-500"
               />
             </div>
             @if (searchTerm()) {
@@ -215,7 +215,7 @@
               </button>
             }
             <button
-              class="text-gray-500 hover:text-gray-800 border border-transparent hover:border-gray-300 p-2 rounded transition-colors bg-gray-50 hover:bg-gray-100"
+              class="text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 border border-transparent hover:border-gray-300 dark:hover:border-slate-600 p-2 rounded transition-colors bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700"
               title="Descargar Reporte"
             >
               <svg
@@ -236,9 +236,9 @@
           </div>
         </div>
 
-        <div class="overflow-x-auto rounded border border-gray-200">
-          <table class="w-full text-center text-sm text-gray-600 whitespace-nowrap">
-            <thead class="text-white font-bold text-xs bg-[#2E7D32]">
+        <div class="overflow-x-auto rounded border border-gray-200 dark:border-slate-700">
+          <table class="w-full text-center text-sm text-gray-600 dark:text-slate-300 whitespace-nowrap">
+            <thead class="text-white font-bold text-xs bg-[#2E7D32] dark:bg-[#1b5e20]">
               <tr>
                 <th class="px-4 py-4 w-12 text-center border-b border-[#2E7D32]">
                   <input
@@ -303,15 +303,17 @@
                 <th class="px-6 py-4 border-b border-[#2E7D32] w-20"></th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
+            <tbody class="divide-y divide-gray-200 dark:divide-slate-700 bg-white dark:bg-slate-900">
               @for (hibrido of paginatedHibridos(); track hibrido.hibrido_nombre) {
                 <!-- Hybrid Row (Level 1) -->
                 <tr
                   [id]="'row-' + hibrido.hibrido_nombre"
                   (click)="toggleHybridExpansion(hibrido.hibrido_nombre)"
-                  class="hover:bg-gray-50 transition-colors group cursor-pointer border-gray-200"
-                  [class.bg-green-50/50]="isHybridSelected(hibrido)"
+                  class="hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors group cursor-pointer border-gray-200 dark:border-slate-700"
+                  [class.bg-green-50]="isHybridSelected(hibrido)"
+                  [class.dark:bg-[#1b5e20]/40]="isHybridSelected(hibrido)"
                   [class.bg-gray-50]="isHybridExpanded(hibrido.hibrido_nombre)"
+                  [class.dark:bg-slate-800]="isHybridExpanded(hibrido.hibrido_nombre)"
                 >
                   <td class="px-4 py-4 text-center">
                     <input
@@ -354,11 +356,11 @@
                 <!-- Hybrid Expanded Content (List of Cycles) -->
                 @if (isHybridExpanded(hibrido.hibrido_nombre)) {
                   <tr>
-                    <td colspan="6" class="p-0 bg-gray-50 border-b border-gray-200">
+                    <td colspan="6" class="p-0 bg-gray-50 dark:bg-slate-800/30 border-b border-gray-200 dark:border-slate-700">
                       <div class="border-l-4 border-[#2E7D32] ml-12">
-                        <table class="w-full text-sm text-gray-600">
+                        <table class="w-full text-sm text-gray-600 dark:text-slate-400">
                           <thead
-                            class="bg-gray-100/80 text-[10px] uppercase text-gray-500 font-bold border-b border-gray-200"
+                            class="bg-gray-100/80 dark:bg-slate-800/80 text-[10px] uppercase text-gray-500 dark:text-slate-300 font-bold border-b border-gray-200 dark:border-slate-700"
                           >
                             <tr>
                               <th class="px-4 py-2 w-12"></th>
@@ -373,8 +375,9 @@
                             @for (ciclo of hibrido.ciclos_detalle; track ciclo.id) {
                               <tr
                                 (click)="toggleRowExpansion(ciclo.id, $event)"
-                                class="hover:bg-gray-100/70 transition-colors border-b border-gray-100 cursor-pointer"
+                                class="hover:bg-gray-100/70 dark:hover:bg-slate-700/50 transition-colors border-b border-gray-100 dark:border-slate-700/50 cursor-pointer"
                                 [class.bg-green-50]="isRowSelected(ciclo.id)"
+                                [class.dark:bg-[#1b5e20]/40]="isRowSelected(ciclo.id)"
                               >
                                 <td class="px-4 py-3 text-center">
                                   <input
@@ -400,18 +403,18 @@
                                     ></path>
                                   </svg>
                                 </td>
-                                <td class="px-6 py-3 font-medium text-gray-800">
+                                <td class="px-6 py-3 font-medium text-gray-800 dark:text-slate-200">
                                   {{ ciclo.year }}
                                 </td>
-                                <td class="px-6 py-3 text-gray-500">ID: {{ ciclo.terreno }}</td>
-                                <td class="px-6 py-3 text-center text-[11px] text-gray-500">
+                                <td class="px-6 py-3 text-gray-500 dark:text-slate-400">ID: {{ ciclo.terreno }}</td>
+                                <td class="px-6 py-3 text-center text-[11px] text-gray-500 dark:text-slate-400">
                                   {{ ciclo.fecha_siembra }}
-                                  <span class="mx-1 text-gray-300">/</span>
+                                  <span class="mx-1 text-gray-300 dark:text-slate-600">/</span>
                                   {{ ciclo.fecha_cosecha }}
                                 </td>
                                 <td class="px-6 py-3 text-center">
                                   <span
-                                    class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200"
+                                    class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
                                   >
                                     {{ ciclo.condicion }}
                                   </span>
@@ -420,14 +423,14 @@
 
                               <!-- Cycle Expanded Content (Lab Results) -->
                               @if (isRowExpanded(ciclo.id)) {
-                                <tr class="bg-white">
+                                <tr class="bg-white dark:bg-slate-900 border-none">
                                   <td
                                     colspan="6"
                                     class="px-6 py-6 transition-all duration-300 shadow-inner"
                                   >
                                     <div class="max-w-4xl mx-auto">
                                       <h4
-                                        class="text-xs font-bold text-gray-800 uppercase mb-4 flex items-center gap-2"
+                                        class="text-xs font-bold text-gray-800 dark:text-slate-100 uppercase mb-4 flex items-center gap-2"
                                       >
                                         <svg
                                           class="w-4 h-4 text-[#2E7D32]"
@@ -451,15 +454,15 @@
                                         >
                                           @if (ciclo.laboratorio_info.metodologia) {
                                             <div
-                                              class="bg-gray-50 border border-gray-200 rounded p-2 flex flex-col items-center justify-center hover:border-gray-400 transition-colors shadow-sm h-16"
+                                              class="bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700/80 rounded p-2 flex flex-col items-center justify-center hover:border-gray-400 dark:hover:border-slate-500 transition-colors shadow-sm h-16"
                                             >
                                               <p
-                                                class="text-[0.6rem] text-gray-500 uppercase tracking-widest mb-1 text-center font-medium"
+                                                class="text-[0.6rem] text-gray-500 dark:text-slate-400 uppercase tracking-widest mb-1 text-center font-medium"
                                               >
                                                 Metodología
                                               </p>
                                               <p
-                                                class="text-[10px] font-bold text-gray-800 truncate text-center"
+                                                class="text-[10px] font-bold text-gray-800 dark:text-slate-200 truncate text-center"
                                               >
                                                 {{ ciclo.laboratorio_info.metodologia }}
                                               </p>
@@ -471,16 +474,16 @@
                                             track metric.key
                                           ) {
                                             <div
-                                              class="bg-white border border-gray-200 rounded p-2 flex flex-col items-center justify-center hover:border-[#2E7D32] hover:shadow-md transition-all shadow-sm h-16"
+                                              class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded p-2 flex flex-col items-center justify-center hover:border-[#2E7D32] dark:hover:border-[#4caf50] hover:shadow-md transition-all shadow-sm h-16"
                                             >
                                               <p
-                                                class="text-[0.65rem] text-gray-500 uppercase tracking-tight mb-1 text-center whitespace-normal leading-tight font-medium"
+                                                class="text-[0.65rem] text-gray-500 dark:text-slate-400 uppercase tracking-tight mb-1 text-center whitespace-normal leading-tight font-medium"
                                                 style="word-break: break-word"
                                               >
                                                 {{ metric.label }}
                                               </p>
                                               <p
-                                                class="text-xs font-bold text-[#2E7D32] text-center"
+                                                class="text-xs font-bold text-[#2E7D32] dark:text-[#4caf50] text-center"
                                               >
                                                 {{ metric.value }}{{ metric.unit }}
                                               </p>
@@ -489,21 +492,21 @@
                                         </div>
                                       } @else {
                                         <div
-                                          class="bg-gray-50 border border-dashed border-gray-300 rounded p-6 text-center text-gray-500 text-xs"
+                                          class="bg-gray-50 dark:bg-slate-800/50 border border-dashed border-gray-300 dark:border-slate-600 rounded p-6 text-center text-gray-500 dark:text-slate-400 text-xs"
                                         >
                                           No hay resultados de laboratorio disponibles para este
                                           ciclo.
                                         </div>
                                       }
 
-                                      <div class="mt-4 pt-4 border-t border-gray-100">
+                                      <div class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700/50">
                                         <h5
-                                          class="text-[10px] font-bold text-gray-400 uppercase mb-2"
+                                          class="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase mb-2"
                                         >
                                           Metadata JSON (Depuración)
                                         </h5>
                                         <pre
-                                          class="text-[9px] p-2 bg-gray-50 rounded border border-gray-200 text-gray-500 overflow-x-auto whitespace-pre-wrap"
+                                          class="text-[9px] p-2 bg-gray-50 dark:bg-[#0f172a] rounded border border-gray-200 dark:border-slate-800 text-gray-500 dark:text-slate-400 overflow-x-auto whitespace-pre-wrap"
                                           >{{ ciclo | json }}</pre
                                         >
                                       </div>
@@ -544,13 +547,13 @@
           </table>
 
           <div
-            class="flex items-center justify-end px-4 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-500 gap-6"
+            class="flex items-center justify-end px-4 py-3 bg-gray-50 dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 text-sm text-gray-500 dark:text-slate-400 gap-6"
           >
             <div class="flex items-center gap-2 cursor-default">
-              <span class="text-gray-500">Filas por página:</span>
+              <span class="text-gray-500 dark:text-slate-400">Filas por página:</span>
               <select
                 (change)="pageSize.set(+$any($event.target).value)"
-                class="bg-white text-sm text-gray-700 rounded border border-gray-300 px-2 py-1 focus:outline-none focus:border-[#2E7D32] appearance-none pr-6 relative"
+                class="bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-slate-200 rounded border border-gray-300 dark:border-slate-600 px-2 py-1 focus:outline-none focus:border-[#2E7D32] appearance-none pr-6 relative"
               >
                 <option [value]="5" [selected]="pageSize() === 5">5</option>
                 <option [value]="10" [selected]="pageSize() === 10">10</option>

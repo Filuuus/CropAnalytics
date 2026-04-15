@@ -1,8 +1,8 @@
 <div class="flex flex-col gap-8 w-full">
   <!-- Header -->
   <div>
-    <h1 class="text-3xl font-bold text-gray-900 leading-tight">Comparative Analysis</h1>
-    <p class="text-gray-600 mt-2">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-slate-100 leading-tight">Comparative Analysis</h1>
+    <p class="text-gray-600 dark:text-slate-400 mt-2">
       Compare crop performance across different plots and seed varieties
     </p>
   </div>
@@ -10,11 +10,11 @@
   <!-- Selected Comparison Info -->
   <!-- Selected Comparison Info -->
   @if (selectedCiclos() && selectedCiclos().length > 0) {
-    <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
       <div class="flex items-center justify-between gap-2 mb-4">
         <div class="flex items-center gap-2">
           <img src="assets/images/SVG5.svg" class="w-5 h-5" alt="Setup" />
-          <h3 class="text-lg font-bold text-gray-800">Active Comparison</h3>
+          <h3 class="text-lg font-bold text-gray-800 dark:text-slate-100">Active Comparison</h3>
         </div>
         <button
           (click)="clearSelection.emit()"
@@ -23,15 +23,15 @@
           Limpiar todas las selecciones
         </button>
       </div>
-      <div class="bg-gray-50 rounded p-4 text-sm text-gray-700">
-        <div class="font-bold mb-2 text-gray-900 border-b border-gray-200 pb-2">
+      <div class="bg-gray-50 dark:bg-slate-800 rounded p-4 text-sm text-gray-700 dark:text-slate-300">
+        <div class="font-bold mb-2 text-gray-900 dark:text-slate-100 border-b border-gray-200 dark:border-slate-700 pb-2">
           Híbridos Seleccionados ({{ selectedCiclos().length }}):
         </div>
         <ul class="space-y-2 mt-2">
           @for (ciclo of selectedCiclos(); track ciclo.id) {
-            <li class="flex items-center justify-between bg-white border border-gray-100 rounded px-3 py-2 shadow-sm">
+            <li class="flex items-center justify-between bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-700 rounded px-3 py-2 shadow-sm">
               <span
-                class="text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer underline decoration-blue-600/30 hover:decoration-blue-800 transition-colors"
+                class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer underline decoration-blue-600/30 hover:decoration-blue-800 dark:hover:decoration-blue-400 transition-colors"
                 (click)="navigateHybrid.emit(ciclo.hibrido_nombre)"
                 title="Ver en tabla"
               >
@@ -52,8 +52,8 @@
       </div>
     </section>
   } @else {
-    <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center gap-2 text-gray-500">
+    <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+      <div class="flex items-center gap-2 text-gray-500 dark:text-slate-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
@@ -65,15 +65,15 @@
   <!-- Charts & KPIs Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Growth Chart -->
-    <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col h-full self-start">
+    <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 flex flex-col h-full self-start">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-2">
           <img src="assets/images/SVG7.svg" class="w-5 h-5" alt="Chart" />
-          <h3 class="text-lg font-bold text-gray-800">Dispersión de Híbridos</h3>
+          <h3 class="text-lg font-bold text-gray-800 dark:text-slate-100">Dispersión de Híbridos</h3>
         </div>
         <!-- Heatmap Toggle -->
         <label class="flex items-center gap-2 cursor-pointer">
-          <span class="text-xs text-gray-500 font-medium uppercase tracking-wider">Desempeño</span>
+          <span class="text-xs text-gray-500 dark:text-slate-400 font-medium uppercase tracking-wider">Desempeño</span>
           <div class="relative">
             <input type="checkbox" class="sr-only" [checked]="showHeatmap()" (change)="toggleHeatmap()" />
             <div class="block w-10 h-5 rounded-full transition-colors duration-300" [ngClass]="showHeatmap() ? 'bg-green-500' : 'bg-gray-300'"></div>
@@ -81,30 +81,30 @@
           </div>
         </label>
       </div>
-      <div class="bg-[#fdfdfd] border border-gray-100 rounded-lg p-4 relative w-full h-[400px]">
+      <div class="bg-[#fdfdfd] dark:bg-[#1e293b] border border-gray-100 dark:border-slate-700 rounded-lg p-4 relative w-full h-[400px]">
         <canvas baseChart [data]="scatterChartData()" [options]="scatterChartOptions()" [type]="scatterChartType"></canvas>
       </div>
     </section>
 
     <!-- KPIs -->
-    <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col h-full self-start">
+    <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 flex flex-col h-full self-start">
       <div class="flex items-center gap-2 mb-6">
         <img src="assets/images/SVG6.svg" class="w-5 h-5" alt="KPIs" />
-        <h3 class="text-lg font-bold text-gray-800">Key Performance Indicators</h3>
+        <h3 class="text-lg font-bold text-gray-800 dark:text-slate-100">Key Performance Indicators</h3>
       </div>
       <div class="flex flex-col gap-6">
         @for (kpi of kpiList; track kpi.key) {
-        <div class="flex flex-col border-b border-gray-100 pb-4">
-          <h4 class="text-sm font-semibold text-gray-600 mb-2">{{ kpi.label }}</h4>
+        <div class="flex flex-col border-b border-gray-100 dark:border-slate-700 pb-4">
+          <h4 class="text-sm font-semibold text-gray-600 dark:text-slate-300 mb-2">{{ kpi.label }}</h4>
           
           @if (hibridosSeleccionados().length === 0) {
-            <span class="text-xs text-gray-400 italic">Selecciona puntos en la gráfica o tabla para comparar.</span>
+            <span class="text-xs text-gray-400 dark:text-slate-500 italic">Selecciona puntos en la gráfica o tabla para comparar.</span>
           } @else {
             <div class="grid gap-2">
               @for (sel of hibridosSeleccionados(); track sel.hibrido_nombre) {
-              <div class="flex justify-between items-center bg-gray-50 rounded px-3 py-2 border-l-4 border-[#2E7D32]">
-                <span class="text-sm font-medium text-gray-700">{{ sel.hibrido_nombre }}</span>
-                <span class="text-sm font-bold text-green-700">{{ sel.promedio[kpi.key] || '--' }}{{ kpi.unit }}</span>
+              <div class="flex justify-between items-center bg-gray-50 dark:bg-slate-800/80 rounded px-3 py-2 border-l-4 border-[#2E7D32]">
+                <span class="text-sm font-medium text-gray-700 dark:text-slate-200">{{ sel.hibrido_nombre }}</span>
+                <span class="text-sm font-bold text-green-700 dark:text-green-400">{{ sel.promedio[kpi.key] || '--' }}{{ kpi.unit }}</span>
               </div>
               }
             </div>
