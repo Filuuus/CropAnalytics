@@ -102,7 +102,7 @@ export class Analytics implements OnInit {
   // Computed Properties
   filteredCiclos = computed(() => {
     let c = this.ciclos();
-    
+
     const marcas = this.selectedMarca();
     const locs = this.selectedLocation();
     const years = this.selectedYear();
@@ -110,16 +110,16 @@ export class Analytics implements OnInit {
 
     c = c.filter(ciclo => {
       let match = true;
-      
+
       if (marcas.length > 0) {
         match = match && marcas.includes(ciclo.hibrido_marca);
       }
-      
+
       if (locs.length > 0) {
         const isLocMatch = locs.some(l => l.terrenoIds.includes(ciclo.terreno));
         match = match && isLocMatch;
       }
-      
+
       if (years.length > 0) {
         match = match && years.includes(ciclo.year);
       }
@@ -127,7 +127,7 @@ export class Analytics implements OnInit {
       if (conds.length > 0) {
         match = match && conds.includes(ciclo.condicion);
       }
-      
+
       return match;
     });
 
@@ -173,7 +173,7 @@ export class Analytics implements OnInit {
     result.sort((a: any, b: any) => {
       let valA = a[col];
       let valB = b[col];
-      
+
       if (valA == null) valA = '';
       if (valB == null) valB = '';
 
@@ -352,7 +352,7 @@ export class Analytics implements OnInit {
       expanded.add(hibrido_nombre);
       this.expandedHybrids.set(expanded);
     }
-    
+
     setTimeout(() => {
       const element = document.getElementById('row-' + hibrido_nombre);
       if (element) {
@@ -368,49 +368,59 @@ export class Analytics implements OnInit {
   hibridosSeleccionados = computed(() => {
     const selectedIds = this.selectedCiclosIds();
     if (selectedIds.size === 0) return [];
-    
+
     const hybMap = new Map<string, any>();
-    
+
     // Group all globally matched cycles that are specifically selected
     this.groupedHibridos().forEach(h => {
       const selectedCyclesOfHybrid = h.ciclos_detalle.filter((c: any) => selectedIds.has(c.id));
       if (selectedCyclesOfHybrid.length > 0) {
-         hybMap.set(h.hibrido_nombre, { ...h, selected_ciclos: selectedCyclesOfHybrid });
+        hybMap.set(h.hibrido_nombre, { ...h, selected_ciclos: selectedCyclesOfHybrid });
       }
     });
 
     const result: any[] = [];
     hybMap.forEach((hyb, nombre) => {
-       let msSum = 0, pcSum = 0, fdnSum = 0, cnfSum = 0;
-       let msCount = 0, pcCount = 0, fdnCount = 0, cnfCount = 0;
+      const statsAccumulator: any = {};
+      const metrics = Object.keys(this.labConfig);
 
-       hyb.selected_ciclos.forEach((c: any) => {
-         const lab = c.laboratorio_info;
-         if (lab) {
-           if (typeof lab.ms === 'number') { msSum += lab.ms; msCount++; }
-           if (typeof lab.pc === 'number') { pcSum += lab.pc; pcCount++; }
-           if (typeof lab.fdn === 'number') { fdnSum += lab.fdn; fdnCount++; }
-           if (typeof lab.cnf === 'number') { cnfSum += lab.cnf; cnfCount++; }
-         }
-       });
+      hyb.selected_ciclos.forEach((c: any) => {
+        const lab = c.laboratorio_info;
+        if (lab) {
+          metrics.forEach(m => {
+            if (typeof lab[m] === 'number') {
+              if (!statsAccumulator[m]) statsAccumulator[m] = { sum: 0, count: 0 };
+              statsAccumulator[m].sum += lab[m];
+              statsAccumulator[m].count++;
+            }
+          });
+        }
+      });
 
-       const promedio = {
-         ms: msCount > 0 ? (msSum / msCount).toFixed(2) : '--',
-         pc: pcCount > 0 ? (pcSum / pcCount).toFixed(2) : '--',
-         fdn: fdnCount > 0 ? (fdnSum / fdnCount).toFixed(2) : '--',
-         cnf: cnfCount > 0 ? (cnfSum / cnfCount).toFixed(2) : '--'
-       };
-       
-       result.push({ ...hyb, promedio });
+      const promedio: any = {};
+      metrics.forEach(m => {
+        const s = statsAccumulator[m];
+        promedio[m] = s && s.count > 0 ? (s.sum / s.count).toFixed(2) : '--';
+      });
+
+      result.push({ ...hyb, promedio });
     });
-    
+
+
     return result;
   });
 
   toggleSeleccion(hibridoInput: any) {
+    // Si el input es un número, es una selección granular de un ciclo específico
+    if (typeof hibridoInput === 'number') {
+      this.toggleRowSelection(hibridoInput);
+      return;
+    }
+
     const nombre = hibridoInput.hibrido_nombre || hibridoInput.hibrido || hibridoInput;
     const hibrido = this.groupedHibridos().find((h: any) => h.hibrido_nombre === nombre);
     if (!hibrido) return;
+
 
     const isFullySelected = hibrido.ciclos_detalle.every((c: any) => this.selectedCiclosIds().has(c.id));
     const current = new Set(this.selectedCiclosIds());
@@ -422,7 +432,7 @@ export class Analytics implements OnInit {
         current.add(c.id);
       }
     });
-    
+
     this.selectedCiclosIds.set(current);
   }
 
@@ -455,7 +465,7 @@ export class Analytics implements OnInit {
   toggleHybridSelection(grouped: GroupedHibrido, event: Event) {
     const isChecked = (event.target as HTMLInputElement).checked;
     const currentSelected = new Set(this.selectedCiclosIds());
-    
+
     grouped.ciclos_detalle.forEach(c => {
       if (isChecked) {
         currentSelected.add(c.id);
@@ -463,7 +473,7 @@ export class Analytics implements OnInit {
         currentSelected.delete(c.id);
       }
     });
-    
+
     this.selectedCiclosIds.set(currentSelected);
   }
 
@@ -487,7 +497,7 @@ export class Analytics implements OnInit {
   toggleAllSelection(event: Event) {
     const isChecked = (event.target as HTMLInputElement).checked;
     const currentSelected = new Set(this.selectedCiclosIds());
-    
+
     this.paginatedHibridos().forEach(h => {
       h.ciclos_detalle.forEach(c => {
         if (isChecked) {
@@ -497,7 +507,7 @@ export class Analytics implements OnInit {
         }
       });
     });
-    
+
     this.selectedCiclosIds.set(currentSelected);
   }
 
