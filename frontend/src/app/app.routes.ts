@@ -21,4 +21,17 @@ export const routes: Routes = [
     path: "auth",
     children: AuthRoutes,
   },
+  {
+    path: "captura",
+    children: [
+      {
+        path: "jefe",
+        loadComponent: () => import('./upload/jefe/jefe.component').then(m => m.JefeComponent)
+      },
+      {
+        path: "investigador",
+        loadComponent: () => import('./upload/investigador/investigador.component').then(m => m.InvestigadorComponent)
+      }
+    ]
+  },
 ];

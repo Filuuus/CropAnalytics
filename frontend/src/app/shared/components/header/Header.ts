@@ -14,6 +14,7 @@ import { ThemePreference, ThemeService } from "../../services/theme.service";
 })
 export class Header {
   readonly isThemeMenuOpen = signal(false);
+  readonly isUploadMenuOpen = signal(false);
 
   constructor(
     private router: Router,
@@ -36,6 +37,20 @@ export class Header {
     this.router.navigate(["/auth/login"]);
   }
 
+  onJefeClick() {
+    this.router.navigate(["/captura/jefe"]);
+    this.isUploadMenuOpen.set(false);
+  }
+
+  onInvestigadorClick() {
+    this.router.navigate(["/captura/investigador"]);
+    this.isUploadMenuOpen.set(false);
+  }
+
+  onUploadDataClick() {
+    this.onInvestigadorClick();
+  }
+
   setTheme(preference: ThemePreference): void {
     this.themeService.setPreference(preference);
     this.isThemeMenuOpen.set(false);
@@ -43,10 +58,17 @@ export class Header {
 
   toggleThemeMenu(): void {
     this.isThemeMenuOpen.update((current) => !current);
+    this.isUploadMenuOpen.set(false);
+  }
+
+  toggleUploadMenu(): void {
+    this.isUploadMenuOpen.update((current) => !current);
+    this.isThemeMenuOpen.set(false);
   }
 
   @HostListener("document:click")
   onDocumentClick(): void {
     this.isThemeMenuOpen.set(false);
+    this.isUploadMenuOpen.set(false);
   }
 }
