@@ -8,22 +8,22 @@ from .serializers import TerrenoGeoSerializer, CicloSerializer
 class TerrenoViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Devuelve la lista de terrenos.
-    Gracias al TerrenoGeoSerializer, la salida será automáticamente en formato GeoJSON,
-    perfecto para que tu compañero de frontend lo pinte en OpenLayers o Leaflet.
+    Optimizado con select_related para evitar N+1 queries al cargar municipio y estado.
     """
-    queryset = Terreno.objects.all()
+    queryset = Terreno.objects.select_related('municipio__estado').all()
     serializer_class = TerrenoGeoSerializer
 
 class CicloViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Devuelve los ciclos agrícolas.
-    Incluye un filtro para buscar los ciclos de un terreno específico.
-    Ejemplo: /api/ciclos/?terreno=5
+    Optimizado con select_related para cargar híbrido y laboratorio en una sola consulta.
     """
     serializer_class = CicloSerializer
 
     def get_queryset(self):
-        queryset = Ciclo.objects.all()
+        # Cargamos hibrido y laboratorio de antemano para máxima velocidad
+        queryset = Ciclo.objects.select_related('hibrido', 'laboratorio').all()
+        
         # Permitir filtrar por ID de terreno desde la URL
         terreno_id = self.request.query_params.get('terreno', None)
         if terreno_id is not None:
