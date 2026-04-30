@@ -197,28 +197,31 @@
             <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest px-1">Métrica X</span>
             <select [value]="xAxis()" (change)="xAxis.set($any($event.target).value)"
               class="bg-transparent border-none text-xs font-bold focus:ring-0 block w-full p-1 dark:text-white cursor-pointer">
-              @for (opt of metricOptions; track opt.value) {
+              @for (opt of availableMetricOptions(); track opt.value) {
               <option [value]="opt.value">{{ opt.label }}</option>
               }
             </select>
+
           </div>
           <div class="flex flex-col gap-1 border-x border-gray-200 dark:border-slate-700 px-3">
             <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest px-1">Métrica Y</span>
             <select [value]="yAxis()" (change)="yAxis.set($any($event.target).value)"
               class="bg-transparent border-none text-xs font-bold focus:ring-0 block w-full p-1 dark:text-white cursor-pointer">
-              @for (opt of metricOptions; track opt.value) {
+              @for (opt of availableMetricOptions(); track opt.value) {
               <option [value]="opt.value">{{ opt.label }}</option>
               }
             </select>
+
           </div>
           <div class="flex flex-col gap-1">
             <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest px-1">Métrica Z</span>
             <select [value]="zAxis()" (change)="zAxis.set($any($event.target).value)"
               class="bg-transparent border-none text-xs font-bold focus:ring-0 block w-full p-1 dark:text-white cursor-pointer">
-              @for (opt of metricOptions; track opt.value) {
+              @for (opt of availableMetricOptions(); track opt.value) {
               <option [value]="opt.value">{{ opt.label }}</option>
               }
             </select>
+
           </div>
         </div>
 
@@ -239,14 +242,46 @@
           </div>
           <div class="flex items-center gap-4">
             @if (activeChartType() === 'bar' || activeChartType() === 'line') {
-            <select [value]="barChartMetric()" (change)="barChartMetric.set($any($event.target).value)"
-              class="bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 px-4 py-1.5 focus:ring-2 focus:ring-blue-500 transition-all outline-none">
-              @for (opt of metricOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
+            <div class="relative">
+              <button (click)="metricsDropdownOpen.set(!metricsDropdownOpen())"
+                class="bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 px-4 py-1.5 focus:ring-2 focus:ring-blue-500 transition-all outline-none flex items-center gap-2">
+                <span>Métricas ({{selectedMetrics().length}})</span>
+                <svg class="w-3 h-3 transition-transform" [class.rotate-180]="metricsDropdownOpen()" fill="none"
+                  stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              @if (metricsDropdownOpen()) {
+              <div
+                class="absolute right-0 mt-2 w-56 max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 p-2 fade-in">
+                @for (opt of availableMetricOptions(); track opt.value) {
+                <label
+                  class="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors group">
+                  <input type="checkbox" [checked]="selectedMetrics().includes(opt.value)"
+                    (change)="toggleMetric(opt.value)"
+                    class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                  <span
+                    class="text-xs font-bold text-gray-600 dark:text-slate-300 group-hover:text-blue-600 transition-colors">
+                    {{ opt.label }}
+                  </span>
+                </label>
+                }
+              </div>
               }
-            </select>
+            </div>
             }
+
             <div class="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-xl items-center gap-1">
+              @if (activeChartType() === 'line') {
+              <button (click)="isLineGranular.set(!isLineGranular())"
+                [class]="isLineGranular() ? 'bg-white dark:bg-slate-700 shadow text-blue-600' : 'text-gray-400'"
+                class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5"
+                title="Vista Granular vs Promedio">
+                {{ isLineGranular() ? 'Granular' : 'Promedio' }}
+              </button>
+              <div class="w-px h-4 bg-gray-300 dark:bg-slate-600 mx-1"></div>
+              }
 
               @for (type of ['radar', 'bar', 'line']; track type) {
               <button (click)="activeChartType.set($any(type))"

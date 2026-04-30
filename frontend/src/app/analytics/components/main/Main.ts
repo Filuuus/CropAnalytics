@@ -38,12 +38,16 @@ export class Main {
   viewMode = signal<'productor' | 'investigador'>('productor');
 
   isMicroView = signal<boolean>(false);
+  isLineGranular = signal<boolean>(false);
+
 
   // Signals para el Modo Investigador
   xAxis = signal<string>('ms');
   yAxis = signal<string>('pc');
   zAxis = signal<string>('fdn');
-  barChartMetric = signal<string>('ms');
+  selectedMetrics = signal<string[]>(['ms']);
+  metricsDropdownOpen = signal<boolean>(false);
+
 
   metricOptions = [
     { value: 'ms', label: 'Materia Seca (%)' },
@@ -52,8 +56,23 @@ export class Main {
     { value: 'cnf', label: 'Almidón (CNF) (%)' },
     { value: 'gc', label: 'Grasa (GC) (%)' },
     { value: 'cen', label: 'Cenizas (CEN) (%)' },
-    { value: 'ppc', label: 'PPC (%)' }
+    { value: 'pem', label: 'Peso Específico (PEM) (kg/hl)' },
+    { value: 'pff', label: 'PFF' },
+    { value: 'dff', label: 'DFF (%)' },
+    { value: 'ucaff', label: 'UCAFF' },
+    { value: 'npc', label: 'NPC' },
+    { value: 'ppc', label: 'PPC (%)' },
+    { value: 'rmf', label: 'RMF' },
+    { value: 'rms', label: 'RMS' }
   ];
+
+  availableMetricOptions = computed(() => {
+    const cycles = this.filteredCiclos() || [];
+    return this.metricOptions.filter(opt =>
+      cycles.some(c => c.laboratorio_info?.[opt.value] != null)
+    );
+  });
+
 
 
 
@@ -68,6 +87,14 @@ export class Main {
   private conditionShapes: { [key: string]: string } = {
     'Riego': 'rect', 'Temporal': 'circle', 'Secano': 'triangle'
   };
+
+  private metricColors: { [key: string]: string } = {
+    ms: '#2E7D32', pc: '#1976D2', fdn: '#F57C00', cnf: '#7B1FA2',
+    gc: '#C2185B', cen: '#455A64', pem: '#E64A19', pff: '#00796B',
+    dff: '#689F38', ucaff: '#AFB42B', npc: '#FFA000', ppc: '#5D4037',
+    rmf: '#7E57C2', rms: '#0288D1'
+  };
+
 
   selectedCiclos = input<any[]>([]);
 
@@ -94,6 +121,18 @@ export class Main {
   toggleGranularity() {
     this.isMicroView.update(v => !v);
   }
+
+  toggleMetric(value: string) {
+    const current = this.selectedMetrics();
+    if (current.includes(value)) {
+      if (current.length > 1) {
+        this.selectedMetrics.set(current.filter(m => m !== value));
+      }
+    } else {
+      this.selectedMetrics.set([...current, value]);
+    }
+  }
+
 
 
   public scatterChartOptions = computed<ChartConfiguration['options']>(() => {
@@ -343,44 +382,95 @@ export class Main {
       };
     }
 
-
     if (type === 'line') {
-      const first = seleccionados[0];
-      if (!first) return { labels: [], datasets: [] };
+      if (seleccionados.length === 0) return { labels: [], datasets: [] };
 
-      const history = (this.filteredCiclos() || [])
-        .filter(c => c.hibrido_nombre === first.hibrido_nombre)
-        .sort((a, b) => a.year - b.year);
+      const allCycles = (this.filteredCiclos() || []).filter(c =>
+        seleccionados.some(s => s.hibrido_nombre === c.hibrido_nombre)
+      );
 
-      const metric = this.barChartMetric();
-      const metricLabel = this.metricOptions.find(o => o.value === metric)?.label || metric;
+      const isGranular = this.isLineGranular();
+      let labels: string[] = [];
 
-      return {
-        labels: history.map(c => c.year.toString()),
-        datasets: [{
-          label: `${first.hibrido_nombre} - ${metricLabel}`,
-          data: history.map(c => c.laboratorio_info?.[metric]),
-          borderColor: this.hybridColors[first.hibrido_nombre] || '#1976D2',
-          tension: 0.3,
-          fill: true,
-          backgroundColor: (this.hybridColors[first.hibrido_nombre] || '#1976D2') + '22'
-        }]
-      };
+      if (isGranular) {
+        // Vista Granular: Todos los ciclos ordenados cronológicamente (año) y por ID
+        const sortedAll = [...allCycles].sort((a, b) => (a.year - b.year) || (a.id - b.id));
+        // Generamos etiquetas únicas que incluyan el ID para evitar colisiones
+        labels = sortedAll.map(c => `${c.year}-ID${c.id}`);
+      } else {
+        // Vista Promedio: Solo años únicos
+        const uniqueYears = [...new Set(allCycles.map(c => c.year))].sort((a, b) => a - b);
+        labels = uniqueYears.map(y => y.toString());
+      }
+
+      const metrics = this.selectedMetrics();
+      const datasets: any[] = [];
+
+      seleccionados.forEach(hyb => {
+        const hybCycles = allCycles.filter(c => c.hibrido_nombre === hyb.hibrido_nombre);
+
+        metrics.forEach(m => {
+          const opt = this.metricOptions.find(o => o.value === m);
+          const color = metrics.length > 1 ? (this.metricColors[m] || '#9E9E9E') : (this.hybridColors[hyb.hibrido_nombre] || '#2E7D32');
+
+          let data: (number | null)[] = [];
+
+          if (isGranular) {
+            data = labels.map(label => {
+              const id = parseInt(label.split('-ID')[1]);
+              const match = hybCycles.find(c => c.id === id);
+              return match?.laboratorio_info?.[m] ?? null;
+            });
+          } else {
+            data = labels.map(yearStr => {
+              const year = parseInt(yearStr);
+              const matches = hybCycles.filter(c => c.year === year);
+              if (matches.length === 0) return null;
+              const validValues = matches
+                .map(c => c.laboratorio_info?.[m])
+                .filter(v => v != null && typeof v === 'number');
+              
+              if (validValues.length === 0) return null;
+              return validValues.reduce((a, b) => a + b, 0) / validValues.length;
+            });
+          }
+
+          datasets.push({
+            label: isGranular ? `${opt?.label || m} (${hyb.hibrido_nombre})` : `Prom. ${opt?.label || m} (${hyb.hibrido_nombre})`,
+            data: data,
+            borderColor: color,
+            backgroundColor: color + '22',
+            pointBackgroundColor: color,
+            borderDash: seleccionados.indexOf(hyb) > 0 ? [5, 5] : [],
+            tension: 0.3,
+            fill: false,
+            spanGaps: false,
+            pointRadius: isGranular ? 4 : 6,
+          });
+        });
+      });
+
+      return { labels, datasets };
     }
 
+
+
     if (type === 'bar') {
-      const metric = this.barChartMetric();
-      const metricLabel = this.metricOptions.find(o => o.value === metric)?.label || metric;
+      const metrics = this.selectedMetrics();
 
       return {
         labels: seleccionados.map(s => s.hibrido_nombre),
-        datasets: [{
-          label: metricLabel,
-          data: seleccionados.map(s => s.promedio[metric] || 0),
-          backgroundColor: seleccionados.map(s => this.hybridColors[s.hibrido_nombre] || '#2E7D32')
-        }]
+        datasets: metrics.map(m => {
+          const opt = this.metricOptions.find(o => o.value === m);
+          return {
+            label: opt?.label || m,
+            data: seleccionados.map(s => s.promedio[m] !== '--' ? parseFloat(s.promedio[m]) : null),
+            backgroundColor: this.metricColors[m] || '#9E9E9E'
+          };
+        })
       };
     }
+
 
     return { labels: [], datasets: [] };
   });
