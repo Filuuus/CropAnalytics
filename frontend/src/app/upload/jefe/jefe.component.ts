@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Header } from '../../shared/components/header/Header';
+import { Footer } from '../../shared/components/footer/Footer';
 import { FormConfigService, Config, Field } from '../services/form-config.service';
 
 @Component({
   selector: 'app-jefe',
   standalone: true,
-  imports: [CommonModule, Header],
+  imports: [CommonModule, Header, Footer],
   templateUrl: './jefe.component.html',
   styleUrls: ['../styles_upload.css']
 })

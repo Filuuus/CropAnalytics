@@ -82,17 +82,17 @@ export class Main {
 
   // Paleta de colores para híbridos y formas para condiciones
   private hybridColors: { [key: string]: string } = {
-    'Dekalb': '#2E7D32', 'Pioneer': '#1976D2', 'Nidera': '#F57C00', 'Stine': '#7B1FA2', 'Desconocido': '#9E9E9E'
+    'Dekalb': '#2563EB', 'Pioneer': '#0EA5E9', 'Nidera': '#16A34A', 'Stine': '#7C3AED', 'Desconocido': '#64748B'
   };
   private conditionShapes: { [key: string]: string } = {
     'Riego': 'rect', 'Temporal': 'circle', 'Secano': 'triangle'
   };
 
   private metricColors: { [key: string]: string } = {
-    ms: '#2E7D32', pc: '#1976D2', fdn: '#F57C00', cnf: '#7B1FA2',
-    gc: '#C2185B', cen: '#455A64', pem: '#E64A19', pff: '#00796B',
-    dff: '#689F38', ucaff: '#AFB42B', npc: '#FFA000', ppc: '#5D4037',
-    rmf: '#7E57C2', rms: '#0288D1'
+    ms: '#2563EB', pc: '#0EA5E9', fdn: '#F59E0B', cnf: '#7C3AED',
+    gc: '#DB2777', cen: '#475569', pem: '#EA580C', pff: '#0F766E',
+    dff: '#16A34A', ucaff: '#65A30D', npc: '#D97706', ppc: '#92400E',
+    rmf: '#8B5CF6', rms: '#0284C7'
   };
 
 
@@ -251,7 +251,7 @@ export class Main {
             id: c.id, // ID para selección granular específica
             condicion: c.condicion || 'Temporal'
           });
-          bgColors.push(this.hybridColors[c.hibrido_nombre] || '#2E7D32');
+          bgColors.push(this.hybridColors[c.hibrido_nombre] || '#2563EB');
           pointStyles.push(this.conditionShapes[c.condicion] || 'circle');
           pointRadii.push(6);
         }
@@ -278,7 +278,7 @@ export class Main {
           y: Number((s.pcSum / s.count).toFixed(2)),
           hibrido: name
         });
-        bgColors.push(this.hybridColors[name] || '#2E7D32');
+        bgColors.push(this.hybridColors[name] || '#2563EB');
         pointStyles.push('circle');
         pointRadii.push(8);
       });
@@ -315,7 +315,7 @@ export class Main {
         xData.push(lab[xKey]);
         yData.push(lab[yKey]);
         zData.push(lab[zKey]);
-        colors.push(this.hybridColors[c.hibrido_nombre] || '#2E7D32');
+        colors.push(this.hybridColors[c.hibrido_nombre] || '#2563EB');
         texts.push(`${c.hibrido_nombre} (${c.year})`);
       }
     });
@@ -373,8 +373,8 @@ export class Main {
       const datasets = seleccionados.slice(0, 3).map(sel => ({
         label: sel.hibrido_nombre,
         data: metrics.map(m => sel.promedio[m.key] || 0),
-        borderColor: this.hybridColors[sel.hibrido_nombre] || '#2E7D32',
-        backgroundColor: (this.hybridColors[sel.hibrido_nombre] || '#2E7D32') + '33',
+        borderColor: this.hybridColors[sel.hibrido_nombre] || '#2563EB',
+        backgroundColor: (this.hybridColors[sel.hibrido_nombre] || '#2563EB') + '33',
       }));
       return {
         labels: metrics.map(m => m.label),
@@ -411,7 +411,7 @@ export class Main {
 
         metrics.forEach(m => {
           const opt = this.metricOptions.find(o => o.value === m);
-          const color = metrics.length > 1 ? (this.metricColors[m] || '#9E9E9E') : (this.hybridColors[hyb.hibrido_nombre] || '#2E7D32');
+          const color = metrics.length > 1 ? (this.metricColors[m] || '#64748B') : (this.hybridColors[hyb.hibrido_nombre] || '#2563EB');
 
           let data: (number | null)[] = [];
 
@@ -626,5 +626,4 @@ export class Main {
 
 
 }
-
 

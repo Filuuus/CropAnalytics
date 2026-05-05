@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Header } from '../../shared/components/header/Header';
+import { Footer } from '../../shared/components/footer/Footer';
 import { FormConfigService } from '../services/form-config.service';
 
 @Component({
   selector: 'app-investigador',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, Header],
+  imports: [CommonModule, ReactiveFormsModule, Header, Footer],
   templateUrl: './investigador.component.html',
   styleUrls: ['../styles_upload.css']
 })
