@@ -16,6 +16,8 @@ import { AuthService } from "../../../auth/services/auth.service";
 export class Header {
   readonly isThemeMenuOpen = signal(false);
   readonly isUploadMenuOpen = signal(false);
+  readonly isLogoutDialogOpen = signal(false);
+  readonly logoutDialogState = signal<"idle" | "confirming" | "canceling">("idle");
 
   constructor(
     private router: Router,
@@ -44,7 +46,33 @@ export class Header {
   }
 
   onLogoutClick() {
-    this.authService.logout();
+    this.isThemeMenuOpen.set(false);
+    this.isUploadMenuOpen.set(false);
+    this.logoutDialogState.set("idle");
+    this.isLogoutDialogOpen.set(true);
+  }
+
+  onCancelLogout() {
+    if (this.logoutDialogState() !== "idle") {
+      return;
+    }
+    this.logoutDialogState.set("canceling");
+    window.setTimeout(() => {
+      this.isLogoutDialogOpen.set(false);
+      this.logoutDialogState.set("idle");
+    }, 180);
+  }
+
+  onConfirmLogout() {
+    if (this.logoutDialogState() !== "idle") {
+      return;
+    }
+    this.logoutDialogState.set("confirming");
+    window.setTimeout(() => {
+      this.isLogoutDialogOpen.set(false);
+      this.logoutDialogState.set("idle");
+      this.authService.logout();
+    }, 260);
   }
 
   onJefeClick() {
