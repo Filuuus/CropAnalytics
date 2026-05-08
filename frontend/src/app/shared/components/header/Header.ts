@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
 
 import { ThemePreference, ThemeService } from "../../services/theme.service";
+import { AuthService } from "../../../auth/services/auth.service";
 
 @Component({
   selector: "header-1",
@@ -19,6 +20,7 @@ export class Header {
   constructor(
     private router: Router,
     public themeService: ThemeService,
+    public authService: AuthService,
   ) {}
 
   onHomeClick() {
@@ -35,6 +37,14 @@ export class Header {
 
   onLoginClick() {
     this.router.navigate(["/auth/login"]);
+  }
+
+  onUsersClick() {
+    this.router.navigate(["/users-management"]);
+  }
+
+  onLogoutClick() {
+    this.authService.logout();
   }
 
   onJefeClick() {

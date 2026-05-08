@@ -5,6 +5,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Header } from '../../shared/components/header/Header';
 import { Footer } from '../../shared/components/footer/Footer';
 import { FormConfigService } from '../services/form-config.service';
+import { AuthService } from '../../auth/services/auth.service';
 
 @Component({
   selector: 'app-investigador',
@@ -21,7 +22,8 @@ export class InvestigadorComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private service: FormConfigService,
-    private router: Router
+    private router: Router,
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {

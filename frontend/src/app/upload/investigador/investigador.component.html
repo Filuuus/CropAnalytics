@@ -2,7 +2,9 @@
   <header-1></header-1>
   <div class="role-toggle-bar">
     <span>Modo Captura (Investigador)</span>
+    @if (authService.hasAnyRole(['JEFE', 'SADMIN'])) {
     <button class="btn btn-soft" (click)="switchToJefe()">Cambiar a Jefe</button>
+    }
   </div>
   <div class="app">
   <header>

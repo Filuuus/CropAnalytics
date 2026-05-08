@@ -110,7 +110,7 @@
                 @if (isRegisterMode()) {
                 Completa los datos para crear tu cuenta.
                 } @else {
-                Accede con tu correo y contrasena.
+                Accede con tu correo y contraseña.
                 }
               </p>
             </div>
@@ -162,7 +162,7 @@
               </div>
 
               <div>
-                <label for="password" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Contrasena</label>
+                <label for="password" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Contraseña</label>
                 <input id="password" type="password" formControlName="password" autocomplete="current-password"
                   class="w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                   [ngClass]="isControlInvalid('password')
@@ -170,13 +170,16 @@
                     : 'border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-500/25'"
                   placeholder="Minimo 8 caracteres" />
                 @if (isControlInvalid('password')) {
-                <p class="mt-1 text-xs text-red-600 dark:text-red-300">La contrasena debe tener al menos 8 caracteres.</p>
+                <p class="mt-1 text-xs text-red-600 dark:text-red-300">La contraseña debe tener al menos 8 caracteres.</p>
                 }
               </div>
 
               <button type="submit"
-                class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus-visible:outline-blue-400">
-                @if (isRegisterMode()) {
+                class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus-visible:outline-blue-400"
+                [disabled]="loading()">
+                @if (loading()) {
+                Procesando...
+                } @else if (isRegisterMode()) {
                 Crear cuenta
                 } @else {
                 Iniciar sesion
@@ -184,15 +187,29 @@
               </button>
             </form>
 
-            @if (emailVerificationNotice()) {
+            <div class="my-5 flex items-center gap-3">
+              <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+              <span class="text-xs font-semibold uppercase text-slate-400">o</span>
+              <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+            </div>
+
+            <button type="button"
+              class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+              [disabled]="loading()"
+              (click)="onGoogleClick()">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm font-bold text-blue-600">G</span>
+              Continuar con Google
+            </button>
+
+            @if (successNotice()) {
             <div class="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-200">
-              Registro de diseno completado. Se enviara un correo para verificacion cuando se conecte con el backend.
+              {{ successNotice() }}
             </div>
             }
 
-            @if (loginNotice()) {
-            <div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200">
-              Login de diseno completado. La autenticacion real se conectara en la siguiente fase.
+            @if (errorNotice()) {
+            <div class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+              {{ errorNotice() }}
             </div>
             }
 

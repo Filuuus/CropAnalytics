@@ -3,14 +3,50 @@ from django.db import models
 # Create your models here.
 from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db.models import Q
 
 # --- 1. USUARIOS ---
 class UsuarioCustom(AbstractUser):
+    class Role(models.TextChoices):
+        SADMIN = 'SADMIN', 'SADMIN'
+        JEFE = 'JEFE', 'JEFE'
+        INVESTIGADOR = 'INVESTIGADOR', 'INVESTIGADOR'
+
+    class Provider(models.TextChoices):
+        LOCAL = 'local', 'Local'
+        GOOGLE = 'google', 'Google'
+
+    email = models.EmailField('email address', unique=True)
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.INVESTIGADOR)
+    provider = models.CharField(max_length=20, choices=Provider.choices, default=Provider.LOCAL)
+    avatar = models.URLField(blank=True, null=True)
     es_investigador = models.BooleanField(default=False)
     institucion = models.CharField(max_length=150, blank=True, null=True)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    class Meta:
+        verbose_name = 'user'
+        verbose_name_plural = 'users'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['role'],
+                condition=Q(role='SADMIN'),
+                name='unique_sadmin_user',
+            )
+        ]
+
+    @property
+    def is_sadmin(self):
+        return self.role == self.Role.SADMIN
+
+    @property
+    def is_jefe_or_higher(self):
+        return self.role in {self.Role.SADMIN, self.Role.JEFE}
+
     def __str__(self):
-        return self.username
+        return self.email or self.username
 
 # --- 2. CATÁLOGOS GEOGRÁFICOS ---
 class Estado(models.Model):
