@@ -193,13 +193,7 @@
               <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
             </div>
 
-            <button type="button"
-              class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
-              [disabled]="loading()"
-              (click)="onGoogleClick()">
-              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-sm font-bold text-blue-600">G</span>
-              Continuar con Google
-            </button>
+            <div id="googleBtn" class="w-full overflow-hidden rounded-lg"></div>
 
             @if (successNotice()) {
             <div class="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-200">

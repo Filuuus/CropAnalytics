@@ -104,20 +104,6 @@ export class Auth implements AfterViewInit {
     });
   }
 
-  onGoogleClick(): void {
-    this.errorNotice.set("");
-    if (!environment.googleClientId) {
-      this.errorNotice.set("Configura googleClientId en environment.ts para usar Google Sign-In.");
-      return;
-    }
-
-    if (typeof google === "undefined") {
-      this.errorNotice.set("Google Sign-In no esta disponible. Revisa la conexion o el script de Google.");
-      return;
-    }
-
-    google.accounts.id.prompt();
-  }
 
   ngAfterViewInit(): void {
     if (!environment.googleClientId) {
@@ -132,6 +118,19 @@ export class Auth implements AfterViewInit {
             this.zone.run(() => this.handleGoogleCredential(response.credential));
           },
         });
+
+        // Renderizar el boton oficial de Google
+        google.accounts.id.renderButton(
+          document.getElementById("googleBtn"),
+          {
+            theme: "outline",
+            size: "large",
+            width: 380, // Ajustar al ancho del contenedor
+            text: "continue_with",
+            shape: "rectangular",
+          }
+        );
+
         this.googleReady.set(true);
       })
       .catch(() => {
