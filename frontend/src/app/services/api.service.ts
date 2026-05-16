@@ -18,4 +18,16 @@ export class ApiService {
     getCiclos(): Observable<any> {
         return this.http.get(`${this.baseUrl}/ciclos/`);
     }
+
+    calcularMilk2024(datos: any): Observable<any> {
+        return this.http.post(`${this.baseUrl}/calcular-milk2024/`, datos);
+    }
+
+    calcularProductor(datos: any): Observable<any> {
+        return this.http.post(`${this.baseUrl}/calcular-productor/`, datos);
+    }
+
+    optimizarSemilla(datos: any): Observable<any> {
+        return this.http.post(`${this.baseUrl}/optimizar-semilla/`, datos);
+    }
 }

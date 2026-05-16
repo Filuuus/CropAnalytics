@@ -10,6 +10,8 @@ from .views import (
     RegisterView,
     TerrenoViewSet,
     UserAdminViewSet,
+    CalcularProductorView,
+    OptimizarSemillaView,
 )
 
 # El Router de DRF crea automáticamente las URLs para listar y ver detalles
@@ -25,5 +27,7 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('auth/logout/', LogoutView.as_view(), name='auth-logout'),
     path('auth/me/', MeView.as_view(), name='auth-me'),
+    path('calcular-productor/', CalcularProductorView.as_view(), name='calcular-productor'),
+    path('optimizar-semilla/', OptimizarSemillaView.as_view(), name='optimizar-semilla'),
     path('', include(router.urls)),
 ]

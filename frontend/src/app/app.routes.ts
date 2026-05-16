@@ -60,4 +60,8 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: ["JEFE", "SADMIN"] },
   },
+  {
+    path: "calculator",
+    loadComponent: () => import("./calculator/calculator.component").then(m => m.CalculatorComponent),
+  },
 ];
