@@ -30,45 +30,39 @@
 
     <!-- Selected Comparison Info -->
     @if (selectedCiclos() && selectedCiclos().length > 0) {
-    <section class="ca-card p-4 sm:p-6">
-      <div class="flex items-center justify-between gap-2 mb-4">
+    <section class="ca-card p-4 sm:p-6 rounded-3xl dark:bg-slate-900 dark:border-slate-800">
+      <div class="flex items-center justify-between gap-2 mb-3">
         <div class="flex items-center gap-2">
-          <img src="assets/images/SVG5.svg" class="w-5 h-5" alt="Setup" />
-          <h3 class="text-lg font-bold text-gray-800 dark:text-slate-100">Comparación Activa</h3>
+          <img src="assets/images/SVG5.svg" class="w-4 h-4 animate-pulse" alt="Setup" />
+          <h3 class="text-sm font-bold text-gray-800 dark:text-slate-200">Comparación Activa ({{ selectedCiclos().length }})</h3>
         </div>
         <button (click)="clearSelection.emit()"
-          class="text-xs font-semibold text-red-600 hover:text-red-800 underline decoration-red-600/30 hover:decoration-red-800 transition-colors">
-          Limpiar todas las selecciones
+          class="text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors">
+          Limpiar Todo
         </button>
       </div>
-      <div class="rounded bg-slate-50 p-4 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+      <div class="flex flex-wrap gap-2">
+        @for (ciclo of selectedCiclos(); track ciclo.id) {
         <div
-          class="mb-2 border-b border-slate-200 pb-2 font-bold text-slate-900 dark:border-slate-700 dark:text-slate-100">
-          Híbridos Seleccionados ({{ selectedCiclos().length }}):
+          class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:scale-[1.03] dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+          <span
+            class="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+            (click)="navigateHybrid.emit(ciclo.hibrido_nombre)" title="Ver en tabla">
+            {{ ciclo.hibrido_nombre }} ({{ ciclo.year }})
+          </span>
+          <button (click)="hybridToggled.emit(ciclo.hibrido_nombre)"
+            class="text-slate-400 hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800" title="Quitar de comparación">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <ul class="space-y-2 mt-2">
-          @for (ciclo of selectedCiclos(); track ciclo.id) {
-          <li
-            class="flex items-center justify-between rounded border border-slate-100 bg-white px-3 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <span
-              class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer underline decoration-blue-600/30 hover:decoration-blue-800 dark:hover:decoration-blue-400 transition-colors"
-              (click)="navigateHybrid.emit(ciclo.hibrido_nombre)" title="Ver en tabla">
-              {{ ciclo.hibrido_nombre }} ({{ ciclo.year }})
-            </span>
-            <button (click)="hybridToggled.emit(ciclo.hibrido_nombre)"
-              class="text-gray-400 hover:text-red-500 transition-colors p-1" title="Quitar de comparación">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </li>
-          }
-        </ul>
+        }
       </div>
     </section>
     } @else {
-    <section class="ca-card p-4 sm:p-6">
+    <section class="ca-card p-4 sm:p-6 rounded-3xl dark:bg-slate-900 dark:border-slate-800">
       <div class="flex items-center gap-2 text-gray-500 dark:text-slate-400">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -84,7 +78,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Growth Chart -->
       <section
-        class="ca-card flex h-full flex-col self-start p-4 sm:p-6">
+        class="ca-card flex h-full flex-col self-start p-4 sm:p-6 rounded-3xl dark:bg-slate-900 dark:border-slate-800">
         <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center gap-2">
             <img src="assets/images/SVG7.svg" class="w-5 h-5" alt="Chart" />
@@ -120,43 +114,170 @@
           </div>
         </div>
         <div
-          class="relative h-[320px] w-full rounded-lg border border-slate-100 bg-white p-2 dark:border-slate-700 dark:bg-slate-800 sm:h-[400px] sm:p-4">
+          class="relative h-[320px] w-full rounded-2xl border border-slate-100 bg-white p-2 dark:border-slate-800 dark:bg-slate-950 sm:h-[400px] sm:p-4">
           <canvas baseChart [data]="scatterChartData()" [options]="scatterChartOptions()"
             [type]="scatterChartType"></canvas>
         </div>
       </section>
 
-      <!-- KPIs -->
-      <section
-        class="ca-card flex h-full flex-col self-start p-4 sm:p-6">
-        <div class="flex items-center gap-2 mb-6">
-          <img src="assets/images/SVG6.svg" class="w-5 h-5" alt="KPIs" />
-          <h3 class="text-lg font-bold text-gray-800 dark:text-slate-100">Indicadores Clave (KPIs)</h3>
+      <!-- KPIs: A/B Comparison Engine (Opportunity Cost) -->
+      @if (comparison().mode === 'empty') {
+        <div class="ca-card flex flex-col items-center justify-center p-8 text-center rounded-3xl dark:bg-slate-900 dark:border-slate-800 h-full min-h-[350px] shadow-md border border-slate-100 dark:border-slate-850">
+          <div class="p-4 bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 rounded-full mb-4">
+            <!-- Setup/Info Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-slate-405 dark:text-slate-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+          </div>
+          <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Motor de Comparación A/B</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-xs leading-relaxed">
+            Selecciona al menos 1 híbrido en la tabla inferior para proyectar el costo de oportunidad.
+          </p>
         </div>
-        <div class="flex flex-col gap-6">
-          @for (kpi of kpiList; track kpi.key) {
-          <div class="flex flex-col border-b border-gray-100 dark:border-slate-700 pb-4">
-            <h4 class="text-sm font-semibold text-gray-600 dark:text-slate-300 mb-2">{{ kpi.label }}</h4>
-
-            @if (hibridosSeleccionados().length === 0) {
-            <span class="text-xs text-gray-400 dark:text-slate-500 italic">Selecciona puntos en la gráfica o tabla para
-              comparar.</span>
-            } @else {
-            <div class="grid gap-2">
-              @for (sel of hibridosSeleccionados(); track sel.hibrido_nombre) {
-              <div
-                class="flex items-center justify-between rounded border-l-4 border-blue-500 bg-slate-50 px-3 py-2 dark:bg-slate-800/80">
-                <span class="text-sm font-medium text-gray-700 dark:text-slate-200">{{ sel.hibrido_nombre }}</span>
-                <span class="text-sm font-bold text-blue-600 dark:text-blue-300">{{ sel.promedio[kpi.key] || '--' }}{{
-                  kpi.unit }}</span>
+      } @else {
+        <div class="flex flex-col gap-6 h-full">
+          <!-- Tarjeta 1: Rendimiento MS -->
+          <div class="ca-card flex flex-col p-6 rounded-3xl dark:bg-slate-900 dark:border-slate-800 shadow-md border border-slate-100 dark:border-slate-850 transition-all duration-300 hover:scale-[1.01]">
+            <!-- Fila superior -->
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800/80 pb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.364l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Rendimiento Promedio (MS)</span>
               </div>
-              }
+              <span class="text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700">
+                {{ comparison().mode === 'single' ? 'Individual' : (comparison().mode === 'ab' ? 'Comparativa A/B' : 'Mejor vs Peor') }}
+              </span>
             </div>
+
+            <!-- Fila media -->
+            @if (comparison().mode === 'single') {
+              <div class="flex flex-col items-center justify-center py-4">
+                <span class="text-[10px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider">{{ comparison().hibridoA.hibrido_nombre }}</span>
+                <span class="text-3xl font-black text-slate-850 dark:text-white mt-1">{{ comparison().hibridoA.rmsKg | number:'1.0-0' }} <span class="text-sm font-bold text-slate-500">kg/ha</span></span>
+              </div>
+            } @else {
+              <div class="grid grid-cols-2 gap-4 border-b border-dashed border-slate-200 dark:border-slate-800/80 pb-3.5">
+                <!-- El Ganador (Izquierda) -->
+                <div class="flex flex-col border-r border-slate-150 dark:border-slate-800 pr-2">
+                  <span class="text-[9px] font-bold text-emerald-500 dark:text-emerald-400 truncate uppercase tracking-wider">▲ {{ comparison().hibridoA.hibrido_nombre }}</span>
+                  <span class="text-base font-black text-slate-800 dark:text-white mt-0.5">{{ comparison().hibridoA.rmsKg | number:'1.0-0' }} <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">kg/ha</span></span>
+                </div>
+                <!-- El Perdedor (Derecha) -->
+                <div class="flex flex-col pl-2">
+                  <span class="text-[9px] font-medium text-slate-450 dark:text-slate-500 truncate uppercase tracking-wider">▼ {{ comparison().hibridoB.hibrido_nombre }}</span>
+                  <span class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">{{ comparison().hibridoB.rmsKg | number:'1.0-0' }} <span class="text-[10px] font-normal text-slate-400">kg/ha</span></span>
+                </div>
+              </div>
+              
+              <!-- Fila inferior (El Delta) -->
+              <div class="flex items-center justify-between pt-3">
+                <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Ventaja neta:</span>
+                <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
+                  +{{ comparison().deltaRmsKg | number:'1.0-0' }} kg/ha
+                </span>
+              </div>
             }
           </div>
-          }
+
+          <!-- Tarjeta 2: Potencial Lechero -->
+          <div class="ca-card flex flex-col p-6 rounded-3xl dark:bg-slate-900 dark:border-slate-800 shadow-md border border-slate-100 dark:border-slate-850 transition-all duration-300 hover:scale-[1.01]">
+            <!-- Fila superior -->
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800/80 pb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 rounded-xl">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                </div>
+                <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Potencial Lechero</span>
+              </div>
+              <span class="text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700">
+                {{ comparison().mode === 'single' ? 'Individual' : (comparison().mode === 'ab' ? 'Comparativa A/B' : 'Mejor vs Peor') }}
+              </span>
+            </div>
+
+            <!-- Fila media -->
+            @if (comparison().mode === 'single') {
+              <div class="flex flex-col items-center justify-center py-4">
+                <span class="text-[10px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider">{{ comparison().hibridoA.hibrido_nombre }}</span>
+                <span class="text-3xl font-black text-slate-850 dark:text-white mt-1">{{ comparison().hibridoA.leche | number:'1.0-0' }} <span class="text-sm font-bold text-slate-500">kg Leche/ha</span></span>
+              </div>
+            } @else {
+              <div class="grid grid-cols-2 gap-4 border-b border-dashed border-slate-200 dark:border-slate-800/80 pb-3.5">
+                <!-- El Ganador (Izquierda) -->
+                <div class="flex flex-col border-r border-slate-150 dark:border-slate-800 pr-2">
+                  <span class="text-[9px] font-bold text-emerald-500 dark:text-emerald-400 truncate uppercase tracking-wider">▲ {{ comparison().hibridoA.hibrido_nombre }}</span>
+                  <span class="text-base font-black text-slate-800 dark:text-white mt-0.5">{{ comparison().hibridoA.leche | number:'1.0-0' }} <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">kg/ha</span></span>
+                </div>
+                <!-- El Perdedor (Derecha) -->
+                <div class="flex flex-col pl-2">
+                  <span class="text-[9px] font-medium text-slate-450 dark:text-slate-500 truncate uppercase tracking-wider">▼ {{ comparison().hibridoB.hibrido_nombre }}</span>
+                  <span class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">{{ comparison().hibridoB.leche | number:'1.0-0' }} <span class="text-[10px] font-normal text-slate-400">kg/ha</span></span>
+                </div>
+              </div>
+              
+              <!-- Fila inferior (El Delta) -->
+              <div class="flex items-center justify-between pt-3">
+                <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Ventaja neta:</span>
+                <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
+                  +{{ comparison().deltaLeche | number:'1.0-0' }} kg/ha
+                </span>
+              </div>
+            }
+          </div>
+
+          <!-- Tarjeta 3: Ingreso Bruto Proyectado con Acento Visual Premium -->
+          <div class="ca-card flex flex-col p-6 rounded-3xl bg-emerald-50/15 dark:bg-emerald-950/10 border border-emerald-200/50 dark:border-emerald-900/30 shadow-md transition-all duration-300 hover:scale-[1.01]">
+            <!-- Fila superior -->
+            <div class="flex items-center justify-between mb-4 border-b border-emerald-100/50 dark:border-emerald-900/20 pb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span class="text-[10px] font-black text-emerald-650 dark:text-emerald-400 uppercase tracking-widest">Ingreso Bruto Proyectado</span>
+              </div>
+              <span class="text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                {{ comparison().mode === 'single' ? 'Individual' : (comparison().mode === 'ab' ? 'Comparativa A/B' : 'Mejor vs Peor') }}
+              </span>
+            </div>
+
+            <!-- Fila media -->
+            @if (comparison().mode === 'single') {
+              <div class="flex flex-col items-center justify-center py-4">
+                <span class="text-[10px] font-bold text-slate-450 dark:text-slate-400 uppercase tracking-wider">{{ comparison().hibridoA.hibrido_nombre }}</span>
+                <span class="text-3xl font-black text-emerald-700 dark:text-emerald-350 mt-1">${{ comparison().hibridoA.ingreso | number:'1.0-0' }} <span class="text-sm font-bold text-emerald-600/80 dark:text-emerald-500">MXN/ha</span></span>
+              </div>
+            } @else {
+              <div class="grid grid-cols-2 gap-4 border-b border-dashed border-emerald-100/50 dark:border-emerald-900/20 pb-3.5">
+                <!-- El Ganador (Izquierda) -->
+                <div class="flex flex-col border-r border-emerald-100/30 dark:border-emerald-900/20 pr-2">
+                  <span class="text-[9px] font-bold text-emerald-500 dark:text-emerald-400 truncate uppercase tracking-wider">▲ {{ comparison().hibridoA.hibrido_nombre }}</span>
+                  <span class="text-base font-black text-slate-800 dark:text-white mt-0.5">${{ comparison().hibridoA.ingreso | number:'1.0-0' }} <span class="text-[10px] font-medium text-slate-400">MXN/ha</span></span>
+                </div>
+                <!-- El Perdedor (Derecha) -->
+                <div class="flex flex-col pl-2">
+                  <span class="text-[9px] font-medium text-slate-450 dark:text-slate-500 truncate uppercase tracking-wider">▼ {{ comparison().hibridoB.hibrido_nombre }}</span>
+                  <span class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">${{ comparison().hibridoB.ingreso | number:'1.0-0' }} <span class="text-[10px] font-normal text-slate-400">MXN/ha</span></span>
+                </div>
+              </div>
+              
+              <!-- Fila inferior (El Delta) -->
+              <div class="flex items-center justify-between pt-3">
+                <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Ventaja neta:</span>
+                <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400">
+                  +${{ comparison().deltaIngreso | number:'1.0-0' }} MXN/ha
+                </span>
+              </div>
+            }
+          </div>
         </div>
-      </section>
+      }
     </div>
   </div>
   } @else {
@@ -188,11 +309,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- Main 3D Chart Container -->
       <section
-        class="ca-card relative flex h-[480px] flex-col overflow-hidden p-4 sm:h-[600px]">
+        class="ca-card relative flex h-[480px] flex-col overflow-hidden p-4 sm:h-[600px] rounded-3xl dark:bg-slate-900 dark:border-slate-800">
 
         <!-- Axis Selectors Sub-Header -->
         <div
-          class="mb-4 grid grid-cols-1 gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50 sm:grid-cols-3">
+          class="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40 sm:grid-cols-3">
           <div class="flex flex-col gap-1">
             <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest px-1">Métrica X</span>
             <select [value]="xAxis()" (change)="xAxis.set($any($event.target).value)"
@@ -203,7 +324,7 @@
             </select>
 
           </div>
-          <div class="flex flex-col gap-1 border-x border-gray-200 dark:border-slate-700 px-3">
+          <div class="flex flex-col gap-1 border-x border-gray-200 dark:border-slate-800 px-3">
             <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest px-1">Métrica Y</span>
             <select [value]="yAxis()" (change)="yAxis.set($any($event.target).value)"
               class="bg-transparent border-none text-xs font-bold focus:ring-0 block w-full p-1 dark:text-white cursor-pointer">
@@ -221,11 +342,10 @@
               <option [value]="opt.value">{{ opt.label }}</option>
               }
             </select>
-
-          </div>
         </div>
+      </div>
 
-        <div class="flex-1 relative">
+      <div class="flex-1 relative">
           <plotly-plot [data]="plotlyData()" [layout]="plotlyLayout()" [useResizeHandler]="true"
             [style]="{width: '100%', height: '100%'}"></plotly-plot>
         </div>

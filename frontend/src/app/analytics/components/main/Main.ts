@@ -42,8 +42,8 @@ export class Main {
 
 
   // Signals para el Modo Investigador
-  xAxis = signal<string>('ms');
-  yAxis = signal<string>('pc');
+  xAxis = signal<string>('rms');
+  yAxis = signal<string>('cnf');
   zAxis = signal<string>('fdn');
   selectedMetrics = signal<string[]>(['ms']);
   metricsDropdownOpen = signal<boolean>(false);
@@ -97,20 +97,173 @@ export class Main {
 
 
   selectedCiclos = input<any[]>([]);
-
   filteredCiclos = input<any[]>([]); // Data for the static chart
   hibridosSeleccionados = input<any[]>([]);
+  precioLeche = input<number>(10.50);
 
   hybridToggled = output<any>();
   clearSelection = output<void>();
   navigateHybrid = output<string>();
 
-  kpiList = [
-    { key: 'ms', label: 'Rendimiento Seco (MS)', unit: '%' },
-    { key: 'pc', label: 'Proteína Cruda (PC)', unit: '%' },
-    { key: 'fdn', label: 'Fibra D.N. (FDN)', unit: '%' },
-    { key: 'cnf', label: 'Carbohidratos (CNF)', unit: '%' }
-  ];
+  // Ecuaciones de Wisconsin Milk2024 adaptadas al frontend de forma simple
+  calcularLecheHa(ciclo: any): number {
+    const lab = ciclo.laboratorio_info;
+    if (!lab) return 0;
+    
+    const ms = lab.ms || 35.0;
+    const cp = lab.pc || 8.5;
+    const ee = lab.gc || 3.2;
+    const ash = lab.cen || 4.0;
+    const ndf = lab.fdn || 42.0;
+    const starch = lab.cnf || 30.0;
+    const rms = lab.rms || 20.0; // rms es el rendimiento de materia seca en t/ha
+    
+    const ndfd = 58.0;
+    const undf240 = 15.0;
+    const starch_d = 75.0;
+
+    const fa = Math.max(0.0, ee - 1.0);
+    const d_fa = fa * 0.73;
+    const rom = Math.max(0.0, 100.0 - (ash + ndf + starch + fa + cp));
+    const d_rom = rom * 0.91;
+    const d_cp = cp * 0.70;
+    const d_starch = starch * (starch_d / 100.0);
+    const d_ndf_rumen = ndf * (ndfd / 100.0);
+    const remanente_fibra_digestible = Math.max(0.0, ndf - d_ndf_rumen - undf240);
+    const d_ndf = d_ndf_rumen + (remanente_fibra_digestible * 0.10);
+
+    const tdn = d_cp + d_rom + (d_fa * 2.25) + d_starch + d_ndf;
+    const de = (tdn / 100.0) * 4.409;
+    const nel = Math.max(0.0, (0.703 * de) - 0.19);
+    const leche_ton = (nel * 311.4) + 120.0;
+    return leche_ton * rms;
+  }
+
+  // Group selected cycles by hybrid and compute consolidations
+  selectedHybridsData = computed(() => {
+    const selected = this.selectedCiclos() || [];
+    if (selected.length === 0) return [];
+
+    // Group selected cycles by hybrid name
+    const groups = new Map<string, any[]>();
+    selected.forEach(c => {
+      const name = c.hibrido_nombre || 'Desconocido';
+      const list = groups.get(name) || [];
+      list.push(c);
+      groups.set(name, list);
+    });
+
+    const result: any[] = [];
+    groups.forEach((cycles, hibrido_nombre) => {
+      let totalRms = 0;
+      let totalLeche = 0;
+      let validRmsCount = 0;
+      let validLecheCount = 0;
+
+      cycles.forEach(c => {
+        const rms = c.laboratorio_info?.rms;
+        if (rms != null && typeof rms === 'number') {
+          totalRms += rms;
+          validRmsCount++;
+        }
+        const leche = this.calcularLecheHa(c);
+        if (leche != null && typeof leche === 'number') {
+          totalLeche += leche;
+          validLecheCount++;
+        }
+      });
+
+      const avgRms = validRmsCount > 0 ? totalRms / validRmsCount : 0;
+      const avgLeche = validLecheCount > 0 ? totalLeche / validLecheCount : 0;
+      const rmsKg = avgRms * 1000;
+      const ingreso = avgLeche * this.precioLeche();
+
+      result.push({
+        hibrido_nombre,
+        rmsKg,
+        leche: avgLeche,
+        ingreso
+      });
+    });
+
+    return result;
+  });
+
+  // Dynamic A/B comparison and opportunity cost engine
+  comparison = computed(() => {
+    const list = this.selectedHybridsData();
+    const count = list.length;
+
+    if (count === 0) {
+      return {
+        mode: 'empty',
+        hibridoA: null,
+        hibridoB: null,
+        deltaRmsKg: 0,
+        deltaLeche: 0,
+        deltaIngreso: 0
+      };
+    }
+
+    if (count === 1) {
+      return {
+        mode: 'single',
+        hibridoA: list[0],
+        hibridoB: null,
+        deltaRmsKg: 0,
+        deltaLeche: 0,
+        deltaIngreso: 0
+      };
+    }
+
+    let hibridoA: any;
+    let hibridoB: any;
+    let modeText = 'comparison';
+
+    if (count === 2) {
+      if (list[0].ingreso >= list[1].ingreso) {
+        hibridoA = list[0];
+        hibridoB = list[1];
+      } else {
+        hibridoA = list[1];
+        hibridoB = list[0];
+      }
+      modeText = 'ab';
+    } else {
+      // Find Mejor and Peor by ingreso
+      let mejor = list[0];
+      let peor = list[0];
+
+      list.forEach(h => {
+        if (h.ingreso > mejor.ingreso) {
+          mejor = h;
+        }
+        if (h.ingreso < peor.ingreso) {
+          peor = h;
+        }
+      });
+
+      hibridoA = mejor;
+      hibridoB = peor;
+      modeText = 'best_worst';
+    }
+
+    // Mathematical safety: force always positive delta (Ganador - Perdedor)
+    const deltaRmsKg = Math.abs(hibridoA.rmsKg - hibridoB.rmsKg);
+    const deltaLeche = Math.abs(hibridoA.leche - hibridoB.leche);
+    const deltaIngreso = Math.abs(hibridoA.ingreso - hibridoB.ingreso);
+
+    return {
+      mode: modeText,
+      hibridoA,
+      hibridoB,
+      deltaRmsKg,
+      deltaLeche,
+      deltaIngreso
+    };
+  });
+
+  kpiList = [];
 
   showHeatmap = signal<boolean>(false);
 
@@ -144,7 +297,7 @@ export class Main {
         x: {
           title: {
             display: true,
-            text: 'Rendimiento Seco (ms %)',
+            text: 'Rendimiento Materia Seca (RMS t/ha)',
             color: '#4B5563',
             font: { weight: 'bold' },
           },
@@ -154,7 +307,7 @@ export class Main {
         y: {
           title: {
             display: true,
-            text: 'Proteína Cruda (pc %)',
+            text: 'Carbohidratos No Fibrosos (CNF %)',
             color: '#4B5563',
             font: { weight: 'bold' },
           },
@@ -171,7 +324,7 @@ export class Main {
             label: (context) => {
               const index = context.dataIndex;
               const dataPoint = context.dataset.data[index] as any;
-              return `Híbrido: ${dataPoint.hibrido} | MS: ${dataPoint.x}% | PC: ${dataPoint.y}%`;
+              return `Híbrido: ${dataPoint.hibrido} | RMS: ${dataPoint.x} t/ha | CNF: ${dataPoint.y}%`;
             },
           },
         },
@@ -179,29 +332,29 @@ export class Main {
           annotations: {
             box1: {
               type: 'box',
-              xMin: 40,
-              yMin: 6.5,
+              xMin: 20,
+              yMin: 33,
               backgroundColor: 'rgba(76, 175, 80, 0.1)',
               borderWidth: 0,
             },
             box2: {
               type: 'box',
-              xMax: 40,
-              yMax: 6.5,
+              xMax: 20,
+              yMax: 33,
               backgroundColor: 'rgba(244, 67, 54, 0.1)',
               borderWidth: 0,
             },
             box3: {
               type: 'box',
-              xMin: 40,
-              yMax: 6.5,
+              xMin: 20,
+              yMax: 33,
               backgroundColor: 'rgba(255, 193, 7, 0.1)',
               borderWidth: 0,
             },
             box4: {
               type: 'box',
-              xMax: 40,
-              yMin: 6.5,
+              xMax: 20,
+              yMin: 33,
               backgroundColor: 'rgba(255, 152, 0, 0.1)',
               borderWidth: 0,
             }
@@ -241,32 +394,35 @@ export class Main {
 
     if (isMicro) {
       // VISTA MICRO: Cada ciclo es un punto individual
+      const selectedSet = new Set(this.selectedCiclos().map(c => c.id));
       ciclos.forEach(c => {
         const lab = c.laboratorio_info;
-        if (lab?.ms != null && lab?.pc != null) {
+        if (lab?.rms != null && lab?.cnf != null) {
           newData.push({
-            x: lab.ms,
-            y: lab.pc,
+            x: lab.rms,
+            y: lab.cnf,
             hibrido: c.hibrido_nombre || 'Desconocido',
             id: c.id, // ID para selección granular específica
             condicion: c.condicion || 'Temporal'
           });
-          bgColors.push(this.hybridColors[c.hibrido_nombre] || '#2563EB');
+          const isSelected = selectedSet.has(c.id);
+          const baseColor = this.hybridColors[c.hibrido_nombre] || '#2563EB';
+          bgColors.push(isSelected ? '#EAB308' : baseColor);
           pointStyles.push(this.conditionShapes[c.condicion] || 'circle');
-          pointRadii.push(6);
+          pointRadii.push(isSelected ? 10 : 6);
         }
       });
     } else {
-
       // VISTA MACRO: Promedios por híbrido
-      const stats = new Map<string, { msSum: number; pcSum: number; count: number }>();
+      const selectedHybrids = new Set(this.selectedCiclos().map(c => c.hibrido_nombre));
+      const stats = new Map<string, { rmsSum: number; cnfSum: number; count: number }>();
       ciclos.forEach(c => {
         const lab = c.laboratorio_info;
-        if (lab?.ms != null && lab?.pc != null) {
+        if (lab?.rms != null && lab?.cnf != null) {
           const name = c.hibrido_nombre || 'Desconocido';
-          const s = stats.get(name) || { msSum: 0, pcSum: 0, count: 0 };
-          s.msSum += lab.ms;
-          s.pcSum += lab.pc;
+          const s = stats.get(name) || { rmsSum: 0, cnfSum: 0, count: 0 };
+          s.rmsSum += lab.rms;
+          s.cnfSum += lab.cnf;
           s.count++;
           stats.set(name, s);
         }
@@ -274,13 +430,15 @@ export class Main {
 
       stats.forEach((s, name) => {
         newData.push({
-          x: Number((s.msSum / s.count).toFixed(2)),
-          y: Number((s.pcSum / s.count).toFixed(2)),
+          x: Number((s.rmsSum / s.count).toFixed(2)),
+          y: Number((s.cnfSum / s.count).toFixed(2)),
           hibrido: name
         });
-        bgColors.push(this.hybridColors[name] || '#2563EB');
+        const isSelected = selectedHybrids.has(name);
+        const baseColor = this.hybridColors[name] || '#2563EB';
+        bgColors.push(isSelected ? '#EAB308' : baseColor);
         pointStyles.push('circle');
-        pointRadii.push(8);
+        pointRadii.push(isSelected ? 12 : 8);
       });
     }
 
@@ -291,7 +449,7 @@ export class Main {
         pointBackgroundColor: bgColors,
         pointStyle: pointStyles as any,
         pointRadius: pointRadii,
-        pointHoverRadius: 10
+        pointHoverRadius: 12
       }]
     };
   });

@@ -86,18 +86,56 @@ export class Analytics implements OnInit {
   selectedCondicion = signal<string[]>([]);
   searchTerm = signal<string>('');
 
-  // Pagination
-  currentPage = signal<number>(1);
-  pageSize = signal<number>(10);
-
-  // Sorting
-  sortColumn = signal<string>('hibrido_nombre');
-  sortDirection = signal<'asc' | 'desc'>('asc');
-
-  // Expansion and Selection map
+  // Expansion, Collapse and Selection map for Hierarchical Accordion
+  collapsedMarcas = signal<Set<string>>(new Set());
   expandedHybrids = signal<Set<string>>(new Set());
   expandedRows = signal<Set<number>>(new Set());
   selectedCiclosIds = signal<Set<number>>(new Set());
+  hibridoSortOption = signal<'alphabetical' | 'rms_desc'>('alphabetical');
+  precioLeche = signal<number>(10.50);
+
+  actualizarPrecioLeche(event: Event) {
+    const inputElement = event.target as HTMLInputElement;
+    const value = parseFloat(inputElement.value);
+    if (!isNaN(value) && value > 0) {
+      this.precioLeche.set(value);
+    }
+  }
+
+  calcularLecheHa(ciclo: any): number {
+    const lab = ciclo.laboratorio_info;
+    if (!lab) return 0;
+    
+    // Ecuaciones de Wisconsin Milk2024 adaptadas al frontend de forma simple
+    const ms = lab.ms || 35.0;
+    const cp = lab.pc || 8.5;
+    const ee = lab.gc || 3.2;
+    const ash = lab.cen || 4.0;
+    const ndf = lab.fdn || 42.0;
+    const starch = lab.cnf || 30.0;
+    const rms = lab.rms || 20.0; // rms es el rendimiento de materia seca en t/ha
+    
+    // Constantes estándar de Wisconsin MILK2024
+    const ndfd = 58.0;
+    const undf240 = 15.0;
+    const starch_d = 75.0;
+
+    const fa = Math.max(0.0, ee - 1.0);
+    const d_fa = fa * 0.73;
+    const rom = Math.max(0.0, 100.0 - (ash + ndf + starch + fa + cp));
+    const d_rom = rom * 0.91;
+    const d_cp = cp * 0.70;
+    const d_starch = starch * (starch_d / 100.0);
+    const d_ndf_rumen = ndf * (ndfd / 100.0);
+    const remanente_fibra_digestible = Math.max(0.0, ndf - d_ndf_rumen - undf240);
+    const d_ndf = d_ndf_rumen + (remanente_fibra_digestible * 0.10);
+
+    const tdn = d_cp + d_rom + (d_fa * 2.25) + d_starch + d_ndf;
+    const de = (tdn / 100.0) * 4.409;
+    const nel = Math.max(0.0, (0.703 * de) - 0.19);
+    const leche_ton = (nel * 311.4) + 120.0;
+    return leche_ton * rms;
+  }
 
   // Computed Properties
   filteredCiclos = computed(() => {
@@ -131,17 +169,74 @@ export class Analytics implements OnInit {
       return match;
     });
 
-    // Filter by Search Term
-    const term = this.searchTerm().toLowerCase();
+    // Filter by Search Term (checking Marca, Híbrido, or Año)
+    const term = this.searchTerm().toLowerCase().trim();
     if (term) {
       c = c.filter(ciclo => {
         const hName = ciclo.hibrido_nombre ? ciclo.hibrido_nombre.toLowerCase() : '';
-        const hMarca = ciclo.hibrido_marca ? ciclo.hibrido_marca.toLowerCase() : '';
-        return hName.includes(term) || hMarca.includes(term);
+        const hMarca = (ciclo.hibrido_marca && ciclo.hibrido_marca.trim() !== '') 
+          ? ciclo.hibrido_marca.toLowerCase() 
+          : 'sin marca registrada';
+        const cYear = ciclo.year ? String(ciclo.year) : '';
+        return hName.includes(term) || hMarca.includes(term) || cYear.includes(term);
       });
     }
 
     return c;
+  });
+
+  groupedHierarchy = computed(() => {
+    const cycles = this.filteredCiclos() || [];
+    const sortOpt = this.hibridoSortOption();
+    
+    const grouped = cycles.reduce((acc: any, ciclo: any) => {
+      const marca = (ciclo.hibrido_marca && ciclo.hibrido_marca.trim() !== '') 
+        ? ciclo.hibrido_marca 
+        : 'Sin Marca Registrada';
+      const hibrido = ciclo.hibrido_nombre || 'Desconocido';
+      
+      if (!acc[marca]) {
+        acc[marca] = {};
+      }
+      if (!acc[marca][hibrido]) {
+        acc[marca][hibrido] = [];
+      }
+      acc[marca][hibrido].push(ciclo);
+      return acc;
+    }, {});
+    
+    const result = Object.keys(grouped).map(marcaName => {
+      const hibridosMap = grouped[marcaName];
+      const hibridos = Object.keys(hibridosMap).map(hibridoName => {
+        const cyclesList = hibridosMap[hibridoName];
+        
+        // Calculate average RMS for this hybrid to allow sorting by RMS
+        const validRmsValues = cyclesList.map((c: any) => c.laboratorio_info?.rms).filter((v: any) => typeof v === 'number');
+        const avgRms = validRmsValues.length > 0 
+          ? validRmsValues.reduce((sum: number, val: number) => sum + val, 0) / validRmsValues.length 
+          : 0;
+
+        return {
+          hibrido_nombre: hibridoName,
+          avg_rms: avgRms,
+          ciclos: cyclesList.sort((a: any, b: any) => b.year - a.year)
+        };
+      });
+
+      // Sort hybrids within brand based on selector option
+      if (sortOpt === 'rms_desc') {
+        hibridos.sort((a: any, b: any) => b.avg_rms - a.avg_rms);
+      } else {
+        hibridos.sort((a: any, b: any) => a.hibrido_nombre.localeCompare(b.hibrido_nombre));
+      }
+      
+      return {
+        marca: marcaName,
+        hibridos: hibridos
+      };
+    }).sort((a: any, b: any) => a.marca.localeCompare(b.marca));
+    
+    return result;
   });
 
   groupedHibridos = computed<GroupedHibrido[]>(() => {
@@ -166,30 +261,9 @@ export class Analytics implements OnInit {
       };
     });
 
-    // Apply sorting to hybrids
-    const col = this.sortColumn();
-    const dir = this.sortDirection() === 'asc' ? 1 : -1;
-
-    result.sort((a: any, b: any) => {
-      let valA = a[col];
-      let valB = b[col];
-
-      if (valA == null) valA = '';
-      if (valB == null) valB = '';
-
-      if (typeof valA === 'string' && typeof valB === 'string') {
-        return valA.localeCompare(valB) * dir;
-      }
-      return (valA < valB ? -1 : (valA > valB ? 1 : 0)) * dir;
-    });
+    result.sort((a, b) => a.hibrido_nombre.localeCompare(b.hibrido_nombre));
 
     return result;
-  });
-
-  paginatedHibridos = computed(() => {
-    const grouped = this.groupedHibridos();
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return grouped.slice(start, start + this.pageSize());
   });
 
   selectedCiclosObjects = computed(() => {
@@ -237,7 +311,6 @@ export class Analytics implements OnInit {
     } else {
       this.selectedLocation.set([...current, option]);
     }
-    this.currentPage.set(1);
   }
 
   toggleYearSelection(year: number) {
@@ -247,7 +320,6 @@ export class Analytics implements OnInit {
     } else {
       this.selectedYear.set([...current, year]);
     }
-    this.currentPage.set(1);
   }
 
   toggleMarcaSelection(marca: string) {
@@ -257,7 +329,6 @@ export class Analytics implements OnInit {
     } else {
       this.selectedMarca.set([...current, marca]);
     }
-    this.currentPage.set(1);
   }
 
   toggleCondicionSelection(cond: string) {
@@ -267,7 +338,6 @@ export class Analytics implements OnInit {
     } else {
       this.selectedCondicion.set([...current, cond]);
     }
-    this.currentPage.set(1);
   }
 
   isLocSelected(label: string): boolean {
@@ -292,18 +362,15 @@ export class Analytics implements OnInit {
     this.selectedMarca.set([]);
     this.selectedCondicion.set([]);
     this.searchTerm.set('');
-    this.currentPage.set(1);
   }
 
   onSearch(event: Event) {
     const inputElement = event.target as HTMLInputElement;
     this.searchTerm.set(inputElement.value);
-    this.currentPage.set(1);
   }
 
   limpiarBusqueda() {
     this.searchTerm.set('');
-    this.currentPage.set(1);
   }
 
   getValidLabMetrics(labInfo: any) {
@@ -322,47 +389,30 @@ export class Analytics implements OnInit {
       });
   }
 
-  toggleSort(column: string) {
-    if (this.sortColumn() === column) {
-      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
-    } else {
-      this.sortColumn.set(column);
-      this.sortDirection.set('asc');
-    }
-    this.currentPage.set(1);
-  }
-
   limpiarSelecciones() {
     this.selectedCiclosIds.set(new Set<number>());
   }
 
-  toggleHybridExpansion(name: string) {
-    const expanded = new Set(this.expandedHybrids());
-    if (expanded.has(name)) {
-      expanded.delete(name);
-    } else {
-      expanded.add(name);
-    }
-    this.expandedHybrids.set(expanded);
-  }
-
   enfocarEnTabla(hibrido_nombre: string) {
-    const expanded = new Set(this.expandedHybrids());
-    if (!expanded.has(hibrido_nombre)) {
-      expanded.add(hibrido_nombre);
-      this.expandedHybrids.set(expanded);
+    const cycle = this.filteredCiclos().find((c: any) => c.hibrido_nombre === hibrido_nombre);
+    if (!cycle) return;
+    const marca = (cycle.hibrido_marca && cycle.hibrido_marca.trim() !== '') ? cycle.hibrido_marca : 'Sin Marca Registrada';
+
+    // Expand Marca by removing from collapsedMarcas
+    const collapsedM = new Set(this.collapsedMarcas());
+    if (collapsedM.has(marca)) {
+      collapsedM.delete(marca);
+      this.collapsedMarcas.set(collapsedM);
     }
 
-    setTimeout(() => {
-      const element = document.getElementById('row-' + hibrido_nombre);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // highlight briefly
-        element.style.transition = 'background-color 0.5s';
-        element.style.backgroundColor = '#e8f5e9'; // light green
-        setTimeout(() => element.style.backgroundColor = '', 1500);
-      }
-    }, 100);
+    // Expand Hybrid by adding to expandedHybrids
+    const key = `${marca}::${hibrido_nombre}`;
+    const expandedH = new Set(this.expandedHybrids());
+    expandedH.add(key);
+    this.expandedHybrids.set(expandedH);
+
+    // Select the cycles of this hybrid
+    this.toggleHibridoSelection(marca, hibrido_nombre);
   }
 
   hibridosSeleccionados = computed(() => {
@@ -411,33 +461,63 @@ export class Analytics implements OnInit {
   });
 
   toggleSeleccion(hibridoInput: any) {
-    // Si el input es un número, es una selección granular de un ciclo específico
     if (typeof hibridoInput === 'number') {
       this.toggleRowSelection(hibridoInput);
       return;
     }
 
     const nombre = hibridoInput.hibrido_nombre || hibridoInput.hibrido || hibridoInput;
-    const hibrido = this.groupedHibridos().find((h: any) => h.hibrido_nombre === nombre);
-    if (!hibrido) return;
+    if (typeof nombre === 'string') {
+      const cycle = this.filteredCiclos().find((c: any) => c.hibrido_nombre === nombre);
+      if (cycle) {
+        const marca = (cycle.hibrido_marca && cycle.hibrido_marca.trim() !== '') ? cycle.hibrido_marca : 'Sin Marca Registrada';
+        this.toggleHibridoSelection(marca, nombre);
+      }
+    }
+  }
 
-
-    const isFullySelected = hibrido.ciclos_detalle.every((c: any) => this.selectedCiclosIds().has(c.id));
+  toggleHibridoSelection(marca: string, hibrido_nombre: string) {
+    const brand = this.groupedHierarchy().find(b => b.marca === marca);
+    if (!brand) return;
+    const h = brand.hibridos.find((x: any) => x.hibrido_nombre === hibrido_nombre);
+    if (!h) return;
     const current = new Set(this.selectedCiclosIds());
-
-    hibrido.ciclos_detalle.forEach((c: any) => {
-      if (isFullySelected) {
+    const isSelected = h.ciclos.every((c: any) => current.has(c.id));
+    h.ciclos.forEach((c: any) => {
+      if (isSelected) {
         current.delete(c.id);
       } else {
         current.add(c.id);
       }
     });
-
     this.selectedCiclosIds.set(current);
   }
 
+  isHybridSelected(marca: string, hibrido_nombre: string): boolean {
+    const brand = this.groupedHierarchy().find(b => b.marca === marca);
+    if (!brand) return false;
+    const h = brand.hibridos.find((x: any) => x.hibrido_nombre === hibrido_nombre);
+    if (!h || h.ciclos.length === 0) return false;
+    return h.ciclos.every((c: any) => this.selectedCiclosIds().has(c.id));
+  }
+
+  calcularHibridoLecheHa(hibrido: any): number {
+    if (!hibrido || !hibrido.ciclos || hibrido.ciclos.length === 0) return 0;
+    const sum = hibrido.ciclos.reduce((acc: number, c: any) => acc + this.calcularLecheHa(c), 0);
+    return sum / hibrido.ciclos.length;
+  }
+
+  toggleRowSelection(id: number) {
+    const selected = new Set(this.selectedCiclosIds());
+    if (selected.has(id)) {
+      selected.delete(id);
+    } else {
+      selected.add(id);
+    }
+    this.selectedCiclosIds.set(selected);
+  }
+
   toggleRowExpansion(id: number, event: Event) {
-    // Only expand if clicking outside of the checkbox column
     const target = event.target as HTMLElement;
     if (target.tagName.toLowerCase() === 'input' && target.getAttribute('type') === 'checkbox') {
       return;
@@ -452,21 +532,99 @@ export class Analytics implements OnInit {
     this.expandedRows.set(expanded);
   }
 
-  toggleRowSelection(id: number) {
-    const selected = new Set(this.selectedCiclosIds());
-    if (selected.has(id)) {
-      selected.delete(id);
+  toggleMarcaExpansion(marca: string) {
+    const collapsed = new Set(this.collapsedMarcas());
+    if (collapsed.has(marca)) {
+      collapsed.delete(marca);
     } else {
-      selected.add(id);
+      collapsed.add(marca);
     }
-    this.selectedCiclosIds.set(selected);
+    this.collapsedMarcas.set(collapsed);
   }
 
-  toggleHybridSelection(grouped: GroupedHibrido, event: Event) {
+  toggleHierarchyHybridExpansion(marca: string, hibrido: string) {
+    const key = `${marca}::${hibrido}`;
+    const expanded = new Set(this.expandedHybrids());
+    if (expanded.has(key)) {
+      expanded.delete(key);
+    } else {
+      expanded.add(key);
+    }
+    this.expandedHybrids.set(expanded);
+  }
+
+  isMarcaExpanded(marca: string): boolean {
+    return !this.collapsedMarcas().has(marca);
+  }
+
+  isHierarchyHybridExpanded(marca: string, hibrido: string): boolean {
+    return this.expandedHybrids().has(`${marca}::${hibrido}`);
+  }
+
+  toggleAllExpansionState() {
+    const allExpanded = this.collapsedMarcas().size === 0;
+    if (allExpanded) {
+      const brandNames = new Set<string>();
+      this.groupedHierarchy().forEach(brandGroup => {
+        brandNames.add(brandGroup.marca);
+      });
+      this.collapsedMarcas.set(brandNames);
+    } else {
+      this.collapsedMarcas.set(new Set<string>());
+    }
+  }
+
+  get areAllHierarchyNodesExpanded(): boolean {
+    return this.collapsedMarcas().size === 0;
+  }
+
+  toggleMarcaSelectionInHierarchy(hibridos: any[], event: Event) {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    const currentSelected = new Set(this.selectedCiclosIds());
+    
+    hibridos.forEach(h => {
+      h.ciclos.forEach((c: any) => {
+        if (isChecked) {
+          currentSelected.add(c.id);
+        } else {
+          currentSelected.delete(c.id);
+        }
+      });
+    });
+    
+    this.selectedCiclosIds.set(currentSelected);
+  }
+
+  isMarcaSelectedInHierarchy(hibridos: any[]): boolean {
+    if (hibridos.length === 0) return false;
+    return hibridos.every(h => h.ciclos.every((c: any) => this.selectedCiclosIds().has(c.id)));
+  }
+
+  toggleHybridSelectionInHierarchy(hibridoCiclos: any[], event: Event) {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    const currentSelected = new Set(this.selectedCiclosIds());
+    
+    hibridoCiclos.forEach(c => {
+      if (isChecked) {
+        currentSelected.add(c.id);
+      } else {
+        currentSelected.delete(c.id);
+      }
+    });
+    
+    this.selectedCiclosIds.set(currentSelected);
+  }
+
+  isHybridSelectedInHierarchy(hibridoCiclos: any[]): boolean {
+    if (hibridoCiclos.length === 0) return false;
+    return hibridoCiclos.every(c => this.selectedCiclosIds().has(c.id));
+  }
+
+  toggleAllSelection(event: Event) {
     const isChecked = (event.target as HTMLInputElement).checked;
     const currentSelected = new Set(this.selectedCiclosIds());
 
-    grouped.ciclos_detalle.forEach(c => {
+    this.filteredCiclos().forEach(c => {
       if (isChecked) {
         currentSelected.add(c.id);
       } else {
@@ -477,15 +635,6 @@ export class Analytics implements OnInit {
     this.selectedCiclosIds.set(currentSelected);
   }
 
-  isHybridSelected(grouped: GroupedHibrido): boolean {
-    if (grouped.ciclos_detalle.length === 0) return false;
-    return grouped.ciclos_detalle.every(c => this.selectedCiclosIds().has(c.id));
-  }
-
-  isHybridExpanded(name: string): boolean {
-    return this.expandedHybrids().has(name);
-  }
-
   isRowExpanded(id: number): boolean {
     return this.expandedRows().has(id);
   }
@@ -494,47 +643,9 @@ export class Analytics implements OnInit {
     return this.selectedCiclosIds().has(id);
   }
 
-  toggleAllSelection(event: Event) {
-    const isChecked = (event.target as HTMLInputElement).checked;
-    const currentSelected = new Set(this.selectedCiclosIds());
-
-    this.paginatedHibridos().forEach(h => {
-      h.ciclos_detalle.forEach(c => {
-        if (isChecked) {
-          currentSelected.add(c.id);
-        } else {
-          currentSelected.delete(c.id);
-        }
-      });
-    });
-
-    this.selectedCiclosIds.set(currentSelected);
-  }
-
-  get isAllCurrentPageSelected(): boolean {
-    const page = this.paginatedHibridos();
-    if (page.length === 0) return false;
-    return page.every(h => this.isHybridSelected(h));
-  }
-
-  // Pagination Methods
-  get totalItems() {
-    return this.groupedHibridos().length;
-  }
-
-  get totalPages() {
-    return Math.ceil(this.totalItems / this.pageSize()) || 1;
-  }
-
-  nextPage() {
-    if (this.currentPage() < this.totalPages) {
-      this.currentPage.update(p => p + 1);
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage() > 1) {
-      this.currentPage.update(p => p - 1);
-    }
+  get isAllFilteredSelected(): boolean {
+    const filtered = this.filteredCiclos();
+    if (filtered.length === 0) return false;
+    return filtered.every(c => this.selectedCiclosIds().has(c.id));
   }
 }
