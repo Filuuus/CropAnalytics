@@ -286,85 +286,89 @@ class OptimizarSemillaView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Buscar todos los híbridos
-        hybrids = Hibrido.objects.all()
-        ranking = []
+        from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max
+        import datetime
 
-        for h in hybrids:
-            # Filtrar los ciclos de este híbrido por el régimen hídrico
-            ciclos_hibrido = Ciclo.objects.filter(hibrido=h, condicion__iexact=regimen_hidrico)
-            if not ciclos_hibrido.exists():
-                continue
-
-            # Obtener promedios químicos y fenológicos (DFF)
-            averages = ResultadoLaboratorio.objects.filter(ciclo__in=ciclos_hibrido).aggregate(
-                avg_ms=Avg('ms'),
-                avg_pc=Avg('pc'),
-                avg_gc=Avg('gc'),
-                avg_cen=Avg('cen'),
-                avg_fdn=Avg('fdn'),
-                avg_dff=Avg('dff')
+        # Agrupar y promediar en una sola consulta ORM de alto rendimiento
+        ciclos_stats = Ciclo.objects.filter(condicion__iexact=regimen_hidrico) \
+            .values('hibrido__id', 'hibrido__nombre', 'hibrido__marca') \
+            .annotate(
+                avg_ms=Avg('laboratorio__ms'),
+                avg_cp=Avg('laboratorio__pc'),
+                avg_ee=Avg('laboratorio__gc'),
+                avg_ash=Avg('laboratorio__cen'),
+                avg_ndf=Avg('laboratorio__fdn'),
+                avg_dff=Avg('laboratorio__dff'),
+                # Constantes de fallbacks mockeadas como anotaciones Value del ORM
+                avg_ndfd=Value(58.0, output_field=fields.FloatField()),
+                avg_undf240=Value(15.0, output_field=fields.FloatField()),
+                avg_starch=Value(30.0, output_field=fields.FloatField()),
+                avg_starch_d=Value(75.0, output_field=fields.FloatField()),
+                # Duración del ciclo en la base de datos
+                avg_duracion=Avg(
+                    ExpressionWrapper(
+                        F('fecha_cosecha') - F('fecha_siembra'),
+                        output_field=fields.DurationField()
+                    )
+                ),
+                # Fechas extremas para calcular las ventanas
+                min_siembra=Min('fecha_siembra'),
+                max_siembra=Max('fecha_siembra')
             )
 
-            # Si no hay resultados de laboratorio para este híbrido en este régimen, usar fallbacks
-            avg_ms = averages['avg_ms'] or 35.0
-            avg_pc = averages['avg_pc'] or 8.5
-            avg_gc = averages['avg_gc'] or 3.2
-            avg_cen = averages['avg_cen'] or 4.0
-            avg_fdn = averages['avg_fdn'] or 42.0
-            avg_dff = averages['avg_dff'] or 65.0  # promedio de días a floración femenina
+        ranking = []
+        MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
-            # Duración del ciclo (fecha_cosecha - fecha_siembra)
-            durations = []
-            for c in ciclos_hibrido:
-                if c.fecha_cosecha and c.fecha_siembra:
-                    diff = (c.fecha_cosecha - c.fecha_siembra).days
-                    if diff > 0:
-                        durations.append(diff)
+        def format_date(d):
+            return f"{d.day} de {MESES[d.month - 1]}"
+
+        for item in ciclos_stats:
+            avg_ms = item['avg_ms'] or 35.0
+            avg_pc = item['avg_cp'] or 8.5
+            avg_gc = item['avg_ee'] or 3.2
+            avg_cen = item['avg_ash'] or 4.0
+            avg_fdn = item['avg_ndf'] or 42.0
+            avg_dff = item['avg_dff'] or 65.0
             
-            duracion_promedio = int(sum(durations) / len(durations)) if durations else (140 if regimen_hidrico == 'Riego' else 120)
+            avg_ndfd = item['avg_ndfd']
+            avg_undf240 = item['avg_undf240']
+            avg_starch = item['avg_starch']
+            avg_starch_d = item['avg_starch_d']
 
-            # Lógica de procesamiento de fechas de siembra y cosecha con tolerancia
-            import datetime
+            # Calcular duración del ciclo promedio con fallbacks según tipo de datos devuelto por la BD
+            avg_dur = item['avg_duracion']
+            if avg_dur is not None:
+                if hasattr(avg_dur, 'days'):
+                    duracion_promedio = avg_dur.days
+                else:
+                    try:
+                        duracion_promedio = int(avg_dur.total_seconds() / 86400)
+                    except Exception:
+                        duracion_promedio = int(avg_dur)
+            else:
+                duracion_promedio = 140 if regimen_hidrico == 'Riego' else 120
 
-            fecha_siembra_list = [c.fecha_siembra for c in ciclos_hibrido if c.fecha_siembra]
-            
-            MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-            
-            def format_date(d):
-                return f"{d.day} de {MESES[d.month - 1]}"
+            # Calcular ventanas de fechas
+            min_siembra = item['min_siembra']
+            max_siembra = item['max_siembra']
 
-            if not fecha_siembra_list:
-                # Fallback por si no hay fechas históricas registradas
+            if not min_siembra or not max_siembra:
                 ref_siembra = datetime.date(2000, 5, 15) if regimen_hidrico == 'Riego' else datetime.date(2000, 6, 15)
                 start_siembra = ref_siembra - datetime.timedelta(days=7)
                 end_siembra = ref_siembra + datetime.timedelta(days=7)
             else:
-                # Convertir todas las fechas a un año bisiesto común (2000) para ignorar el año
-                dummy_dates = [datetime.date(2000, d.month, d.day) for d in fecha_siembra_list]
-                
-                # Encontrar el rango de fechas en el año dummy
-                min_date = min(dummy_dates)
-                max_date = max(dummy_dates)
-                range_days = (max_date - min_date).days
-                
+                dummy_min = datetime.date(2000, min_siembra.month, min_siembra.day)
+                dummy_max = datetime.date(2000, max_siembra.month, max_siembra.day)
+                range_days = (dummy_max - dummy_min).days
+
                 if range_days > 15:
-                    # Usar el rango histórico real
-                    start_siembra = min_date
-                    end_siembra = max_date
+                    start_siembra = dummy_min
+                    end_siembra = dummy_max
                 else:
-                    # Rango menor o igual a 15 días o un solo registro: calcular promedio y aplicar buffer de +/- 7 días
-                    day_of_year_list = [(d - datetime.date(2000, 1, 1)).days for d in dummy_dates]
-                    avg_day = sum(day_of_year_list) / len(day_of_year_list)
-                    avg_date = datetime.date(2000, 1, 1) + datetime.timedelta(days=int(avg_day))
-                    
-                    start_siembra = avg_date - datetime.timedelta(days=7)
-                    end_siembra = avg_date + datetime.timedelta(days=7)
+                    start_siembra = dummy_min - datetime.timedelta(days=7)
+                    end_siembra = dummy_min + datetime.timedelta(days=7)
 
-            # Ventana de Siembra Formateada
             ventana_siembra = f"{format_date(start_siembra)} - {format_date(end_siembra)}"
-
-            # Ventana de Cosecha Dinámica: sumar la duración promedio del ciclo a los límites de siembra
             start_cosecha = start_siembra + datetime.timedelta(days=duracion_promedio)
             end_cosecha = end_siembra + datetime.timedelta(days=duracion_promedio)
             ventana_cosecha = f"{format_date(start_cosecha)} - {format_date(end_cosecha)}"
@@ -376,10 +380,10 @@ class OptimizarSemillaView(APIView):
                 'ee': avg_gc,
                 'ash': avg_cen,
                 'ndf': avg_fdn,
-                'ndfd': 58.0,       # Fallbacks estándar de Wisconsin
-                'undf240': 15.0,
-                'starch': 30.0,
-                'starch_d': 75.0,
+                'ndfd': avg_ndfd,
+                'undf240': avg_undf240,
+                'starch': avg_starch,
+                'starch_d': avg_starch_d,
                 'yield_dm': yield_dm,
             }
 
@@ -388,9 +392,9 @@ class OptimizarSemillaView(APIView):
 
             ranking.append({
                 'hibrido': {
-                    'id': h.id,
-                    'nombre': h.nombre,
-                    'marca': h.marca
+                    'id': item['hibrido__id'],
+                    'nombre': item['hibrido__nombre'],
+                    'marca': item['hibrido__marca']
                 },
                 'valores_bromatologicos_promedio': {
                     'ms': round(avg_ms, 2),
@@ -398,10 +402,10 @@ class OptimizarSemillaView(APIView):
                     'ee': round(avg_gc, 2),
                     'ash': round(avg_cen, 2),
                     'ndf': round(avg_fdn, 2),
-                    'ndfd': datos['ndfd'],
-                    'undf240': datos['undf240'],
-                    'starch': datos['starch'],
-                    'starch_d': datos['starch_d']
+                    'ndfd': avg_ndfd,
+                    'undf240': avg_undf240,
+                    'starch': avg_starch,
+                    'starch_d': avg_starch_d
                 },
                 'dff_promedio': round(avg_dff, 1),
                 'duracion_ciclo_promedio': duracion_promedio,
