@@ -13,11 +13,11 @@ export const routes: Routes = [
   },
   {
     path: "dashboard",
-    children: DashboardRoutes,
+    loadComponent: () => import("./calculator/calculator.component").then(m => m.CalculatorComponent),
   },
   {
     path: "dashboard-jefe",
-    children: DashboardRoutes,
+    loadComponent: () => import("./calculator/calculator.component").then(m => m.CalculatorComponent),
   },
   {
     path: "dashboard-investigador",

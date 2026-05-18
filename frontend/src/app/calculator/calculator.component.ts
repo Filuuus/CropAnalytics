@@ -19,7 +19,6 @@ export class CalculatorComponent {
 
   form: FormGroup = this.fb.group({
     regimen_hidrico: ['Riego', [Validators.required]],
-    yield_dm: [20.0, [Validators.required, Validators.min(0.1)]],
     hectareas: [1, [Validators.required, Validators.min(0.01)]],
     precio_leche: [10.50, [Validators.required, Validators.min(0.01)]]
   });
@@ -28,6 +27,9 @@ export class CalculatorComponent {
   selectedHibridoIndex: number = 0;
   loading: boolean = false;
   error: string | null = null;
+  hibridoSeleccionado: any = null;
+  hibridoA: any = null;
+  hibridoB: any = null;
 
   submit(): void {
     if (this.form.valid) {
@@ -35,16 +37,23 @@ export class CalculatorComponent {
       this.error = null;
       this.ranking = [];
       this.selectedHibridoIndex = 0;
+      this.hibridoSeleccionado = null;
+      this.hibridoA = null;
+      this.hibridoB = null;
 
       // Extrae únicamente los parámetros que el backend necesita
-      const { regimen_hidrico, yield_dm } = this.form.value;
+      const { regimen_hidrico } = this.form.value;
 
-      this.apiService.optimizarSemilla({ regimen_hidrico, yield_dm }).subscribe({
+      this.apiService.optimizarSemilla({ regimen_hidrico }).subscribe({
         next: (res) => {
           this.ranking = res;
           this.loading = false;
           if (this.ranking.length === 0) {
             this.error = "No se encontraron híbridos con muestras de laboratorio bajo el régimen hídrico seleccionado.";
+          } else {
+            // Auto-seleccionar primer lugar como A por defecto
+            this.hibridoA = this.ranking[0];
+            this.hibridoSeleccionado = this.ranking[0];
           }
           this.cdr.detectChanges();
         },
@@ -100,15 +109,82 @@ export class CalculatorComponent {
     return this.produccionTotalGanador * this.precioLeche;
   }
 
+  seleccionarHibrido(hibrido: any): void {
+    if (this.hibridoA === hibrido) {
+      if (this.hibridoB) {
+        this.hibridoA = this.hibridoB;
+        this.hibridoSeleccionado = this.hibridoB;
+        this.hibridoB = null;
+      } else {
+        this.hibridoA = null;
+        this.hibridoSeleccionado = null;
+      }
+    } else if (this.hibridoB === hibrido) {
+      this.hibridoB = null;
+    } else {
+      if (!this.hibridoA) {
+        this.hibridoA = hibrido;
+        this.hibridoSeleccionado = hibrido;
+      } else if (!this.hibridoB) {
+        this.hibridoB = hibrido;
+      } else {
+        this.hibridoA = this.hibridoB;
+        this.hibridoSeleccionado = this.hibridoB;
+        this.hibridoB = hibrido;
+      }
+    }
+    this.cdr.detectChanges();
+  }
+
+  abrirComparacion(hibrido: any): void {
+    this.hibridoSeleccionado = hibrido;
+    this.cdr.detectChanges();
+  }
+
+  cerrarModal(): void {
+    this.hibridoSeleccionado = null;
+    this.cdr.detectChanges();
+  }
+
+  get costoOportunidad(): number {
+    if (this.ranking && this.ranking.length > 0 && this.hibridoSeleccionado) {
+      return (this.ranking[0].leche_ha - this.hibridoSeleccionado.leche_ha) * this.hectareas * this.precioLeche;
+    }
+    return 0;
+  }
+
+  get comparacionDiferencia(): number {
+    if (this.hibridoA && this.hibridoB) {
+      return Math.abs(this.hibridoA.leche_ha - this.hibridoB.leche_ha) * this.hectareas * this.precioLeche;
+    }
+    return 0;
+  }
+
+  get hibridoSuperior(): any {
+    if (this.hibridoA && this.hibridoB) {
+      return this.hibridoA.leche_ha >= this.hibridoB.leche_ha ? this.hibridoA : this.hibridoB;
+    }
+    return null;
+  }
+
+  get hibridoInferior(): any {
+    if (this.hibridoA && this.hibridoB) {
+      return this.hibridoA.leche_ha < this.hibridoB.leche_ha ? this.hibridoA : this.hibridoB;
+    }
+    return null;
+  }
+
   resetForm(): void {
     this.form.reset({
       regimen_hidrico: 'Riego',
-      yield_dm: 20.0,
       hectareas: 1,
       precio_leche: 10.50
     });
     this.ranking = [];
     this.selectedHibridoIndex = 0;
+    this.hibridoSeleccionado = null;
+    this.hibridoA = null;
+    this.hibridoB = null;
     this.error = null;
   }
 

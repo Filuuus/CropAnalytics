@@ -263,20 +263,11 @@ class OptimizarSemillaView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        yield_dm = request.data.get('yield_dm')
         regimen_hidrico = request.data.get('regimen_hidrico')
 
-        if yield_dm is None or not regimen_hidrico:
+        if not regimen_hidrico:
             return Response(
-                {'detail': 'yield_dm y regimen_hidrico son campos obligatorios.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            yield_dm = float(yield_dm)
-        except ValueError:
-            return Response(
-                {'detail': 'yield_dm debe ser un número válido.'},
+                {'detail': 'regimen_hidrico es un campo obligatorio.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -286,7 +277,7 @@ class OptimizarSemillaView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max
+        from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max, Case, When
         import datetime
 
         # Agrupar y promediar en una sola consulta ORM de alto rendimiento
@@ -299,6 +290,14 @@ class OptimizarSemillaView(APIView):
                 avg_ash=Avg('laboratorio__cen'),
                 avg_ndf=Avg('laboratorio__fdn'),
                 avg_dff=Avg('laboratorio__dff'),
+                tasa_supervivencia=Avg(
+                    Case(
+                        When(laboratorio__pem__gt=0, then=ExpressionWrapper(F('laboratorio__ppc') * 1.0 / F('laboratorio__pem'), output_field=fields.FloatField())),
+                        default=None,
+                        output_field=fields.FloatField()
+                    )
+                ),
+                rendimiento_promedio=Avg('laboratorio__rms'),
                 # Constantes de fallbacks mockeadas como anotaciones Value del ORM
                 avg_ndfd=Value(58.0, output_field=fields.FloatField()),
                 avg_undf240=Value(15.0, output_field=fields.FloatField()),
@@ -329,6 +328,16 @@ class OptimizarSemillaView(APIView):
             avg_cen = item['avg_ash'] or 4.0
             avg_fdn = item['avg_ndf'] or 42.0
             avg_dff = item['avg_dff'] or 65.0
+            tasa_supervivencia = item['tasa_supervivencia']
+            rendimiento_promedio = item['rendimiento_promedio'] or 20.0
+
+            if tasa_supervivencia is not None:
+                factor_supervivencia = min(1.0, float(tasa_supervivencia))
+            else:
+                factor_supervivencia = 1.0
+
+            # Calcular el rendimiento real esperado: promedio_historico * factor_supervivencia
+            rendimiento_real_esperado = float(rendimiento_promedio) * factor_supervivencia
             
             avg_ndfd = item['avg_ndfd']
             avg_undf240 = item['avg_undf240']
@@ -384,7 +393,7 @@ class OptimizarSemillaView(APIView):
                 'undf240': avg_undf240,
                 'starch': avg_starch,
                 'starch_d': avg_starch_d,
-                'yield_dm': yield_dm,
+                'yield_dm': rendimiento_real_esperado,
             }
 
             # Calcular métricas MILK2024
@@ -412,6 +421,8 @@ class OptimizarSemillaView(APIView):
                 'ventana_siembra': ventana_siembra,
                 'ventana_cosecha': ventana_cosecha,
                 'regimen_hidrico': regimen_hidrico,
+                'factor_supervivencia': round(factor_supervivencia, 4),
+                'rendimiento_real_esperado': round(rendimiento_real_esperado, 2),
                 **resultados
             })
 
