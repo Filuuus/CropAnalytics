@@ -1,4 +1,5 @@
-import { Component, signal, computed, input, output, ChangeDetectionStrategy, ViewChild, viewChild } from '@angular/core';
+import { Component, signal, computed, input, output, ChangeDetectionStrategy, ViewChild, viewChild, AfterViewInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 
 import { CommonModule } from '@angular/common';
@@ -23,14 +24,20 @@ Chart.register(annotationPlugin);
 
 @Component({
   selector: 'main-1',
-  imports: [CommonModule, BaseChartDirective, PlotlyModule],
+  imports: [CommonModule, BaseChartDirective, PlotlyModule, FormsModule],
 
   templateUrl: './Main.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[style.display]': "'contents'" },
 })
-export class Main {
+export class Main implements AfterViewInit {
+  private cdr = inject(ChangeDetectorRef);
+  private zone = inject(NgZone);
   readonly chart = viewChild<HTMLCanvasElement>('dynamicChartCanvas');
+
+  private lastHoveredPoint: any = null;
+  private mouseDownPos = { x: 0, y: 0 };
+  private mouseDownTime = 0;
 
 
 
@@ -63,12 +70,16 @@ export class Main {
     { value: 'npc', label: 'NPC' },
     { value: 'ppc', label: 'PPC (%)' },
     { value: 'rmf', label: 'RMF' },
-    { value: 'rms', label: 'RMS' }
+    { value: 'rms', label: 'RMS' },
+    { value: 'leche_ha', label: 'Producción Leche (kg/ha)' },
+    { value: 'ingreso_ha', label: 'Ingreso Bruto ($/ha)' }
   ];
 
   availableMetricOptions = computed(() => {
     const cycles = this.filteredCiclos() || [];
     return this.metricOptions.filter(opt =>
+      opt.value === 'leche_ha' ||
+      opt.value === 'ingreso_ha' ||
       cycles.some(c => c.laboratorio_info?.[opt.value] != null)
     );
   });
@@ -92,8 +103,16 @@ export class Main {
     ms: '#2563EB', pc: '#0EA5E9', fdn: '#F59E0B', cnf: '#7C3AED',
     gc: '#DB2777', cen: '#475569', pem: '#EA580C', pff: '#0F766E',
     dff: '#16A34A', ucaff: '#65A30D', npc: '#D97706', ppc: '#92400E',
-    rmf: '#8B5CF6', rms: '#0284C7'
+    rmf: '#8B5CF6', rms: '#0284C7',
+    leche_ha: '#3B82F6', ingreso_ha: '#10B981'
   };
+
+  ngAfterViewInit() {
+    // Triggers a layout recalculation on Plotly once the component views and CSS are fully rendered
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 150);
+  }
 
 
   selectedCiclos = input<any[]>([]);
@@ -457,6 +476,10 @@ export class Main {
   // Computed para el modo investigador (Plotly 3D)
   public plotlyData = computed(() => {
     const ciclos = this.filteredCiclos() || [];
+    const selected = this.selectedCiclos() || [];
+    const selectedIds = new Set(selected.map(c => c.id));
+    const hasSelection = selectedIds.size > 0;
+
     const xKey = this.xAxis();
     const yKey = this.yAxis();
     const zKey = this.zAxis();
@@ -466,15 +489,42 @@ export class Main {
     const zData: number[] = [];
     const colors: string[] = [];
     const texts: string[] = [];
+    const customData: any[] = [];
 
     ciclos.forEach(c => {
       const lab = c.laboratorio_info;
-      if (lab && lab[xKey] != null && lab[yKey] != null && lab[zKey] != null) {
-        xData.push(lab[xKey]);
-        yData.push(lab[yKey]);
-        zData.push(lab[zKey]);
-        colors.push(this.hybridColors[c.hibrido_nombre] || '#2563EB');
-        texts.push(`${c.hibrido_nombre} (${c.year})`);
+      if (lab) {
+        const getVal = (key: string): number | null => {
+          if (key === 'leche_ha') {
+            return this.calcularLecheHa(c);
+          }
+          if (key === 'ingreso_ha') {
+            return this.calcularLecheHa(c) * this.precioLeche();
+          }
+          return lab[key] !== undefined ? lab[key] : null;
+        };
+
+        const valX = getVal(xKey);
+        const valY = getVal(yKey);
+        const valZ = getVal(zKey);
+
+        if (valX !== null && valY !== null && valZ !== null) {
+          xData.push(valX);
+          yData.push(valY);
+          zData.push(valZ);
+
+          const isSelected = selectedIds.has(c.id);
+          const baseColor = this.hybridColors[c.hibrido_nombre] || '#2563EB';
+
+          if (hasSelection) {
+            colors.push(isSelected ? '#10B981' : 'rgba(74, 85, 104, 0.25)');
+          } else {
+            colors.push(baseColor);
+          }
+
+          texts.push(`${c.hibrido_nombre} (${c.year})`);
+          customData.push(c.id);
+        }
       }
     });
 
@@ -483,6 +533,7 @@ export class Main {
       y: yData,
       z: zData,
       text: texts,
+      customdata: customData,
       mode: 'markers',
       type: 'scatter3d',
       marker: {
@@ -500,8 +551,7 @@ export class Main {
 
     return {
       autosize: true,
-      height: 600,
-      margin: { l: 0, r: 0, b: 0, t: 0 },
+      margin: { t: 0, b: 0, l: 0, r: 0 },
       scene: {
         xaxis: { title: xLabel },
         yaxis: { title: yLabel },
@@ -512,6 +562,55 @@ export class Main {
       font: { color: '#6B7280' }
     };
   });
+
+  toggleRowSelection(id: number) {
+    this.hybridToggled.emit(id);
+  }
+
+  onPlotlyClick(event: any) {
+    if (event && event.points && event.points[0]) {
+      const hibridoId = event.points[0].customdata;
+      if (hibridoId !== undefined && hibridoId !== null) {
+        this.zone.run(() => {
+          this.toggleRowSelection(hibridoId);
+        });
+      }
+    }
+  }
+
+  onPlotlyHover(event: any) {
+    if (event && event.points && event.points[0]) {
+      this.lastHoveredPoint = event.points[0];
+    }
+  }
+
+  onPlotlyUnhover(event: any) {
+    this.lastHoveredPoint = null;
+  }
+
+  onMouseDown(event: MouseEvent) {
+    this.mouseDownPos = { x: event.clientX, y: event.clientY };
+    this.mouseDownTime = performance.now();
+  }
+
+  onMouseUp(event: MouseEvent) {
+    const timeDiff = performance.now() - this.mouseDownTime;
+    const dx = event.clientX - this.mouseDownPos.x;
+    const dy = event.clientY - this.mouseDownPos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // If mouse moved less than 6 pixels and released within 300ms, treat as click
+    if (dist < 6 && timeDiff < 300) {
+      if (this.lastHoveredPoint) {
+        const hibridoId = this.lastHoveredPoint.customdata;
+        if (hibridoId !== undefined && hibridoId !== null) {
+          this.zone.run(() => {
+            this.toggleRowSelection(hibridoId);
+          });
+        }
+      }
+    }
+  }
 
   // Slot Dinámico 2D
   public dynamicChartData = computed<ChartData>(() => {
@@ -577,6 +676,13 @@ export class Main {
             data = labels.map(label => {
               const id = parseInt(label.split('-ID')[1]);
               const match = hybCycles.find(c => c.id === id);
+              if (!match) return null;
+              if (m === 'leche_ha') {
+                return this.calcularLecheHa(match);
+              }
+              if (m === 'ingreso_ha') {
+                return this.calcularLecheHa(match) * this.precioLeche();
+              }
               return match?.laboratorio_info?.[m] ?? null;
             });
           } else {
@@ -585,7 +691,15 @@ export class Main {
               const matches = hybCycles.filter(c => c.year === year);
               if (matches.length === 0) return null;
               const validValues = matches
-                .map(c => c.laboratorio_info?.[m])
+                .map(c => {
+                  if (m === 'leche_ha') {
+                    return this.calcularLecheHa(c);
+                  }
+                  if (m === 'ingreso_ha') {
+                    return this.calcularLecheHa(c) * this.precioLeche();
+                  }
+                  return c.laboratorio_info?.[m];
+                })
                 .filter(v => v != null && typeof v === 'number');
               
               if (validValues.length === 0) return null;
@@ -622,7 +736,18 @@ export class Main {
           const opt = this.metricOptions.find(o => o.value === m);
           return {
             label: opt?.label || m,
-            data: seleccionados.map(s => s.promedio[m] !== '--' ? parseFloat(s.promedio[m]) : null),
+            data: seleccionados.map(s => {
+              if (m === 'leche_ha' || m === 'ingreso_ha') {
+                const cycles = s.selected_ciclos || s.ciclos || [];
+                if (cycles.length === 0) return null;
+                const vals = cycles.map((c: any) => {
+                  if (m === 'leche_ha') return this.calcularLecheHa(c);
+                  return this.calcularLecheHa(c) * this.precioLeche();
+                });
+                return vals.reduce((a: number, b: number) => a + b, 0) / vals.length;
+              }
+              return s.promedio[m] !== '--' && s.promedio[m] !== undefined ? parseFloat(s.promedio[m]) : null;
+            }),
             backgroundColor: this.metricColors[m] || '#9E9E9E'
           };
         })
@@ -640,8 +765,23 @@ export class Main {
     plugins: {
       legend: { position: 'bottom', labels: { usePointStyle: true } }
     },
+    layout: {
+      padding: {
+        bottom: 45
+      }
+    },
     animation: false,
-    scales: this.activeChartType() !== 'radar' ? { y: { beginAtZero: true } } : undefined
+    scales: this.activeChartType() !== 'radar' ? {
+      y: { beginAtZero: true },
+      x: {
+        type: 'category',
+        ticks: {
+          autoSkip: false,
+          maxRotation: 45,
+          minRotation: 45
+        }
+      }
+    } : undefined
   }));
 
 
