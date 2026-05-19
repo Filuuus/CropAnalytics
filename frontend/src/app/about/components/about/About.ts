@@ -1,24 +1,14 @@
 import { Component, ChangeDetectionStrategy } from "@angular/core";
-import { Router } from "@angular/router";
+import { CommonModule } from "@angular/common";
 import { Header } from "../../../shared/components/header/Header";
 import { Footer } from "../../../shared/components/footer/Footer";
-import { CommonModule } from "@angular/common";
 
 @Component({
-  selector: "home",
+  selector: "about",
+  standalone: true,
   imports: [CommonModule, Header, Footer],
-  templateUrl: "./Home.html",
+  templateUrl: "./About.html",
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { "[style.display]": "'contents'" },
 })
-export class Home {
-  constructor(private router: Router) { }
-
-  onGoToDashboardClick() {
-    this.router.navigate(["/dashboard"]);
-  }
-
-  onAboutClick() {
-    this.router.navigate(["/about"]);
-  }
-}
+export class About {}

@@ -45,6 +45,10 @@ export class Header {
     this.router.navigate(["/users-management"]);
   }
 
+  onAboutClick() {
+    this.router.navigate(["/about"]);
+  }
+
   onLogoutClick() {
     this.isThemeMenuOpen.set(false);
     this.isUploadMenuOpen.set(false);

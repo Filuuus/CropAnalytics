@@ -4,14 +4,14 @@
   <div class="container mx-auto flex h-16 items-center justify-between px-4">
     <div class="flex cursor-pointer items-center gap-2" (click)="onHomeClick()">
       <img src="assets/images/imgs/logoP.png" class="h-9 w-9" alt="Logo" />
-      <span class="text-xl font-bold text-slate-800 dark:text-slate-100">CropAnalytics</span>
+      <span class="text-xl font-bold text-slate-800 dark:text-slate-100">Sentineli</span>
     </div>
 
     <nav class="hidden items-center gap-8 md:flex">
       <a
         (click)="onHomeClick()"
         class="cursor-pointer font-medium text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
-        >Home</a
+        >Inicio</a
       >
       <a
         (click)="onDashboardClick()"
@@ -23,14 +23,14 @@
       <a
         (click)="onAnalyticsClick()"
         class="cursor-pointer font-medium text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
-        >Analytics</a
+        >Analíticas</a
       >
       @if (authService.isAuthenticated()) {
       <div class="relative flex items-center gap-1" (click)="$event.stopPropagation()">
         <a
           (click)="onUploadDataClick()"
           class="cursor-pointer font-medium text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
-          >Upload Data</a
+          >Subir Datos</a
         >
         <button
           (click)="toggleUploadMenu()"
@@ -76,8 +76,8 @@
         >Usuarios</a
       >
       }
-      <a class="cursor-pointer font-medium text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
-        >About</a
+      <a (click)="onAboutClick()" class="cursor-pointer font-medium text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-300"
+        >Nosotros</a
       >
     </nav>
 
@@ -201,7 +201,7 @@
           Cerrar sesion
         </h2>
         <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Se cerrara tu sesion actual en CropAnalytics. Podras iniciar sesion de nuevo cuando lo necesites.
+          Se cerrará tu sesión actual en Sentineli. Podrás iniciar sesión de nuevo cuando lo necesites.
         </p>
       </div>
     </div>
