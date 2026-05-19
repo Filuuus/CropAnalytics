@@ -830,10 +830,10 @@ export class Main implements AfterViewInit {
     const canvas = canvasEl || document.querySelector('.vista-investigador canvas') as HTMLCanvasElement;
     const chartImg2d = canvas ? this.procesarImagenFondoBlanco(canvas) : null;
 
-    // 1. Configuración inicial del PDF (Portrait)
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    // 1. Configuración inicial del PDF (Landscape para espacio extra)
+    const pdf = new jsPDF('l', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
     // 2. Cabecera y Título
     pdf.setFontSize(22);
@@ -843,45 +843,130 @@ export class Main implements AfterViewInit {
     // 3. Metadatos de Filtros (Contexto Analítico)
     pdf.setFontSize(9);
     pdf.setTextColor(100, 100, 100);
+    
+    const rawLoc = this.selectedLocation().map(l => l.label).join(', ');
+    const rawYear = this.selectedYear().join(', ');
+    const rawMarca = this.selectedMarca().join(', ');
+    const rawCond = this.selectedCondicion().join(', ');
+    
+    const filtroUbicacion = rawLoc && rawLoc !== 'Todas' ? rawLoc : 'Todas';
+    const filtroAnio = rawYear && rawYear !== 'Todos' ? rawYear : 'Todos';
+    const filtroMarca = rawMarca && rawMarca !== 'Todas' ? rawMarca : 'Todas';
+    const filtroCondicion = rawCond && rawCond !== 'Todas' ? rawCond : 'Todas';
+    const textoBusqueda = this.searchTerm();
+
     const filterContext = [
-      `Ubicación: ${this.selectedLocation().map(l => l.label).join(', ') || 'Todas'}`,
-      `Año: ${this.selectedYear().join(', ') || 'Todos'}`,
-      `Marca: ${this.selectedMarca().join(', ') || 'Todas'}`,
-      `Condición: ${this.selectedCondicion().join(', ') || 'Todas'}`,
-      `Búsqueda: ${this.searchTerm() || 'Ninguna'}`
+      `Ubicación: ${filtroUbicacion}`,
+      `Año: ${filtroAnio}`,
+      `Marca: ${filtroMarca}`,
+      `Condición: ${filtroCondicion}`,
+      `Búsqueda: ${textoBusqueda || 'Ninguna'}`
     ];
     pdf.text(filterContext.join('  |  '), 15, 28, { maxWidth: pageWidth - 30 });
 
     pdf.setDrawColor(230, 230, 230);
     pdf.line(15, 33, pageWidth - 15, 33);
 
+    // Formateadores financieros y numéricos
+    const formatCurrency = (val: number) => {
+      if (!val || isNaN(val)) return '$0 MXN';
+      return `$${Math.round(val).toLocaleString('es-MX')} MXN`;
+    };
+    const formatNumber = (val: number) => {
+      if (!val || isNaN(val)) return '0 kg/ha';
+      return `${Math.round(val).toLocaleString('es-MX')} kg/ha`;
+    };
+
     try {
-      // 4. Captura Nativa de Plotly (3D)
+      // 4. Cálculos Financieros del Modelo MILK2024
+      const calculatedData = this.hibridosSeleccionados().map(h => {
+        const cycles = h.ciclos_detalle || [];
+        let avgLeche = 0;
+        let avgIngreso = 0;
+        if (cycles.length > 0) {
+          const totalLeche = cycles.reduce((sum: number, c: any) => sum + this.calcularLecheHa(c), 0);
+          avgLeche = totalLeche / cycles.length;
+          avgIngreso = avgLeche * this.precioLeche();
+        }
+        return {
+          hibrido: h,
+          avgLeche,
+          avgIngreso
+        };
+      });
+
+      let topPerformer = { hibrido_nombre: 'N/A', avgIngreso: 0 };
+      let promedioGeneralIngreso = 0;
+
+      if (calculatedData.length > 0) {
+        const sorted = [...calculatedData].sort((a, b) => b.avgIngreso - a.avgIngreso);
+        topPerformer = {
+          hibrido_nombre: sorted[0].hibrido.hibrido_nombre,
+          avgIngreso: sorted[0].avgIngreso
+        };
+        const totalIngreso = calculatedData.reduce((sum, item) => sum + item.avgIngreso, 0);
+        promedioGeneralIngreso = totalIngreso / calculatedData.length;
+      }
+
+      // Renderizado del Resumen Ejecutivo (Tarjeta Visual)
+      pdf.setFillColor(248, 250, 252); // bg-slate-50
+      pdf.setDrawColor(226, 232, 240); // border-slate-200
+      pdf.roundedRect(15, 37, pageWidth - 30, 20, 2, 2, 'FD');
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(30, 41, 59); // slate-800
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('RESUMEN DE INTELIGENCIA FINANCIERA (MODELO MILK2024)', 20, 43);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(71, 85, 105); // slate-600
+      pdf.text('Híbrido Líder Financiero:', 20, 51);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(16, 185, 129); // emerald-500
+      pdf.text(`${topPerformer.hibrido_nombre} (${formatCurrency(topPerformer.avgIngreso)})`, 60, 51);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(71, 85, 105);
+      pdf.text('Promedio de Ingreso General de la Selección:', 140, 51);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(30, 41, 59);
+      pdf.text(formatCurrency(promedioGeneralIngreso), 208, 51);
+
+      // Restablecer fuentes para el resto del reporte
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(50, 50, 50);
+
+      // 5. Captura Nativa de Plotly (3D) y Chart.js (2D) colocados lado a lado
       const plotlyEl = document.querySelector('plotly-plot .js-plotly-plot') as any;
       if (plotlyEl) {
-        pdf.setFontSize(13);
-        pdf.setTextColor(50, 50, 50);
-        pdf.text('Distribución Multidimensional (3D):', 15, 42);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Distribución Multidimensional (3D):', 15, 67);
+        pdf.setFont('helvetica', 'normal');
 
         const plotlyImg = await PlotlyJS.toImage(plotlyEl, {
           format: 'png',
           width: 1000,
           height: 750
         });
-        pdf.addImage(plotlyImg, 'PNG', 15, 47, 180, 95);
+        pdf.addImage(plotlyImg, 'PNG', 15, 72, 125, 85);
+        
+        const labelX = this.metricOptions.find(m => m.value === this.xAxis())?.label || this.xAxis();
+        const labelY = this.metricOptions.find(m => m.value === this.yAxis())?.label || this.yAxis();
+        const labelZ = this.metricOptions.find(m => m.value === this.zAxis())?.label || this.zAxis();
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Ejes 3D -> X: ${labelX} | Y: ${labelY} | Z: ${labelZ}`, 15, 162);
       }
 
-      // 5. Captura Segura de Chart.js (2D)
       if (chartImg2d) {
-        pdf.text('Análisis de Perfil Nutricional (2D):', 15, 155);
-        pdf.addImage(chartImg2d, 'PNG', 15, 160, 180, 90);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Análisis de Perfil Nutricional (2D):', 150, 67);
+        pdf.setFont('helvetica', 'normal');
+        pdf.addImage(chartImg2d, 'PNG', 150, 72, 132, 85);
       }
-
-
-
-
-
-
 
       // 6. Tabla de Datos Detallada (Página 2)
       pdf.addPage();
@@ -889,23 +974,28 @@ export class Main implements AfterViewInit {
       pdf.setTextColor(46, 125, 50);
       pdf.text('Desglose de Datos Seleccionados', 15, 20);
 
-      const rows = this.hibridosSeleccionados().map(h => [
-        h.hibrido_nombre,
-        h.promedio.ms + '%',
-        h.promedio.pc + '%',
-        h.promedio.fdn + '%',
-        h.promedio.cnf + '%'
+      const rows = calculatedData.map(item => [
+        item.hibrido.hibrido_nombre,
+        item.hibrido.promedio.rms,
+        item.hibrido.promedio.fdn + '%',
+        item.hibrido.promedio.cnf + '%',
+        formatNumber(item.avgLeche),
+        formatCurrency(item.avgIngreso)
       ]);
 
       autoTable(pdf, {
-        startY: 30,
-        head: [['Híbrido', 'MS', 'PC', 'FDN', 'Almidón (CNF)']],
+        startY: 28,
+        head: [['Híbrido', 'RMS (t/ha)', 'Fibra (FDN)', 'Almidón (CNF)', 'Leche (kg/ha)', 'Ingreso Bruto']],
         body: rows,
         theme: 'striped',
-        headStyles: { fillColor: [46, 125, 50], halign: 'center' },
+        headStyles: { fillColor: [30, 41, 59], halign: 'center' }, // Color gris pizarra corporativo
         columnStyles: {
           0: { fontStyle: 'bold' },
-          1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' }
+          1: { halign: 'center' },
+          2: { halign: 'center' },
+          3: { halign: 'center' },
+          4: { halign: 'right' },
+          5: { halign: 'right', fontStyle: 'bold', textColor: [16, 185, 129] } // Resaltado verde para Ingreso
         }
       });
 
@@ -920,8 +1010,5 @@ export class Main implements AfterViewInit {
       console.error('Error detallado en exportarPDF:', error);
     }
   }
-
-
-
 }
 
