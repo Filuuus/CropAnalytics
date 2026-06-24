@@ -28,7 +28,8 @@
             ],
             "styles": [
               "src/styles.css",
-              "src/app/app.css"
+              "src/app/app.css",
+              "node_modules/leaflet/dist/leaflet.css"
             ]
           },
           "configurations": {

@@ -1,0 +1,47 @@
+<div class="map-container">
+  <div class="map-header">
+    <h3 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+      Mapa de Estadísticas por Región
+    </h3>
+    <button
+      (click)="refreshMap()"
+      class="rounded border border-transparent bg-slate-50 p-1.5 text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+      title="Actualizar Mapa"
+    >
+      <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="map-loading">
+      <div class="spinner"></div>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-2">Cargando datos del mapa...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="map-error">
+      <svg class="w-8 h-8 text-red-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="text-sm text-red-600 dark:text-red-400">{{ error() }}</p>
+    </div>
+  }
+
+  <div id="map" class="map-view"></div>
+
+  <div class="map-legend">
+    <div class="flex items-center justify-between mb-1.5">
+      <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300">Producción de Leche (kg/ha)</h4>
+      <span class="text-[10px] text-slate-500 dark:text-slate-500">Tamaño = # ciclos</span>
+    </div>
+    <div class="legend-gradient"></div>
+    <div class="legend-labels">
+      <span class="text-slate-600 dark:text-slate-400">Baja</span>
+      <span class="text-slate-600 dark:text-slate-400">Media</span>
+      <span class="text-slate-600 dark:text-slate-400">Alta</span>
+    </div>
+  </div>
+</div>

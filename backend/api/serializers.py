@@ -171,6 +171,8 @@ class CicloSerializer(serializers.ModelSerializer):
     hibrido_nombre = serializers.CharField(source='hibrido.nombre', read_only=True)
     hibrido_marca = serializers.CharField(source='hibrido.marca', read_only=True)
     laboratorio_info = ResultadoLaboratorioSerializer(source='laboratorio', read_only=True)
+    terreno_municipio = serializers.CharField(source='terreno.municipio.nombre', read_only=True)
+    terreno_estado = serializers.CharField(source='terreno.municipio.estado.nombre', read_only=True)
     
     class Meta:
         model = Ciclo

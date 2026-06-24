@@ -15,6 +15,7 @@ from .views import (
     OptimizarSemillaView,
     EstadoListView,
     MunicipioListView,
+    MapaEstadisticasView,
 )
 
 # El Router de DRF crea automáticamente las URLs para listar y ver detalles
@@ -35,5 +36,6 @@ urlpatterns = [
     path('optimizar-semilla/', OptimizarSemillaView.as_view(), name='optimizar-semilla'),
     path('estados/', EstadoListView.as_view(), name='estados-list'),
     path('municipios/', MunicipioListView.as_view(), name='municipios-list'),
+    path('mapa-estadisticas/', MapaEstadisticasView.as_view(), name='mapa-estadisticas'),
     path('', include(router.urls)),
 ]
