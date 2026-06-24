@@ -306,13 +306,26 @@ class OptimizarSemillaView(APIView):
             except Exception:
                 pass
 
-        from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max, Case, When
+        from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max, Case, When, Count
         import datetime
 
+        # Primero verificar si hay ciclos con el régimen hídrico solicitado
+        ciclos_count = Ciclo.objects.filter(condicion__iexact=regimen_hidrico).count()
+        
+        if ciclos_count == 0:
+            return Response(
+                {'detail': f'No se encontraron ciclos con régimen hídrico "{regimen_hidrico}".'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         # Agrupar y promediar en una sola consulta ORM de alto rendimiento
-        ciclos_stats = Ciclo.objects.filter(condicion__iexact=regimen_hidrico) \
-            .values('hibrido__id', 'hibrido__nombre', 'hibrido__marca') \
+        # Solo incluir ciclos que tengan resultados de laboratorio
+        ciclos_stats = Ciclo.objects.filter(
+            condicion__iexact=regimen_hidrico,
+            laboratorio__isnull=False
+        ).values('hibrido__id', 'hibrido__nombre', 'hibrido__marca') \
             .annotate(
+                count_ciclos=Count('id'),
                 avg_ms=Avg('laboratorio__ms'),
                 avg_cp=Avg('laboratorio__pc'),
                 avg_ee=Avg('laboratorio__gc'),
@@ -342,6 +355,13 @@ class OptimizarSemillaView(APIView):
                 # Fechas extremas para calcular las ventanas
                 min_siembra=Min('fecha_siembra'),
                 max_siembra=Max('fecha_siembra')
+            ).filter(count_ciclos__gt=0)
+
+        # Verificar si hay híbridos con datos de laboratorio
+        if not ciclos_stats.exists():
+            return Response(
+                {'detail': f'No se encontraron híbridos con resultados de laboratorio bajo el régimen hídrico "{regimen_hidrico}". Por favor, asegúrate de que existan ciclos con datos de laboratorio cargados.'},
+                status=status.HTTP_404_NOT_FOUND
             )
 
         ranking = []
