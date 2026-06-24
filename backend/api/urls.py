@@ -11,6 +11,7 @@ from .views import (
     TerrenoViewSet,
     UserAdminViewSet,
     CalcularProductorView,
+    CalcularProductorGeoView,
     OptimizarSemillaView,
 )
 
@@ -28,6 +29,7 @@ urlpatterns = [
     path('auth/logout/', LogoutView.as_view(), name='auth-logout'),
     path('auth/me/', MeView.as_view(), name='auth-me'),
     path('calcular-productor/', CalcularProductorView.as_view(), name='calcular-productor'),
+    path('calcular-productor-geo/', CalcularProductorGeoView.as_view(), name='calcular-productor-geo'),
     path('optimizar-semilla/', OptimizarSemillaView.as_view(), name='optimizar-semilla'),
     path('', include(router.urls)),
 ]

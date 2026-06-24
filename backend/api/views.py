@@ -178,7 +178,8 @@ class CicloViewSet(viewsets.ReadOnlyModelViewSet):
 
 from django.db.models import Avg
 from .utils.milk_calculator import calcular_metricas_milk2024
-from .models import Hibrido, ResultadoLaboratorio
+from .utils.geospatial_estimator import aplicar_ajuste_geoespacial
+from .models import Hibrido, ResultadoLaboratorio, Terreno
 
 class CalcularProductorView(APIView):
     permission_classes = [AllowAny]
@@ -430,3 +431,153 @@ class OptimizarSemillaView(APIView):
         ranking.sort(key=lambda x: x['leche_ha'], reverse=True)
 
         return Response(ranking, status=status.HTTP_200_OK)
+
+class CalcularProductorGeoView(APIView):
+    """
+    Endpoint mejorado que incluye ajustes geoespaciales basados en la ubicación del terreno.
+    Permite al productor obtener estimaciones más precisas considerando factores geográficos.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        hibrido_id = request.data.get('hibrido_id')
+        yield_dm = request.data.get('yield_dm')
+        terreno_id = request.data.get('terreno_id')
+        
+        # Coordenadas opcionales si no se proporciona terreno_id
+        latitud = request.data.get('latitud')
+        longitud = request.data.get('longitud')
+        altitud = request.data.get('altitud')
+
+        if not hibrido_id or yield_dm is None:
+            return Response(
+                {'detail': 'hibrido_id y yield_dm son campos obligatorios.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            yield_dm = float(yield_dm)
+        except ValueError:
+            return Response(
+                {'detail': 'yield_dm debe ser un número válido.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Buscar el híbrido
+        try:
+            if isinstance(hibrido_id, int) or (isinstance(hibrido_id, str) and hibrido_id.isdigit()):
+                hibrido = Hibrido.objects.get(id=int(hibrido_id))
+            else:
+                hibrido = Hibrido.objects.get(nombre__iexact=str(hibrido_id))
+        except Hibrido.DoesNotExist:
+            return Response(
+                {'detail': f'Híbrido con ID o nombre "{hibrido_id}" no encontrado.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Obtener coordenadas del terreno o usar las proporcionadas
+        if terreno_id:
+            try:
+                terreno = Terreno.objects.get(id=terreno_id)
+                latitud = terreno.latitud_gps
+                longitud = terreno.longitud_gps
+                altitud = terreno.altitud
+                ubicacion_info = {
+                    'terreno_id': terreno.id,
+                    'municipio': terreno.municipio.nombre,
+                    'estado': terreno.municipio.estado.nombre
+                }
+            except Terreno.DoesNotExist:
+                return Response(
+                    {'detail': f'Terreno con ID {terreno_id} no encontrado.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        elif latitud is not None and longitud is not None:
+            try:
+                latitud = float(latitud)
+                longitud = float(longitud)
+                altitud = float(altitud) if altitud is not None else None
+                ubicacion_info = {
+                    'coordenadas_personalizadas': True,
+                    'latitud': latitud,
+                    'longitud': longitud,
+                    'altitud': altitud
+                }
+            except (ValueError, TypeError):
+                return Response(
+                    {'detail': 'Las coordenadas deben ser números válidos.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            return Response(
+                {'detail': 'Debe proporcionar terreno_id o coordenadas (latitud, longitud).'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Obtener promedios bromatológicos del híbrido
+        averages = ResultadoLaboratorio.objects.filter(ciclo__hibrido=hibrido).aggregate(
+            avg_ms=Avg('ms'),
+            avg_pc=Avg('pc'),
+            avg_gc=Avg('gc'),
+            avg_cen=Avg('cen'),
+            avg_fdn=Avg('fdn')
+        )
+
+        # Preparar datos para el calculador
+        datos = {
+            'ms': averages['avg_ms'] or 35.0,
+            'cp': averages['avg_pc'] or 8.5,
+            'ee': averages['avg_gc'] or 3.2,
+            'ash': averages['avg_cen'] or 4.0,
+            'ndf': averages['avg_fdn'] or 42.0,
+            'ndfd': 58.0,
+            'undf240': 15.0,
+            'starch': 30.0,
+            'starch_d': 75.0,
+            'yield_dm': yield_dm,
+        }
+
+        # Calcular métricas MILK2024 base
+        resultados_base = calcular_metricas_milk2024(datos)
+
+        # Aplicar ajuste geoespacial
+        ajuste_geo = aplicar_ajuste_geoespacial(
+            rendimiento_base=yield_dm,
+            latitud=latitud,
+            longitud=longitud,
+            altitud=altitud
+        )
+
+        # Recalcular con rendimiento ajustado
+        datos_ajustados = datos.copy()
+        datos_ajustados['yield_dm'] = ajuste_geo['rendimiento_ajustado']
+        resultados_ajustados = calcular_metricas_milk2024(datos_ajustados)
+
+        return Response({
+            'hibrido': {
+                'id': hibrido.id,
+                'nombre': hibrido.nombre,
+                'marca': hibrido.marca
+            },
+            'ubicacion': ubicacion_info,
+            'valores_bromatologicos_promedio': {
+                'ms': round(datos['ms'], 2),
+                'cp': round(datos['cp'], 2),
+                'ee': round(datos['ee'], 2),
+                'ash': round(datos['ash'], 2),
+                'ndf': round(datos['ndf'], 2),
+                'ndfd': datos['ndfd'],
+                'undf240': datos['undf240'],
+                'starch': datos['starch'],
+                'starch_d': datos['starch_d']
+            },
+            'estimacion_base': {
+                **resultados_base,
+                'yield_dm': yield_dm
+            },
+            'ajuste_geoespacial': ajuste_geo,
+            'estimacion_ajustada': {
+                **resultados_ajustados,
+                'yield_dm': ajuste_geo['rendimiento_ajustado']
+            }
+        }, status=status.HTTP_200_OK)
