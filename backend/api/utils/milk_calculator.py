@@ -224,3 +224,151 @@ def calcular_metricas_milk2024(datos: dict) -> dict:
         'leche_ha': round(leche_ha, 2),
         'confianza': confianza_info
     }
+
+def calcular_valor_ensilaje(datos: dict, resultados_milk: dict, precios: dict = None) -> dict:
+    """
+    Calcula el valor económico del ensilaje para diferentes escenarios de producción:
+    1. Venta de ensilaje (precio por tonelada de materia seca)
+    2. Uso propio para producción lechera (valor basado en leche producida)
+    3. Compra de ensilaje para alimentación (costo de adquisición)
+    
+    Args:
+        datos: Datos nutricionales y de rendimiento
+        resultados_milk: Resultados del cálculo MILK2024
+        precios: Diccionario con precios de mercado (opcional)
+    
+    Returns:
+        Diccionario con análisis económico por escenario
+    """
+    # Precios por defecto (MXN)
+    if precios is None:
+        precios = {}
+    
+    precio_ensilaje_ton_ms = precios.get('ensilaje_ton_ms', 2800.0)  # MXN por tonelada MS
+    precio_leche_litro = precios.get('leche_litro', 10.50)  # MXN por litro
+    costo_produccion_ensilaje = precios.get('costo_produccion', 1800.0)  # MXN/ton MS
+    costo_transporte_ton = precios.get('transporte', 150.0)  # MXN por tonelada
+    
+    yield_dm = datos.get('yield_dm', 0.0)  # Toneladas MS por hectárea
+    leche_ha = resultados_milk.get('leche_ha', 0.0)  # kg leche por hectárea
+    leche_ton = resultados_milk.get('leche_ton', 0.0)  # kg leche por tonelada MS
+    nel = resultados_milk.get('nel', 0.0)  # Mcal/kg
+    
+    # ESCENARIO 1: Productor que VENDE ensilaje
+    ingreso_venta_bruto = yield_dm * precio_ensilaje_ton_ms
+    costo_produccion_total = yield_dm * costo_produccion_ensilaje
+    utilidad_venta = ingreso_venta_bruto - costo_produccion_total
+    margen_venta = (utilidad_venta / ingreso_venta_bruto * 100) if ingreso_venta_bruto > 0 else 0
+    
+    escenario_venta = {
+        'descripcion': 'Productor que vende ensilaje',
+        'rendimiento_ms_ha': round(yield_dm, 2),
+        'precio_venta_ton_ms': precio_ensilaje_ton_ms,
+        'ingreso_bruto_ha': round(ingreso_venta_bruto, 2),
+        'costo_produccion_ha': round(costo_produccion_total, 2),
+        'utilidad_neta_ha': round(utilidad_venta, 2),
+        'margen_utilidad': round(margen_venta, 2),
+        'roi': round((utilidad_venta / costo_produccion_total * 100) if costo_produccion_total > 0 else 0, 2)
+    }
+    
+    # ESCENARIO 2: Productor que USA ensilaje propio (producción lechera)
+    ingreso_leche = leche_ha * precio_leche_litro
+    costo_ensilaje_propio = costo_produccion_total
+    # Costos adicionales de producción lechera (alimentación complementaria, manejo, etc.)
+    costo_adicional_lecheria = leche_ha * 3.5  # ~3.5 MXN por litro producido
+    costo_total_lecheria = costo_ensilaje_propio + costo_adicional_lecheria
+    utilidad_lecheria = ingreso_leche - costo_total_lecheria
+    margen_lecheria = (utilidad_lecheria / ingreso_leche * 100) if ingreso_leche > 0 else 0
+    
+    # Valor implícito del ensilaje basado en la leche que produce
+    valor_implicito_ensilaje = (leche_ton * precio_leche_litro) / 1000  # Por tonelada MS
+    
+    escenario_uso_propio = {
+        'descripcion': 'Productor que usa ensilaje para sus vacas',
+        'rendimiento_ms_ha': round(yield_dm, 2),
+        'produccion_leche_ha': round(leche_ha, 2),
+        'produccion_leche_ton_ms': round(leche_ton, 2),
+        'precio_leche_litro': precio_leche_litro,
+        'ingreso_leche_ha': round(ingreso_leche, 2),
+        'costo_ensilaje_ha': round(costo_ensilaje_propio, 2),
+        'costo_adicional_lecheria_ha': round(costo_adicional_lecheria, 2),
+        'costo_total_ha': round(costo_total_lecheria, 2),
+        'utilidad_neta_ha': round(utilidad_lecheria, 2),
+        'margen_utilidad': round(margen_lecheria, 2),
+        'valor_implicito_ensilaje_ton': round(valor_implicito_ensilaje, 2),
+        'roi': round((utilidad_lecheria / costo_total_lecheria * 100) if costo_total_lecheria > 0 else 0, 2)
+    }
+    
+    # ESCENARIO 3: Productor que COMPRA ensilaje
+    costo_compra_ensilaje = yield_dm * (precio_ensilaje_ton_ms + costo_transporte_ton)
+    ingreso_leche_comprador = leche_ha * precio_leche_litro
+    costo_adicional_comprador = leche_ha * 3.5
+    costo_total_comprador = costo_compra_ensilaje + costo_adicional_comprador
+    utilidad_comprador = ingreso_leche_comprador - costo_total_comprador
+    margen_comprador = (utilidad_comprador / ingreso_leche_comprador * 100) if ingreso_leche_comprador > 0 else 0
+    
+    # Precio máximo que debería pagar por el ensilaje para mantener rentabilidad
+    margen_minimo_deseado = 0.20  # 20%
+    ingreso_objetivo = ingreso_leche_comprador * (1 - margen_minimo_deseado)
+    precio_maximo_ensilaje = (ingreso_objetivo - costo_adicional_comprador) / yield_dm if yield_dm > 0 else 0
+    
+    escenario_compra = {
+        'descripcion': 'Productor que compra ensilaje',
+        'necesidad_ms_ha': round(yield_dm, 2),
+        'precio_compra_ton_ms': precio_ensilaje_ton_ms,
+        'costo_transporte_ton': costo_transporte_ton,
+        'costo_ensilaje_ha': round(costo_compra_ensilaje, 2),
+        'produccion_leche_ha': round(leche_ha, 2),
+        'ingreso_leche_ha': round(ingreso_leche_comprador, 2),
+        'costo_adicional_lecheria_ha': round(costo_adicional_comprador, 2),
+        'costo_total_ha': round(costo_total_comprador, 2),
+        'utilidad_neta_ha': round(utilidad_comprador, 2),
+        'margen_utilidad': round(margen_comprador, 2),
+        'precio_maximo_recomendado_ton': round(precio_maximo_ensilaje, 2),
+        'roi': round((utilidad_comprador / costo_total_comprador * 100) if costo_total_comprador > 0 else 0, 2)
+    }
+    
+    # ANÁLISIS COMPARATIVO
+    mejor_escenario = max(
+        [('venta', escenario_venta['utilidad_neta_ha']),
+         ('uso_propio', escenario_uso_propio['utilidad_neta_ha']),
+         ('compra', escenario_compra['utilidad_neta_ha'])],
+        key=lambda x: x[1]
+    )
+    
+    recomendacion = {
+        'mejor_opcion': mejor_escenario[0],
+        'utilidad_maxima_ha': round(mejor_escenario[1], 2),
+        'diferencia_vs_venta': round(escenario_uso_propio['utilidad_neta_ha'] - escenario_venta['utilidad_neta_ha'], 2),
+        'factor_decision': 'produccion_lechera' if mejor_escenario[0] == 'uso_propio' else 'venta_directa',
+        'justificacion': _generar_recomendacion_ensilaje(escenario_venta, escenario_uso_propio, escenario_compra, mejor_escenario[0])
+    }
+    
+    return {
+        'escenario_venta': escenario_venta,
+        'escenario_uso_propio': escenario_uso_propio,
+        'escenario_compra': escenario_compra,
+        'recomendacion': recomendacion,
+        'parametros_mercado': {
+            'precio_ensilaje_ton_ms': precio_ensilaje_ton_ms,
+            'precio_leche_litro': precio_leche_litro,
+            'costo_produccion_ton_ms': costo_produccion_ensilaje,
+            'costo_transporte_ton': costo_transporte_ton
+        }
+    }
+
+def _generar_recomendacion_ensilaje(venta: dict, uso_propio: dict, compra: dict, mejor: str) -> str:
+    """Genera recomendación textual para el productor."""
+    if mejor == 'uso_propio':
+        diferencia = uso_propio['utilidad_neta_ha'] - venta['utilidad_neta_ha']
+        return (f"La producción lechera propia genera ${diferencia:,.2f} MXN más por hectárea "
+                f"que vender el ensilaje. Con un ROI de {uso_propio['roi']:.1f}%, "
+                f"es más rentable usar el ensilaje para alimentar vacas lecheras.")
+    elif mejor == 'venta':
+        return (f"Vender el ensilaje es más rentable con un margen de {venta['margen_utilidad']:.1f}%. "
+                f"Genera ${venta['utilidad_neta_ha']:,.2f} MXN por hectárea sin los costos "
+                f"adicionales de la producción lechera.")
+    else:
+        return (f"Para productores sin tierra, comprar ensilaje a ${compra['precio_compra_ton_ms']:,.2f} MXN/ton "
+                f"y producir leche genera ${compra['utilidad_neta_ha']:,.2f} MXN/ha equivalente. "
+                f"Precio máximo recomendado: ${compra['precio_maximo_recomendado_ton']:,.2f} MXN/ton.")

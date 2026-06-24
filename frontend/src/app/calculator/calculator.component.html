@@ -62,6 +62,36 @@
             <div *ngIf="form.get('regimen_hidrico')?.touched && form.get('regimen_hidrico')?.invalid" class="text-rose-500 text-[10px] mt-1">El régimen hídrico es obligatorio.</div>
           </div>
 
+          <!-- Divider -->
+          <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+            <h3 class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-1.5">
+              <span>📍</span> Ubicación (Opcional)
+            </h3>
+            <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-3">Mejora las recomendaciones con datos locales</p>
+          </div>
+
+          <!-- Estado -->
+          <div>
+            <label for="estado_id" class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Estado</label>
+            <div class="relative rounded-lg shadow-sm">
+              <select id="estado_id" formControlName="estado_id" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500/50 transition-all">
+                <option [value]="null">Seleccionar estado...</option>
+                <option *ngFor="let estado of estados" [value]="estado.id">{{ estado.nombre }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Municipio -->
+          <div *ngIf="form.get('estado_id')?.value">
+            <label for="municipio_id" class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Municipio</label>
+            <div class="relative rounded-lg shadow-sm">
+              <select id="municipio_id" formControlName="municipio_id" [disabled]="loadingMunicipios || municipios.length === 0" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500/50 transition-all disabled:opacity-50">
+                <option [value]="null">{{ loadingMunicipios ? 'Cargando...' : 'Seleccionar municipio...' }}</option>
+                <option *ngFor="let municipio of municipios" [value]="municipio.id">{{ municipio.nombre }}</option>
+              </select>
+            </div>
+          </div>
+
           <!-- Cantidad de Hectáreas -->
           <div>
             <label for="hectareas" class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Cantidad de Hectáreas</label>
@@ -78,6 +108,40 @@
               <input type="number" step="0.10" id="precio_leche" formControlName="precio_leche" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500/50 transition-all placeholder:text-slate-400" placeholder="Ej: 10.50">
             </div>
             <div *ngIf="form.get('precio_leche')?.touched && form.get('precio_leche')?.invalid" class="text-rose-500 text-[10px] mt-1">Precio obligatorio mayor a 0.</div>
+          </div>
+
+          <!-- Divider -->
+          <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+            <h3 class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-1.5">
+              <span>💰</span> Parámetros Económicos
+            </h3>
+          </div>
+
+          <!-- Precio del Ensilaje -->
+          <div>
+            <label for="precio_ensilaje" class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Precio Ensilaje ($/Ton MS)</label>
+            <div class="relative rounded-lg shadow-sm">
+              <input type="number" step="50" id="precio_ensilaje" formControlName="precio_ensilaje" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500/50 transition-all placeholder:text-slate-400" placeholder="Ej: 2800">
+            </div>
+            <div *ngIf="form.get('precio_ensilaje')?.touched && form.get('precio_ensilaje')?.invalid" class="text-rose-500 text-[10px] mt-1">Precio obligatorio.</div>
+          </div>
+
+          <!-- Costo de Producción -->
+          <div>
+            <label for="costo_produccion" class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Costo Producción ($/Ha)</label>
+            <div class="relative rounded-lg shadow-sm">
+              <input type="number" step="50" id="costo_produccion" formControlName="costo_produccion" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500/50 transition-all placeholder:text-slate-400" placeholder="Ej: 1800">
+            </div>
+            <div *ngIf="form.get('costo_produccion')?.touched && form.get('costo_produccion')?.invalid" class="text-rose-500 text-[10px] mt-1">Costo obligatorio.</div>
+          </div>
+
+          <!-- Costo de Transporte -->
+          <div>
+            <label for="costo_transporte" class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Costo Transporte ($/Ton)</label>
+            <div class="relative rounded-lg shadow-sm">
+              <input type="number" step="10" id="costo_transporte" formControlName="costo_transporte" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500 dark:focus:ring-emerald-500/50 transition-all placeholder:text-slate-400" placeholder="Ej: 150">
+            </div>
+            <div *ngIf="form.get('costo_transporte')?.touched && form.get('costo_transporte')?.invalid" class="text-rose-500 text-[10px] mt-1">Costo obligatorio.</div>
           </div>
 
           <!-- Botón de Envío -->
@@ -160,6 +224,29 @@
                   <span class="text-[10px] text-slate-400 font-bold block mb-1">Híbrido Seleccionado A</span>
                   <h4 class="text-base font-black text-slate-900 dark:text-white leading-tight">{{ hibridoA.hibrido.marca }} - {{ hibridoA.hibrido.nombre }}</h4>
                   
+                  <!-- Confidence Badge A -->
+                  <div *ngIf="hibridoA.confianza" class="mt-3 p-2 rounded-lg border {{ getConfidenceClass(hibridoA.confianza) }}">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-sm">{{ getConfidenceIcon(hibridoA.confianza.nivel_confianza) }}</span>
+                      <div>
+                        <p class="text-[9px] font-bold {{ getConfidenceTextClass(hibridoA.confianza) }}">{{ hibridoA.confianza.nivel_confianza }}</p>
+                        <p class="text-[8px] text-slate-500 dark:text-slate-400">{{ hibridoA.confianza.factor_confianza | number:'1.0-0' }}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Regional Relevance Badge A -->
+                  <div *ngIf="hibridoA.relevancia_regional" class="mt-2 p-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-[9px] font-bold text-indigo-700 dark:text-indigo-400">📍 Relevancia Regional</span>
+                      <span class="text-[10px] font-black text-indigo-900 dark:text-indigo-300">{{ hibridoA.relevancia_regional.score }}%</span>
+                    </div>
+                    <p class="text-[8px] text-indigo-600 dark:text-indigo-400">
+                      {{ hibridoA.relevancia_regional.muestras_locales }} local{{ hibridoA.relevancia_regional.muestras_locales !== 1 ? 'es' : '' }} •
+                      {{ hibridoA.relevancia_regional.muestras_regionales }} regional{{ hibridoA.relevancia_regional.muestras_regionales !== 1 ? 'es' : '' }}
+                    </p>
+                  </div>
+                  
                   <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl space-y-2">
                     <div class="flex justify-between items-center text-xs">
                       <span class="text-slate-500 dark:text-slate-400">Leche/Ha:</span>
@@ -209,6 +296,29 @@
                 <div>
                   <span class="text-[10px] text-slate-400 font-bold block mb-1">Híbrido Seleccionado B</span>
                   <h4 class="text-base font-black text-slate-900 dark:text-white leading-tight">{{ hibridoB.hibrido.marca }} - {{ hibridoB.hibrido.nombre }}</h4>
+                  
+                  <!-- Confidence Badge B -->
+                  <div *ngIf="hibridoB.confianza" class="mt-3 p-2 rounded-lg border {{ getConfidenceClass(hibridoB.confianza) }}">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-sm">{{ getConfidenceIcon(hibridoB.confianza.nivel_confianza) }}</span>
+                      <div>
+                        <p class="text-[9px] font-bold {{ getConfidenceTextClass(hibridoB.confianza) }}">{{ hibridoB.confianza.nivel_confianza }}</p>
+                        <p class="text-[8px] text-slate-500 dark:text-slate-400">{{ hibridoB.confianza.factor_confianza | number:'1.0-0' }}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Regional Relevance Badge B -->
+                  <div *ngIf="hibridoB.relevancia_regional" class="mt-2 p-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-[9px] font-bold text-indigo-700 dark:text-indigo-400">📍 Relevancia Regional</span>
+                      <span class="text-[10px] font-black text-indigo-900 dark:text-indigo-300">{{ hibridoB.relevancia_regional.score }}%</span>
+                    </div>
+                    <p class="text-[8px] text-indigo-600 dark:text-indigo-400">
+                      {{ hibridoB.relevancia_regional.muestras_locales }} local{{ hibridoB.relevancia_regional.muestras_locales !== 1 ? 'es' : '' }} •
+                      {{ hibridoB.relevancia_regional.muestras_regionales }} regional{{ hibridoB.relevancia_regional.muestras_regionales !== 1 ? 'es' : '' }}
+                    </p>
+                  </div>
                   
                   <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl space-y-2">
                     <div class="flex justify-between items-center text-xs">
@@ -274,6 +384,282 @@
                 </div>
               </div>
               <span class="text-4xl">🌾</span>
+            </div>
+
+            <!-- Confidence Badge -->
+            <div *ngIf="hibridoA.confianza" class="p-4 rounded-2xl border-2 {{ getConfidenceClass(hibridoA.confianza) }}">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">{{ getConfidenceIcon(hibridoA.confianza.nivel_confianza) }}</span>
+                  <div>
+                    <h4 class="text-xs font-black uppercase tracking-wider {{ getConfidenceTextClass(hibridoA.confianza) }}">
+                      Confianza: {{ hibridoA.confianza.nivel_confianza }}
+                    </h4>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Factor: {{ hibridoA.confianza.factor_confianza | number:'1.1-1' }}%</p>
+                  </div>
+                </div>
+              </div>
+              
+              <p class="text-xs text-slate-600 dark:text-slate-400 mb-3">{{ hibridoA.confianza.justificacion }}</p>
+              
+              <div *ngIf="hibridoA.confianza.ajuste_geografico" class="mt-2 p-2 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg">
+                <p class="text-[9px] font-bold text-indigo-700 dark:text-indigo-400 mb-0.5">Ajuste Geográfico:</p>
+                <p class="text-[10px] text-indigo-600 dark:text-indigo-400">{{ hibridoA.confianza.ajuste_geografico }}</p>
+              </div>
+              
+              <div *ngIf="hibridoA.confianza.penalizaciones && hibridoA.confianza.penalizaciones.length > 0" class="mt-2">
+                <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1">Penalizaciones:</p>
+                <ul class="space-y-0.5">
+                  <li *ngFor="let pen of hibridoA.confianza.penalizaciones" class="text-[10px] text-slate-600 dark:text-slate-400 flex items-start gap-1">
+                    <span class="text-rose-500">•</span>
+                    <span>{{ pen }}</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div *ngIf="hibridoA.confianza.advertencias && hibridoA.confianza.advertencias.length > 0" class="mt-2">
+                <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 mb-1">Advertencias:</p>
+                <ul class="space-y-0.5">
+                  <li *ngFor="let adv of hibridoA.confianza.advertencias" class="text-[10px] text-slate-600 dark:text-slate-400 flex items-start gap-1">
+                    <span class="text-amber-500">⚠</span>
+                    <span>{{ adv }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Regional Relevance Card -->
+            <div *ngIf="hibridoA.relevancia_regional" class="p-5 rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">📍</span>
+                  <div>
+                    <h4 class="text-xs font-black uppercase tracking-wider text-indigo-800 dark:text-indigo-300">
+                      Relevancia Regional
+                    </h4>
+                    <p class="text-[10px] text-indigo-600 dark:text-indigo-400">Nivel: {{ hibridoA.relevancia_regional.nivel }}</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-2xl font-black text-indigo-900 dark:text-indigo-200">{{ hibridoA.relevancia_regional.score }}%</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="p-3 bg-white/50 dark:bg-slate-900/30 rounded-xl">
+                  <p class="text-[9px] text-indigo-600 dark:text-indigo-400 mb-0.5">Muestras Locales</p>
+                  <p class="text-lg font-black text-indigo-900 dark:text-indigo-200">{{ hibridoA.relevancia_regional.muestras_locales }}</p>
+                </div>
+                <div class="p-3 bg-white/50 dark:bg-slate-900/30 rounded-xl">
+                  <p class="text-[9px] text-indigo-600 dark:text-indigo-400 mb-0.5">Muestras Regionales</p>
+                  <p class="text-lg font-black text-indigo-900 dark:text-indigo-200">{{ hibridoA.relevancia_regional.muestras_regionales }}</p>
+                </div>
+              </div>
+
+              <div *ngIf="hibridoA.relevancia_regional.distancia_promedio_km" class="p-3 bg-white/50 dark:bg-slate-900/30 rounded-xl">
+                <p class="text-[9px] text-indigo-600 dark:text-indigo-400 mb-0.5">Distancia Promedio a Sitios de Prueba</p>
+                <p class="text-sm font-black text-indigo-900 dark:text-indigo-200">{{ hibridoA.relevancia_regional.distancia_promedio_km }} km</p>
+              </div>
+
+              <div *ngIf="hibridoA.relevancia_regional.desglose_scores" class="mt-3 pt-3 border-t border-indigo-200 dark:border-indigo-800">
+                <p class="text-[9px] font-bold text-indigo-700 dark:text-indigo-400 mb-2">Desglose de Scores:</p>
+                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                  <div class="flex justify-between">
+                    <span class="text-indigo-600 dark:text-indigo-400">Local (40%):</span>
+                    <strong class="text-indigo-900 dark:text-indigo-200">{{ hibridoA.relevancia_regional.desglose_scores.local }}%</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-indigo-600 dark:text-indigo-400">Regional (30%):</span>
+                    <strong class="text-indigo-900 dark:text-indigo-200">{{ hibridoA.relevancia_regional.desglose_scores.regional }}%</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-indigo-600 dark:text-indigo-400">Climático (20%):</span>
+                    <strong class="text-indigo-900 dark:text-indigo-200">{{ hibridoA.relevancia_regional.desglose_scores.climatico }}%</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-indigo-600 dark:text-indigo-400">Altitud (10%):</span>
+                    <strong class="text-indigo-900 dark:text-indigo-200">{{ hibridoA.relevancia_regional.desglose_scores.altitud }}%</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Economic Analysis Recommendation Banner -->
+            <div *ngIf="hibridoA.analisis_economico?.recomendacion" class="p-5 rounded-3xl border-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 border-indigo-300 dark:border-indigo-700">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">💡</span>
+                <div class="flex-grow">
+                  <h4 class="text-sm font-black text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-2">Recomendación Económica</h4>
+                  <p class="text-xs text-indigo-700 dark:text-indigo-400 mb-3 leading-relaxed">
+                    {{ hibridoA.analisis_economico.recomendacion.justificacion }}
+                  </p>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white/50 dark:bg-slate-900/30 p-3 rounded-xl">
+                      <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-0.5">Mejor Opción</p>
+                      <p class="text-sm font-black text-indigo-900 dark:text-indigo-200">
+                        {{ getScenarioName(hibridoA.analisis_economico.recomendacion.mejor_opcion) }}
+                      </p>
+                    </div>
+                    <div class="bg-white/50 dark:bg-slate-900/30 p-3 rounded-xl">
+                      <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-0.5">Utilidad Máxima</p>
+                      <p class="text-sm font-black text-emerald-700 dark:text-emerald-400">
+                        {{ hibridoA.analisis_economico.recomendacion.utilidad_maxima_ha | currency:'MXN':'$':'1.0-0' }}/ha
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Economic Scenarios Tabs -->
+            <div *ngIf="hibridoA.analisis_economico" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800/80 overflow-hidden">
+              <div class="border-b border-slate-200 dark:border-slate-800">
+                <div class="flex">
+                  <button
+                    (click)="selectedScenario = 'venta'"
+                    [class.bg-emerald-50]="selectedScenario === 'venta'"
+                    [class.dark:bg-emerald-950/20]="selectedScenario === 'venta'"
+                    [class.border-b-2]="selectedScenario === 'venta'"
+                    [class.border-emerald-500]="selectedScenario === 'venta'"
+                    [class.text-emerald-700]="selectedScenario === 'venta'"
+                    [class.dark:text-emerald-400]="selectedScenario === 'venta'"
+                    class="flex-1 px-4 py-3 text-xs font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    🌾 Vender Ensilaje
+                  </button>
+                  <button
+                    (click)="selectedScenario = 'uso_propio'"
+                    [class.bg-blue-50]="selectedScenario === 'uso_propio'"
+                    [class.dark:bg-blue-950/20]="selectedScenario === 'uso_propio'"
+                    [class.border-b-2]="selectedScenario === 'uso_propio'"
+                    [class.border-blue-500]="selectedScenario === 'uso_propio'"
+                    [class.text-blue-700]="selectedScenario === 'uso_propio'"
+                    [class.dark:text-blue-400]="selectedScenario === 'uso_propio'"
+                    class="flex-1 px-4 py-3 text-xs font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    🥛 Usar en Lechería
+                  </button>
+                  <button
+                    (click)="selectedScenario = 'compra'"
+                    [class.bg-amber-50]="selectedScenario === 'compra'"
+                    [class.dark:bg-amber-950/20]="selectedScenario === 'compra'"
+                    [class.border-b-2]="selectedScenario === 'compra'"
+                    [class.border-amber-500]="selectedScenario === 'compra'"
+                    [class.text-amber-700]="selectedScenario === 'compra'"
+                    [class.dark:text-amber-400]="selectedScenario === 'compra'"
+                    class="flex-1 px-4 py-3 text-xs font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    🛒 Comprar Ensilaje
+                  </button>
+                </div>
+              </div>
+
+              <!-- Scenario Content: Venta -->
+              <div *ngIf="selectedScenario === 'venta' && hibridoA.analisis_economico.escenario_venta" class="p-6">
+                <h3 class="text-sm font-black text-slate-800 dark:text-white mb-4">{{ hibridoA.analisis_economico.escenario_venta.descripcion }}</h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Rendimiento MS/Ha</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_venta.rendimiento_ms_ha | number:'1.1-2' }} Ton</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Precio Venta/Ton MS</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_venta.precio_venta_ton_ms | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl">
+                    <p class="text-[9px] text-emerald-600 dark:text-emerald-400 mb-1">Ingreso Bruto/Ha</p>
+                    <p class="text-lg font-black text-emerald-700 dark:text-emerald-400">{{ hibridoA.analisis_economico.escenario_venta.ingreso_bruto_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-rose-50 dark:bg-rose-950/20 rounded-xl">
+                    <p class="text-[9px] text-rose-600 dark:text-rose-400 mb-1">Costo Producción/Ha</p>
+                    <p class="text-lg font-black text-rose-700 dark:text-rose-400">{{ hibridoA.analisis_economico.escenario_venta.costo_produccion_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-indigo-50 dark:bg-indigo-950/20 rounded-xl col-span-2">
+                    <p class="text-[9px] text-indigo-600 dark:text-indigo-400 mb-1">Utilidad Neta/Ha</p>
+                    <p class="text-2xl font-black text-indigo-700 dark:text-indigo-400">{{ hibridoA.analisis_economico.escenario_venta.utilidad_neta_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Margen de Utilidad</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_venta.margen_utilidad | number:'1.1-1' }}%</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">ROI</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_venta.roi | number:'1.1-1' }}%</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Scenario Content: Uso Propio -->
+              <div *ngIf="selectedScenario === 'uso_propio' && hibridoA.analisis_economico.escenario_uso_propio" class="p-6">
+                <h3 class="text-sm font-black text-slate-800 dark:text-white mb-4">{{ hibridoA.analisis_economico.escenario_uso_propio.descripcion }}</h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Rendimiento MS/Ha</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_uso_propio.rendimiento_ms_ha | number:'1.1-2' }} Ton</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Producción Leche/Ha</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_uso_propio.produccion_leche_ha | number:'1.0-0' }} Kg</p>
+                  </div>
+                  <div class="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl">
+                    <p class="text-[9px] text-emerald-600 dark:text-emerald-400 mb-1">Ingreso Leche/Ha</p>
+                    <p class="text-lg font-black text-emerald-700 dark:text-emerald-400">{{ hibridoA.analisis_economico.escenario_uso_propio.ingreso_leche_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-rose-50 dark:bg-rose-950/20 rounded-xl">
+                    <p class="text-[9px] text-rose-600 dark:text-rose-400 mb-1">Costo Total/Ha</p>
+                    <p class="text-lg font-black text-rose-700 dark:text-rose-400">{{ hibridoA.analisis_economico.escenario_uso_propio.costo_total_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-indigo-50 dark:bg-indigo-950/20 rounded-xl col-span-2">
+                    <p class="text-[9px] text-indigo-600 dark:text-indigo-400 mb-1">Utilidad Neta/Ha</p>
+                    <p class="text-2xl font-black text-indigo-700 dark:text-indigo-400">{{ hibridoA.analisis_economico.escenario_uso_propio.utilidad_neta_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Valor Implícito Ensilaje</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_uso_propio.valor_implicito_ensilaje_ton | currency:'MXN':'$':'1.0-0' }}/Ton</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">ROI</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_uso_propio.roi | number:'1.1-1' }}%</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Scenario Content: Compra -->
+              <div *ngIf="selectedScenario === 'compra' && hibridoA.analisis_economico.escenario_compra" class="p-6">
+                <h3 class="text-sm font-black text-slate-800 dark:text-white mb-4">{{ hibridoA.analisis_economico.escenario_compra.descripcion }}</h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Necesidad MS/Ha</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_compra.necesidad_ms_ha | number:'1.1-2' }} Ton</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Precio Compra/Ton MS</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_compra.precio_compra_ton_ms | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl">
+                    <p class="text-[9px] text-emerald-600 dark:text-emerald-400 mb-1">Ingreso Leche/Ha</p>
+                    <p class="text-lg font-black text-emerald-700 dark:text-emerald-400">{{ hibridoA.analisis_economico.escenario_compra.ingreso_leche_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-rose-50 dark:bg-rose-950/20 rounded-xl">
+                    <p class="text-[9px] text-rose-600 dark:text-rose-400 mb-1">Costo Total/Ha</p>
+                    <p class="text-lg font-black text-rose-700 dark:text-rose-400">{{ hibridoA.analisis_economico.escenario_compra.costo_total_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-indigo-50 dark:bg-indigo-950/20 rounded-xl col-span-2">
+                    <p class="text-[9px] text-indigo-600 dark:text-indigo-400 mb-1">Utilidad Neta/Ha</p>
+                    <p class="text-2xl font-black text-indigo-700 dark:text-indigo-400">{{ hibridoA.analisis_economico.escenario_compra.utilidad_neta_ha | currency:'MXN':'$':'1.0-0' }}</p>
+                  </div>
+                  <div class="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl col-span-2">
+                    <p class="text-[9px] text-amber-600 dark:text-amber-400 mb-1">💡 Precio Máximo Recomendado</p>
+                    <p class="text-xl font-black text-amber-700 dark:text-amber-400">{{ hibridoA.analisis_economico.escenario_compra.precio_maximo_recomendado_ton | currency:'MXN':'$':'1.0-0' }}/Ton</p>
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mt-1">Para mantener un margen del 20%</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">Margen de Utilidad</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_compra.margen_utilidad | number:'1.1-1' }}%</p>
+                  </div>
+                  <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 mb-1">ROI</p>
+                    <p class="text-lg font-black text-slate-900 dark:text-white">{{ hibridoA.analisis_economico.escenario_compra.roi | number:'1.1-1' }}%</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- KPIs de Rendimiento -->

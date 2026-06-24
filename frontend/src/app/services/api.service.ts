@@ -30,4 +30,13 @@ export class ApiService {
     optimizarSemilla(datos: any): Observable<any> {
         return this.http.post(`${this.baseUrl}/optimizar-semilla/`, datos);
     }
+
+    getEstados(): Observable<any> {
+        return this.http.get(`${this.baseUrl}/estados/`);
+    }
+
+    getMunicipios(estadoId?: number): Observable<any> {
+        const params = estadoId ? `?estado_id=${estadoId}` : '';
+        return this.http.get(`${this.baseUrl}/municipios/${params}`);
+    }
 }
