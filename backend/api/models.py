@@ -144,3 +144,45 @@ class DatoClimatico(models.Model):
 
     def __str__(self):
         return f"Clima: {self.ciclo}"
+
+
+# --- 7. SOIL MOISTURE ML RESULTS ---
+class SoilMoisturePlot(models.Model):
+    """
+    Stores the result of a single LSTM soil moisture inference run for one of
+    the 11 pre-defined Jalisco municipality plots.  One row is inserted each
+    time a user pins a location and requests an analysis; subsequent requests
+    for the same plot within the same calendar day are served from the cache.
+    """
+    plot_id = models.CharField(
+        max_length=50,
+        help_text="Slug from plot_registry (e.g. 'guadalajara')"
+    )
+    plot_name = models.CharField(max_length=100)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    analysis_date = models.DateField(auto_now_add=True)
+
+    # Aggregated metrics (fast-read columns)
+    mean_sm = models.FloatField(null=True, blank=True, help_text="Annual mean soil moisture m³/m³")
+    min_sm  = models.FloatField(null=True, blank=True)
+    max_sm  = models.FloatField(null=True, blank=True)
+    dry_days = models.IntegerField(null=True, blank=True, help_text="Days with sm < 0.15")
+    wet_days = models.IntegerField(null=True, blank=True, help_text="Days with sm > 0.35")
+    model_backend = models.CharField(max_length=30, default="lstm_frozen")
+
+    # Full time-series stored as JSON text (avoids extra table for PoC)
+    timeseries_json = models.TextField(
+        blank=True,
+        help_text="JSON array [{date, soil_moisture}, …]"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        # One cached result per plot per day
+        unique_together = [("plot_id", "analysis_date")]
+
+    def __str__(self):
+        return f"SoilMoisture({self.plot_id}, {self.analysis_date})"

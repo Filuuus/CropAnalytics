@@ -809,3 +809,262 @@ class MapaEstadisticasView(APIView):
             'type': 'FeatureCollection',
             'features': features
         }, status=status.HTTP_200_OK)
+
+
+# =============================================================================
+# SOIL MOISTURE ML PIPELINE  (SMAP + Daymet → LSTM → Recommendation)
+# =============================================================================
+import json
+import math
+import os
+from datetime import date
+
+from django.conf import settings
+
+from .ml.plot_registry import JALISCO_PLOTS, snap_to_nearest_plot
+from .ml.ml_engine import run_inference
+from .models import SoilMoisturePlot
+
+
+# ---------------------------------------------------------------------------
+# Helper: build corn recommendation from moisture profile
+# ---------------------------------------------------------------------------
+def _corn_recommendation(mean_sm: float, dry_days: int, wet_days: int,
+                          min_sm: float, max_sm: float) -> dict:
+    """
+    Baseline hybrid-corn advisory derived from the estimated annual
+    soil-moisture profile.
+
+    Thresholds are based on published FAO-56 and TxSON research values:
+      • optimal range: 0.20–0.35 m³/m³
+      • stress threshold: < 0.15 m³/m³
+      • waterlogging risk: > 0.40 m³/m³
+    """
+    year_days = 366  # 2024 was a leap year
+
+    stress_pct = round(dry_days / year_days * 100, 1)
+    excess_pct = round(wet_days / year_days * 100, 1)
+
+    # Irrigation scheduling advice
+    if mean_sm < 0.15:
+        irrigation = "Alto riesgo de estrés hídrico. Se recomienda riego suplementario cada 5–7 días durante fases vegetativas."
+        regimen = "Riego"
+    elif mean_sm < 0.20:
+        irrigation = "Humedad marginal. Monitoreo semanal recomendado; activar riego si sm < 0.18 m³/m³."
+        regimen = "Riego"
+    elif mean_sm <= 0.35:
+        irrigation = "Humedad óptima para maíz. Riego de precisión en floración (R1-R3) únicamente."
+        regimen = "Temporal"
+    else:
+        irrigation = "Exceso de humedad detectado. Verificar drenaje para prevenir anoxia radicular."
+        regimen = "Temporal"
+
+    # Hybrid selection guidance
+    if dry_days > 90:
+        hybrid_note = "Seleccionar híbridos con tolerancia a sequía (ej. H-567, DK-7088)."
+    elif wet_days > 120:
+        hybrid_note = "Preferir híbridos con resistencia a enfermedades foliares en condiciones húmedas (ej. P3553W)."
+    else:
+        hybrid_note = "Perfil hídrico equilibrado. Híbridos de alto potencial como DK-2038 o ASGROW-780."
+
+    # Planting window
+    if mean_sm > 0.22:
+        planting_window = "15 Abril – 15 Mayo (humedad de siembra adecuada)"
+    else:
+        planting_window = "1 Mayo – 1 Junio (esperar inicio de lluvias para garantizar germinación)"
+
+    return {
+        "regimen_recomendado": regimen,
+        "irrigacion": irrigation,
+        "hibrido_sugerido": hybrid_note,
+        "ventana_siembra": planting_window,
+        "alerta_estres_hidrico": stress_pct > 20,
+        "alerta_exceso_humedad": excess_pct > 30,
+        "dias_estres_pct": stress_pct,
+        "dias_exceso_pct": excess_pct,
+        "rango_optimo_pct": round(
+            (year_days - dry_days - wet_days) / year_days * 100, 1
+        ),
+    }
+
+
+class SoilMoistureAnalysisView(APIView):
+    """
+    POST /api/soil-moisture/
+    -----------------------
+    Accepts a user's GPS pin, snaps it to the nearest of the 11 pre-loaded
+    Jalisco municipality plots, runs the LSTM inference pipeline, and returns
+    a full soil-moisture time-series with a corn recommendation payload.
+
+    Request body:
+        { "lat": 20.65, "lon": -103.35 }
+
+    Response 200:
+        {
+          "snapped_plot": { id, name, lat, lon, distance_km },
+          "timeseries": [ { "date": "2024-01-01", "soil_moisture": 0.27 }, … ],
+          "metrics": { mean_sm, min_sm, max_sm, dry_days, wet_days, model_backend },
+          "recommendation": { … }
+        }
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # --- 1. Validate input ---
+        try:
+            user_lat = float(request.data.get("lat"))
+            user_lon = float(request.data.get("lon"))
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "Se requieren campos 'lat' y 'lon' numéricos."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # --- 2. Spatial snap: nearest Jalisco plot via Haversine ---
+        snapped = snap_to_nearest_plot(user_lat, user_lon)
+        best_plot = snapped
+        best_dist = snapped["distance_km"]
+
+        # --- 3. Check day-level cache in DB ---
+        today = date.today()
+        cached = SoilMoisturePlot.objects.filter(
+            plot_id=best_plot["id"], analysis_date=today
+        ).first()
+
+        if cached:
+            ts = json.loads(cached.timeseries_json) if cached.timeseries_json else []
+            metrics = {
+                "mean_sm": cached.mean_sm,
+                "min_sm":  cached.min_sm,
+                "max_sm":  cached.max_sm,
+                "dry_days":  cached.dry_days,
+                "wet_days":  cached.wet_days,
+                "model_backend": cached.model_backend,
+            }
+            recommendation = _corn_recommendation(
+                cached.mean_sm or 0.25,
+                cached.dry_days or 0,
+                cached.wet_days or 0,
+                cached.min_sm or 0.05,
+                cached.max_sm or 0.55,
+            )
+            return Response({
+                "snapped_plot": {
+                    "id": best_plot["id"],
+                    "name": best_plot["name"],
+                    "lat": best_plot["lat"],
+                    "lon": best_plot["lon"],
+                    "distance_km": round(best_dist, 2),
+                },
+                "timeseries": ts,
+                "metrics": metrics,
+                "recommendation": recommendation,
+                "cache": True,
+            }, status=status.HTTP_200_OK)
+
+        # --- 4. Resolve data file paths ---
+        default_smap = os.path.join(
+            settings.BASE_DIR, "data",
+            "CropAnalytics-BOB-SMAP-2024-SPL3SMP-E-006-results.csv"
+        )
+        master_csv  = getattr(settings, "ML_SMAP_MASTER_CSV", default_smap)
+        daymet_csv  = getattr(settings, "ML_DAYMET_CSV", None)
+
+        try:
+            result = run_inference(best_plot["smap_id"], master_csv, daymet_csv)
+        except FileNotFoundError:
+            return Response(
+                {
+                    "detail": (
+                        f"Archivo CSV maestro SMAP no encontrado. "
+                        f"Ruta esperada: {master_csv}"
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as exc:
+            return Response(
+                {"detail": f"Error en el motor de inferencia: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # --- 5. Build timeseries list (includes raw SMAP column) ---
+        timeseries = [
+            {
+                "date": d,
+                "soil_moisture": sm,
+                "smap_raw": raw,
+            }
+            for d, sm, raw in zip(
+                result["dates"], result["soil_moisture"], result["smap_raw"]
+            )
+        ]
+
+        metrics = {
+            "mean_sm":         result["mean_sm"],
+            "min_sm":          result["min_sm"],
+            "max_sm":          result["max_sm"],
+            "dry_days":        result["dry_days"],
+            "wet_days":        result["wet_days"],
+            "valid_smap_days": result["valid_smap_days"],
+            "has_daymet":      result["has_daymet"],
+            "model_backend":   result["model_backend"],
+        }
+
+        recommendation = _corn_recommendation(
+            result["mean_sm"],
+            result["dry_days"],
+            result["wet_days"],
+            result["min_sm"],
+            result["max_sm"],
+        )
+
+        # --- 6. Persist result (upsert on unique_together) ---
+        SoilMoisturePlot.objects.update_or_create(
+            plot_id=best_plot["id"],
+            analysis_date=today,
+            defaults={
+                "plot_name": best_plot["name"],
+                "latitude": best_plot["lat"],
+                "longitude": best_plot["lon"],
+                "mean_sm": result["mean_sm"],
+                "min_sm":  result["min_sm"],
+                "max_sm":  result["max_sm"],
+                "dry_days":  result["dry_days"],
+                "wet_days":  result["wet_days"],
+                "model_backend": result["model_backend"],
+                "timeseries_json": json.dumps(timeseries),
+            },
+        )
+
+        return Response({
+            "snapped_plot": {
+                "id": best_plot["id"],
+                "smap_id": best_plot["smap_id"],
+                "name": best_plot["name"],
+                "lat": best_plot["lat"],
+                "lon": best_plot["lon"],
+                "distance_km": round(best_dist, 2),
+            },
+            "timeseries": timeseries,
+            "metrics": metrics,
+            "recommendation": recommendation,
+            "cache": False,
+        }, status=status.HTTP_200_OK)
+
+
+class PlotListView(APIView):
+    """
+    GET /api/soil-moisture/plots/
+    Lists all 11 pre-loaded Jalisco municipality plots.
+    Useful for frontend map initialisation.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response(JALISCO_PLOTS, status=status.HTTP_200_OK)
