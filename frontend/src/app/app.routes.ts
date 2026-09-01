@@ -65,6 +65,10 @@ export const routes: Routes = [
     loadComponent: () => import("./calculator/calculator.component").then(m => m.CalculatorComponent),
   },
   {
+    path: "soil-analysis",
+    loadComponent: () => import("./soil-analysis/soil-analysis.component").then(m => m.SoilAnalysisComponent),
+  },
+  {
     path: "about",
     loadComponent: () => import("./about/components/about/About").then(m => m.About),
   },

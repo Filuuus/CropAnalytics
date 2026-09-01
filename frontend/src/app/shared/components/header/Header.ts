@@ -49,6 +49,10 @@ export class Header {
     this.router.navigate(["/about"]);
   }
 
+  onSoilAnalysisClick() {
+    this.router.navigate(["/soil-analysis"]);
+  }
+
   onLogoutClick() {
     this.isThemeMenuOpen.set(false);
     this.isUploadMenuOpen.set(false);

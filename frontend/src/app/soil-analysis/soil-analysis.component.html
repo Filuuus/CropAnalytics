@@ -1,0 +1,510 @@
+<header-1></header-1>
+
+<main class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="w-full px-4 sm:px-6">
+
+    <!-- Page header -->
+    <div class="text-center mb-10">
+      <h1 class="text-4xl md:text-5xl font-black tracking-tight bg-gradient-to-r from-blue-600 to-teal-500 dark:from-blue-400 dark:to-teal-400 bg-clip-text text-transparent">
+        Análisis de Suelo por Satélite
+      </h1>
+      <p class="mt-3 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+        Ancla tu parcela en el mapa, indica su extensión y régimen hídrico. El motor de IA estima la humedad del suelo con datos NASA SMAP 2024 y recomienda los mejores híbridos ajustados a tus condiciones reales.
+      </p>
+    </div>
+
+    <!-- 3-column grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- ── LEFT PANEL: Form ──────────────────────────────────────────── -->
+      <div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-150 dark:border-slate-800 p-6 transition-all hover:shadow-2xl">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800/60">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Tu Parcela</h2>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Haz clic en el mapa para anclar</p>
+          </div>
+          <button type="button" (click)="reset()" class="text-[10px] font-semibold text-rose-600 hover:text-rose-700 transition-colors flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            Reiniciar
+          </button>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+
+          <!-- GPS coords (populated by map click) -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Latitud</label>
+              <input type="number" step="0.000001" formControlName="lat"
+                class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 transition-all placeholder:text-slate-400"
+                placeholder="Clic en mapa">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Longitud</label>
+              <input type="number" step="0.000001" formControlName="lon"
+                class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 transition-all placeholder:text-slate-400"
+                placeholder="Clic en mapa">
+            </div>
+          </div>
+          <p *ngIf="form.get('lat')?.touched && form.get('lat')?.invalid" class="text-rose-500 text-[10px] -mt-3">Selecciona un punto en el mapa.</p>
+
+          <!-- Extension -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Extensión (ha)</label>
+            <input type="number" step="0.1" formControlName="extension_ha"
+              class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 transition-all placeholder:text-slate-400"
+              placeholder="Ej: 5">
+            <p *ngIf="form.get('extension_ha')?.touched && form.get('extension_ha')?.invalid" class="text-rose-500 text-[10px] mt-1">Extensión obligatoria > 0.</p>
+          </div>
+
+          <!-- Irrigation toggle -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1.5">Régimen Hídrico</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="relative flex flex-col items-center justify-center p-2 rounded-xl border-2 cursor-pointer transition-all duration-200"
+                [class.border-blue-500]="!form.get('has_irrigation')?.value"
+                [class.bg-blue-50]="!form.get('has_irrigation')?.value"
+                [class.dark:bg-blue-950]="!form.get('has_irrigation')?.value"
+                [class.border-slate-200]="form.get('has_irrigation')?.value"
+                [class.dark:border-slate-700]="form.get('has_irrigation')?.value">
+                <input type="radio" [value]="false" formControlName="has_irrigation" class="sr-only">
+                <span class="text-base">☁️</span>
+                <span class="text-[10px] font-bold mt-0.5 text-slate-900 dark:text-white">Temporal</span>
+              </label>
+              <label class="relative flex flex-col items-center justify-center p-2 rounded-xl border-2 cursor-pointer transition-all duration-200"
+                [class.border-blue-500]="form.get('has_irrigation')?.value"
+                [class.bg-blue-50]="form.get('has_irrigation')?.value"
+                [class.dark:bg-blue-950]="form.get('has_irrigation')?.value"
+                [class.border-slate-200]="!form.get('has_irrigation')?.value"
+                [class.dark:border-slate-700]="!form.get('has_irrigation')?.value">
+                <input type="radio" [value]="true" formControlName="has_irrigation" class="sr-only">
+                <span class="text-base">💧</span>
+                <span class="text-[10px] font-bold mt-0.5 text-slate-900 dark:text-white">Riego</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Year -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Año de análisis</label>
+            <input type="number" step="1" formControlName="year"
+              class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 transition-all">
+          </div>
+
+          <!-- Economic params -->
+          <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+            <h3 class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-1.5"><span>💰</span> Parámetros Económicos</h3>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Precio Leche ($/L)</label>
+            <input type="number" step="0.1" formControlName="precio_leche" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Precio Ensilaje ($/Ton MS)</label>
+            <input type="number" step="50" formControlName="precio_ensilaje" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Costo Producción ($/Ha)</label>
+            <input type="number" step="50" formControlName="costo_produccion" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-gray-300 mb-1">Costo Transporte ($/Ton)</label>
+            <input type="number" step="10" formControlName="costo_transporte" class="block w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 py-2 px-3 text-xs text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 transition-all">
+          </div>
+
+          <div class="pt-2 flex flex-col gap-2">
+            <button type="submit" [disabled]="loading"
+              class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-bold py-3 px-4 rounded-xl shadow-md active:scale-[0.98] transition-all disabled:opacity-60 cursor-pointer text-xs">
+              <ng-container *ngIf="!loading">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 21l8.982-11.825H14l1-6.175L6 14.825H10l-.187 1.079Z" />
+                </svg>
+                Analizar Parcela
+              </ng-container>
+              <ng-container *ngIf="loading">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Analizando...
+              </ng-container>
+            </button>
+            <button *ngIf="result" type="button" (click)="reset()"
+              class="w-full flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 active:scale-[0.98] transition-all cursor-pointer text-xs">
+              Nueva Consulta
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── CENTER PANEL: Map + Results ──────────────────────────────── -->
+      <div class="lg:col-span-6 space-y-6">
+
+        <!-- Map card -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-150 dark:border-slate-800 overflow-hidden">
+          <div class="flex items-center justify-between px-5 pt-4 pb-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">📡 Parcelas de Referencia SMAP · Jalisco 2024</h3>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400">Haz clic en cualquier punto del mapa para anclar tu parcela</p>
+            </div>
+          </div>
+          <div id="sa-map" class="sa-map-view"></div>
+          <!-- Map hint overlay when no pin -->
+          <div *ngIf="!form.get('lat')?.value" class="px-5 pb-3 pt-1">
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center">
+              Los círculos azules son las 11 parcelas SMAP monitoreadas. Tu punto se mostrará en rojo 📍 al hacer clic.
+            </p>
+          </div>
+          <div *ngIf="form.get('lat')?.value" class="px-5 pb-3 pt-1 flex items-center gap-2">
+            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded-full">
+              📍 {{ form.get('lat')?.value | number:'1.4-6' }}, {{ form.get('lon')?.value | number:'1.4-6' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Empty / loading state -->
+        <div *ngIf="!result && !error && !loading" class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-8 text-center text-white border border-slate-700/50 shadow-2xl flex flex-col items-center justify-center min-h-[260px]">
+          <div class="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 border border-blue-500/30 text-blue-400 animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-black text-white mb-2">Análisis de Humedad Satelital</h3>
+          <p class="text-sm text-slate-400 max-w-md">Ancla tu parcela en el mapa, configura los parámetros y haz clic en <strong class="text-white">Analizar Parcela</strong>.</p>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="loading" class="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-slate-100 dark:border-slate-800 shadow-xl">
+          <svg class="animate-spin h-10 w-10 text-blue-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Ejecutando inferencia LSTM sobre datos SMAP 2024…</p>
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="error" class="p-6 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 rounded-3xl text-center text-rose-800 dark:text-rose-400 shadow-lg">
+          <span class="text-3xl">⚠️</span>
+          <p class="mt-2 text-xs font-bold">{{ error }}</p>
+        </div>
+
+        <!-- ── RESULTS ──────────────────────────────────────────────────── -->
+        <ng-container *ngIf="result && !loading">
+
+          <!-- Snapped plot info -->
+          <div *ngIf="snappedPlot" class="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-2xl">
+            <span class="text-2xl">📡</span>
+            <div class="flex-grow">
+              <p class="text-xs font-bold text-blue-800 dark:text-blue-300">Parcela de referencia SMAP más cercana</p>
+              <p class="text-sm font-black text-blue-900 dark:text-blue-200">{{ snappedPlot.name }}</p>
+              <p class="text-[10px] text-blue-600 dark:text-blue-400">{{ snappedPlot.distance_km }} km de tu punto · ID: {{ snappedPlot.smap_id }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[9px] text-blue-600 dark:text-blue-400">Año</p>
+              <p class="text-lg font-black text-blue-900 dark:text-blue-200">{{ result.year }}</p>
+            </div>
+          </div>
+
+          <!-- SM Warning -->
+          <div *ngIf="smWarning" class="p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-400 rounded-2xl">
+            <p class="text-xs font-semibold text-amber-800 dark:text-amber-300">{{ smWarning }}</p>
+          </div>
+
+          <!-- Projection note -->
+          <div *ngIf="notaProyeccion" class="p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 italic">ℹ️ {{ notaProyeccion }}</p>
+          </div>
+
+          <!-- Hybrid ranking list -->
+          <div *ngIf="ranking.length > 0" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div class="px-5 pt-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-black text-slate-900 dark:text-white">Ranking de Híbridos</h3>
+                <p class="text-[10px] text-slate-500">Régimen: <strong>{{ result.condicion }}</strong> · {{ ranking.length }} híbridos evaluados</p>
+              </div>
+              <span class="text-2xl">🌽</span>
+            </div>
+            <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
+              <button *ngFor="let h of ranking; let i = index" type="button"
+                (click)="selectedHybridIdx = i"
+                class="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
+                [class.bg-blue-50]="selectedHybridIdx === i"
+                [class.dark:bg-blue-950]="selectedHybridIdx === i">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full text-[10px] font-black flex items-center justify-center"
+                  [class.bg-blue-500]="i === 0"
+                  [class.text-white]="i === 0"
+                  [class.bg-slate-200]="i > 0"
+                  [class.dark:bg-slate-700]="i > 0"
+                  [class.text-slate-700]="i > 0"
+                  [class.dark:text-slate-300]="i > 0">
+                  {{ i + 1 }}
+                </span>
+                <div class="flex-grow min-w-0">
+                  <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ h.hibrido.marca }} – {{ h.hibrido.nombre }}</p>
+                  <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                    Leche: <strong class="text-blue-600 dark:text-blue-400">{{ h.milk2024.leche_ha | number:'1.0-0' }} kg/ha</strong> ·
+                    Rend. aj.: {{ h.rendimiento.ajustado_sm_dm_ha | number:'1.1-2' }} t MS/ha
+                  </p>
+                  <!-- Mini score bar -->
+                  <div class="mt-1.5 flex gap-0.5 h-1.5 rounded-full overflow-hidden w-full" *ngIf="h.score_breakdown">
+                    <div class="bg-purple-400" [style.flex]="h.score_breakdown.calidad_nutricional" title="Calidad nutricional"></div>
+                    <div class="bg-blue-400"   [style.flex]="h.score_breakdown.productividad_sm"   title="Productividad SM"></div>
+                    <div class="bg-emerald-400" [style.flex]="h.score_breakdown.digestibilidad_ndf" title="Digestibilidad NDF"></div>
+                    <div class="bg-amber-400"  [style.flex]="h.score_breakdown.consistencia"       title="Consistencia"></div>
+                  </div>
+                </div>
+                <span class="flex-shrink-0 text-[10px] font-black text-slate-400 dark:text-slate-500">Score {{ h.score | number:'1.0-0' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- No hybrids -->
+          <div *ngIf="ranking.length === 0 && result" class="p-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 rounded-3xl text-center">
+            <span class="text-3xl">📭</span>
+            <p class="mt-2 text-xs font-bold text-amber-800 dark:text-amber-300">{{ result.error || 'No se encontraron híbridos para estas condiciones.' }}</p>
+          </div>
+
+        </ng-container>
+      </div>
+
+      <!-- ── RIGHT PANEL: Detail ─────────────────────────────────────── -->
+      <div class="lg:col-span-3 space-y-5">
+
+        <!-- SM Profile card -->
+        <div *ngIf="smProfile" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-xl">💧</span>
+            <h3 class="text-sm font-black text-slate-900 dark:text-white">Perfil de Humedad del Suelo</h3>
+          </div>
+
+          <!-- Suitability badge -->
+          <div class="mb-4 p-3 rounded-2xl border-2 text-center"
+            [class.border-emerald-400]="suitabilityColor(smProfile.rainfed_suitability) === 'emerald'"
+            [class.bg-emerald-50]="suitabilityColor(smProfile.rainfed_suitability) === 'emerald'"
+            [class.dark:bg-emerald-950]="suitabilityColor(smProfile.rainfed_suitability) === 'emerald'"
+            [class.border-blue-400]="suitabilityColor(smProfile.rainfed_suitability) === 'blue'"
+            [class.bg-blue-50]="suitabilityColor(smProfile.rainfed_suitability) === 'blue'"
+            [class.dark:bg-blue-950]="suitabilityColor(smProfile.rainfed_suitability) === 'blue'"
+            [class.border-amber-400]="suitabilityColor(smProfile.rainfed_suitability) === 'amber'"
+            [class.bg-amber-50]="suitabilityColor(smProfile.rainfed_suitability) === 'amber'"
+            [class.dark:bg-amber-950]="suitabilityColor(smProfile.rainfed_suitability) === 'amber'"
+            [class.border-rose-400]="suitabilityColor(smProfile.rainfed_suitability) === 'rose'"
+            [class.bg-rose-50]="suitabilityColor(smProfile.rainfed_suitability) === 'rose'"
+            [class.dark:bg-rose-950]="suitabilityColor(smProfile.rainfed_suitability) === 'rose'">
+            <p class="text-2xl font-black text-slate-900 dark:text-white">{{ smProfile.rainfed_suitability }}<span class="text-base font-semibold">/100</span></p>
+            <p class="text-xs font-bold text-slate-600 dark:text-slate-400">Aptitud Temporal: <strong>{{ suitabilityLabel(smProfile.rainfed_suitability) }}</strong></p>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-500 dark:text-slate-400">Media Anual SM</span>
+              <strong class="text-slate-800 dark:text-slate-200">{{ smProfile.annual_mean_sm | number:'1.3-4' }} m³/m³</strong>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-500 dark:text-slate-400">Media Temp. Crecimiento</span>
+              <strong class="text-slate-800 dark:text-slate-200">{{ smProfile.growing_mean_sm | number:'1.3-4' }} m³/m³</strong>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-500 dark:text-slate-400">Índice de Estrés</span>
+              <strong class="text-slate-800 dark:text-slate-200">{{ (smProfile.stress_index * 100) | number:'1.0-1' }}%</strong>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-500 dark:text-slate-400">Días estrés hídrico</span>
+              <strong class="text-rose-600 dark:text-rose-400">{{ smProfile.growing_dry_days }}</strong>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-500 dark:text-slate-400">Motor de inferencia</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                [class.bg-emerald-100]="smProfile.model_backend === 'lstm_frozen'"
+                [class.text-emerald-700]="smProfile.model_backend === 'lstm_frozen'"
+                [class.bg-slate-100]="smProfile.model_backend !== 'lstm_frozen'"
+                [class.text-slate-600]="smProfile.model_backend !== 'lstm_frozen'">
+                {{ smProfile.model_backend === 'lstm_frozen' ? '🤖 LSTM' : '📡 SMAP' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected hybrid detail -->
+        <ng-container *ngIf="selectedHybrid as h">
+
+          <!-- Header -->
+          <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-5">
+            <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider block mb-1">Híbrido #{{ selectedHybridIdx + 1 }} seleccionado</span>
+            <h4 class="text-base font-black text-slate-900 dark:text-white leading-tight">{{ h.hibrido.marca }} – {{ h.hibrido.nombre }}</h4>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{{ h.n_ciclos_historicos }} ciclos históricos</p>
+
+            <!-- Yield adjustment band -->
+            <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl space-y-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-500">Rendimiento histórico</span>
+                <strong class="text-slate-700 dark:text-slate-300">{{ h.rendimiento.historico_dm_ha | number:'1.1-2' }} t MS/ha</strong>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-500">Factor ajuste SM (FAO-56)</span>
+                <strong [class.text-rose-600]="h.rendimiento.factor_ajuste_sm < 0.7"
+                        [class.text-amber-600]="h.rendimiento.factor_ajuste_sm >= 0.7 && h.rendimiento.factor_ajuste_sm < 0.9"
+                        [class.text-emerald-600]="h.rendimiento.factor_ajuste_sm >= 0.9">
+                  × {{ h.rendimiento.factor_ajuste_sm | number:'1.2-2' }}
+                </strong>
+              </div>
+              <div class="flex justify-between items-center text-xs pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50">
+                <span class="text-slate-500">Rendimiento ajustado</span>
+                <strong class="text-blue-600 dark:text-blue-400">{{ h.rendimiento.ajustado_sm_dm_ha | number:'1.1-2' }} t MS/ha</strong>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-500">Total parcela ({{ extensionHa }} ha)</span>
+                <strong class="text-blue-700 dark:text-blue-300">{{ h.rendimiento.total_dm_plot | number:'1.1-1' }} t MS</strong>
+              </div>
+            </div>
+
+            <!-- MILK headline -->
+            <div class="mt-4 grid grid-cols-2 gap-2">
+              <div class="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl text-center">
+                <p class="text-[9px] text-blue-500 mb-0.5">Leche / ha</p>
+                <p class="text-lg font-black text-blue-700 dark:text-blue-300">{{ h.milk2024.leche_ha | number:'1.0-0' }}</p>
+                <p class="text-[9px] text-blue-500">kg</p>
+              </div>
+              <div class="p-3 bg-teal-50 dark:bg-teal-950/20 rounded-xl text-center">
+                <p class="text-[9px] text-teal-500 mb-0.5">Ingreso proyectado</p>
+                <p class="text-sm font-black text-teal-700 dark:text-teal-300">{{ (h.milk2024.leche_ha * extensionHa * precioLeche) | currency:'MXN':'$':'1.0-0' }}</p>
+                <p class="text-[9px] text-teal-500">MXN total</p>
+              </div>
+            </div>
+
+            <!-- Bromatology mini row -->
+            <div class="mt-3 grid grid-cols-3 gap-1 text-center">
+              <div class="bg-slate-50 dark:bg-slate-900/30 p-1.5 rounded-lg">
+                <span class="block text-[8px] text-slate-400">MS%</span>
+                <strong class="text-[10px] text-slate-700 dark:text-slate-300">{{ h.bromatologia.ms }}</strong>
+              </div>
+              <div class="bg-slate-50 dark:bg-slate-900/30 p-1.5 rounded-lg">
+                <span class="block text-[8px] text-slate-400">CP%</span>
+                <strong class="text-[10px] text-slate-700 dark:text-slate-300">{{ h.bromatologia.cp }}</strong>
+              </div>
+              <div class="bg-slate-50 dark:bg-slate-900/30 p-1.5 rounded-lg">
+                <span class="block text-[8px] text-slate-400">NDF%</span>
+                <strong class="text-[10px] text-slate-700 dark:text-slate-300">{{ h.bromatologia.ndf }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score breakdown -->
+          <div *ngIf="h.score_breakdown" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-5">
+            <h5 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Desglose de Puntuación</h5>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-400 flex-shrink-0"></span>
+                <span class="text-[10px] text-slate-600 dark:text-slate-400 flex-shrink-0 w-36">Calidad nutricional</span>
+                <div class="flex-grow bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
+                  <div class="bg-purple-400 h-1.5 rounded-full" [style.width.%]="(h.score_breakdown.calidad_nutricional / h.score * 100)"></div>
+                </div>
+                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 w-10 text-right">{{ h.score_breakdown.calidad_nutricional | number:'1.0-0' }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-400 flex-shrink-0"></span>
+                <span class="text-[10px] text-slate-600 dark:text-slate-400 flex-shrink-0 w-36">Productividad (SM aj.)</span>
+                <div class="flex-grow bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
+                  <div class="bg-blue-400 h-1.5 rounded-full" [style.width.%]="(h.score_breakdown.productividad_sm / h.score * 100)"></div>
+                </div>
+                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 w-10 text-right">{{ h.score_breakdown.productividad_sm | number:'1.0-0' }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                <span class="text-[10px] text-slate-600 dark:text-slate-400 flex-shrink-0 w-36">Digestibilidad NDF</span>
+                <div class="flex-grow bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
+                  <div class="bg-emerald-400 h-1.5 rounded-full" [style.width.%]="(h.score_breakdown.digestibilidad_ndf / h.score * 100)"></div>
+                </div>
+                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 w-10 text-right">{{ h.score_breakdown.digestibilidad_ndf | number:'1.0-0' }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0"></span>
+                <span class="text-[10px] text-slate-600 dark:text-slate-400 flex-shrink-0 w-36">Consistencia histórica</span>
+                <div class="flex-grow bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
+                  <div class="bg-amber-400 h-1.5 rounded-full" [style.width.%]="(h.score_breakdown.consistencia / h.score * 100)"></div>
+                </div>
+                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 w-10 text-right">{{ h.score_breakdown.consistencia | number:'1.0-0' }}</span>
+              </div>
+            </div>
+            <p class="mt-3 text-[9px] text-slate-400 dark:text-slate-600 italic">
+              Pesos ajustados según aptitud hídrica del sitio.
+              Bajo déficit hídrico se pondera más calidad y digestibilidad; con buena humedad, se prioriza productividad.
+            </p>
+          </div>
+
+          <!-- Confidence -->
+          <div *ngIf="h.milk2024.confianza" class="p-4 rounded-2xl border-2 {{ confidenceClass(h.milk2024.confianza) }}">
+            <p class="text-[9px] font-black uppercase tracking-wider {{ confidenceTextClass(h.milk2024.confianza) }}">
+              Confianza MILK2024: {{ h.milk2024.confianza.nivel_confianza }} ({{ h.milk2024.confianza.factor_confianza | number:'1.0-0' }}%)
+            </p>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{{ h.milk2024.confianza.justificacion }}</p>
+          </div>
+
+          <!-- Economic recommendation -->
+          <div *ngIf="h.analisis_economico?.recomendacion" class="p-4 rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20">
+            <h4 class="text-xs font-black text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-2 flex items-center gap-1.5"><span>💡</span>Recomendación Económica</h4>
+            <p class="text-[10px] text-indigo-700 dark:text-indigo-400 leading-relaxed mb-3">{{ h.analisis_economico.recomendacion.justificacion }}</p>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-white/50 dark:bg-slate-900/30 p-2 rounded-xl text-center">
+                <p class="text-[9px] text-slate-500 mb-0.5">Mejor opción</p>
+                <p class="text-xs font-black text-indigo-900 dark:text-indigo-200">{{ scenarioName(h.analisis_economico.recomendacion.mejor_opcion) }}</p>
+              </div>
+              <div class="bg-white/50 dark:bg-slate-900/30 p-2 rounded-xl text-center">
+                <p class="text-[9px] text-slate-500 mb-0.5">Utilidad máx./ha</p>
+                <p class="text-xs font-black text-emerald-700 dark:text-emerald-400">{{ h.analisis_economico.recomendacion.utilidad_maxima_ha | currency:'MXN':'$':'1.0-0' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Economic scenarios tabs -->
+          <div *ngIf="h.analisis_economico" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div class="flex border-b border-slate-200 dark:border-slate-800">
+              <button (click)="selectedScenario='venta'" class="flex-1 px-3 py-2.5 text-[10px] font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+                [class.bg-emerald-50]="selectedScenario==='venta'" [class.dark:bg-emerald-950]="selectedScenario==='venta'"
+                [class.border-b-2]="selectedScenario==='venta'" [class.border-emerald-500]="selectedScenario==='venta'"
+                [class.text-emerald-700]="selectedScenario==='venta'" [class.dark:text-emerald-400]="selectedScenario==='venta'">🌾 Vender</button>
+              <button (click)="selectedScenario='uso_propio'" class="flex-1 px-3 py-2.5 text-[10px] font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+                [class.bg-blue-50]="selectedScenario==='uso_propio'" [class.dark:bg-blue-950]="selectedScenario==='uso_propio'"
+                [class.border-b-2]="selectedScenario==='uso_propio'" [class.border-blue-500]="selectedScenario==='uso_propio'"
+                [class.text-blue-700]="selectedScenario==='uso_propio'" [class.dark:text-blue-400]="selectedScenario==='uso_propio'">🥛 Lechería</button>
+              <button (click)="selectedScenario='compra'" class="flex-1 px-3 py-2.5 text-[10px] font-bold transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+                [class.bg-amber-50]="selectedScenario==='compra'" [class.dark:bg-amber-950]="selectedScenario==='compra'"
+                [class.border-b-2]="selectedScenario==='compra'" [class.border-amber-500]="selectedScenario==='compra'"
+                [class.text-amber-700]="selectedScenario==='compra'" [class.dark:text-amber-400]="selectedScenario==='compra'">🛒 Comprar</button>
+            </div>
+            <div class="p-4 space-y-2 text-xs" *ngIf="selectedScenario === 'venta' && h.analisis_economico.escenario_venta as sc">
+              <div class="flex justify-between"><span class="text-slate-500">Ingreso bruto/ha</span><strong class="text-emerald-600">{{ sc.ingreso_bruto_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Costo producción/ha</span><strong class="text-rose-600">{{ sc.costo_produccion_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+              <div class="flex justify-between border-t pt-2 border-slate-100 dark:border-slate-800"><span class="text-slate-600 font-bold">Utilidad neta/ha</span><strong class="text-indigo-600 dark:text-indigo-400 text-sm">{{ sc.utilidad_neta_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">ROI</span><strong>{{ sc.roi | number:'1.1-1' }}%</strong></div>
+            </div>
+            <div class="p-4 space-y-2 text-xs" *ngIf="selectedScenario === 'uso_propio' && h.analisis_economico.escenario_uso_propio as sc">
+              <div class="flex justify-between"><span class="text-slate-500">Producción leche/ha</span><strong>{{ sc.produccion_leche_ha | number:'1.0-0' }} kg</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Ingreso leche/ha</span><strong class="text-emerald-600">{{ sc.ingreso_leche_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Costo total/ha</span><strong class="text-rose-600">{{ sc.costo_total_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+              <div class="flex justify-between border-t pt-2 border-slate-100 dark:border-slate-800"><span class="text-slate-600 font-bold">Utilidad neta/ha</span><strong class="text-indigo-600 dark:text-indigo-400 text-sm">{{ sc.utilidad_neta_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+            </div>
+            <div class="p-4 space-y-2 text-xs" *ngIf="selectedScenario === 'compra' && h.analisis_economico.escenario_compra as sc">
+              <div class="flex justify-between"><span class="text-slate-500">Costo ensilaje/ha</span><strong class="text-rose-600">{{ sc.costo_ensilaje_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Ingreso leche/ha</span><strong class="text-emerald-600">{{ sc.ingreso_leche_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+              <div class="flex justify-between border-t pt-2 border-slate-100 dark:border-slate-800"><span class="text-slate-600 font-bold">Utilidad neta/ha</span><strong class="text-indigo-600 dark:text-indigo-400 text-sm">{{ sc.utilidad_neta_ha | currency:'MXN':'$':'1.0-0' }}</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Precio máx. recomendado</span><strong>{{ sc.precio_maximo_recomendado_ton | currency:'MXN':'$':'1.0-0' }}/Ton</strong></div>
+            </div>
+          </div>
+
+        </ng-container>
+
+        <!-- Empty right panel placeholder -->
+        <div *ngIf="!smProfile" class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 text-center min-h-[200px] flex flex-col items-center justify-center">
+          <span class="text-4xl mb-2">💧</span>
+          <p class="text-xs text-slate-400 dark:text-slate-500">El perfil de humedad del suelo y el detalle del híbrido seleccionado aparecerán aquí.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer-1></footer-1>
