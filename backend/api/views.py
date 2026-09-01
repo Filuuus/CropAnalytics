@@ -1068,3 +1068,114 @@ class PlotListView(APIView):
 
     def get(self, request):
         return Response(JALISCO_PLOTS, status=status.HTTP_200_OK)
+
+
+# =============================================================================
+# HYBRID RECOMMENDATION WITH SOIL MOISTURE CONTEXT
+# =============================================================================
+from .utils.hybrid_recommender import recomendar_hibridos
+
+
+class RecomendacionHumedadView(APIView):
+    """
+    POST /api/recomendacion-humedad/
+    --------------------------------
+    Accepts user plot parameters and returns a ranked list of hybrid varieties
+    scored against both MILK2024 performance and estimated soil moisture
+    compatibility.
+
+    Request body:
+        {
+          "lat":           20.74,           # GPS pin latitude
+          "lon":           -102.83,         # GPS pin longitude
+          "extension_ha":  5.0,             # plot size in hectares
+          "has_irrigation": false,          # true = "Riego", false = "Temporal"
+          "year":          2024,            # optional, default 2024
+          "precio_ensilaje": 2800.0,        # optional market price overrides
+          "precio_leche":    10.50,
+          "costo_produccion": 1800.0,
+          "costo_transporte": 150.0
+        }
+
+    Response 200:
+        {
+          "snapped_plot":    { id, smap_id, name, lat, lon, distance_km },
+          "sm_profile":      { annual_mean_sm, growing_mean_sm, stress_index,
+                               rainfed_suitability, is_real_data, model_backend },
+          "sm_warning":      str | null,
+          "condicion":       "Temporal" | "Riego",
+          "year":            int,
+          "extension_ha":    float,
+          "ranking":         [
+            {
+              "hibrido":               { id, nombre, marca },
+              "n_ciclos_historicos":   int,
+              "rendimiento":           { historico_dm_ha, ajustado_sm_dm_ha,
+                                         factor_ajuste_sm, total_dm_plot, avg_dff },
+              "bromatologia":          { ms, cp, ee, ash, ndf },
+              "milk2024":              { ... },
+              "analisis_economico":    { ... },
+              "score":                 float
+            }, …
+          ],
+          "nota_proyeccion": str | null
+        }
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # --- Validate required inputs ---
+        try:
+            lat          = float(request.data.get("lat"))
+            lon          = float(request.data.get("lon"))
+            extension_ha = float(request.data.get("extension_ha", 1.0))
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "Se requieren 'lat', 'lon' y 'extension_ha' numéricos."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        has_irrigation = request.data.get("has_irrigation", False)
+        if isinstance(has_irrigation, str):
+            has_irrigation = has_irrigation.lower() in ("true", "1", "yes")
+        has_irrigation = bool(has_irrigation)
+
+        try:
+            year = int(request.data.get("year", 2024))
+        except (TypeError, ValueError):
+            year = 2024
+
+        if extension_ha <= 0:
+            return Response(
+                {"detail": "'extension_ha' debe ser mayor que cero."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        precios = {
+            "ensilaje_ton_ms": float(request.data.get("precio_ensilaje",  2800.0)),
+            "leche_litro":     float(request.data.get("precio_leche",       10.50)),
+            "costo_produccion": float(request.data.get("costo_produccion", 1800.0)),
+            "transporte":      float(request.data.get("costo_transporte",   150.0)),
+        }
+
+        try:
+            result = recomendar_hibridos(
+                lat=lat,
+                lon=lon,
+                extension_ha=extension_ha,
+                has_irrigation=has_irrigation,
+                year=year,
+                precios_mercado=precios,
+            )
+        except FileNotFoundError as exc:
+            return Response(
+                {"detail": f"Archivo de datos no encontrado: {exc}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as exc:
+            return Response(
+                {"detail": f"Error en el motor de recomendación: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response(result, status=status.HTTP_200_OK)
