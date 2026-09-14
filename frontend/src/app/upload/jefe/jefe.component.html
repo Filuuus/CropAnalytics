@@ -1,0 +1,337 @@
+<div class="upload-page">
+  <header-1></header-1>
+  <div class="role-toggle-bar">
+    <span>Modo Configuración (Jefe)</span>
+    <button class="btn btn-soft" (click)="switchToInvestigador()">Ver como Investigador</button>
+  </div>
+  <div class="app">
+  <header>
+    <section class="hero">
+      <div class="hero-top">
+        <div class="brand">
+          <h1>Sentineli</h1>
+          <p>
+            Panel de jefe de investigadores para decidir qué campos verá el equipo de captura.
+            Aquí se puede simplificar, ampliar o esconder información antes de que llegue al formulario principal.
+          </p>
+        </div>
+        <div class="status">Control de campos y permisos</div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <div class="layout">
+      <aside class="card">
+        <div class="card-head">
+          <h2>Configuración general</h2>
+          <p>La idea es que el jefe arme el formulario como una caja de herramientas: solo sale lo que se necesita.</p>
+        </div>
+
+        <div class="card-body profile">
+          <div class="summary-box">
+            <h3>Rol actual</h3>
+            <p>Jefe de investigadores</p>
+            <div class="stats">
+              <div class="stat">
+                <strong>18</strong>
+                <span>Campos disponibles</span>
+              </div>
+              <div class="stat">
+                <strong>12</strong>
+                <span>Activos para captura</span>
+              </div>
+              <div class="stat">
+                <strong>6</strong>
+                <span>Ocultos temporalmente</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-box">
+            <h3>Buscar campo</h3>
+            <input class="search" type="text" placeholder="Ej. NDVI, parcela, rendimiento..." />
+            <div class="filters">
+              <div class="pill-row">
+                <span class="pill active">Todos</span>
+                <span class="pill">Obligatorios</span>
+                <span class="pill">Opcionales</span>
+                <span class="pill">Avanzados</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-box">
+            <h3>Estado de publicación</h3>
+            <p>Los cambios se pueden preparar y luego publicar para que aparezcan en el formulario de investigadores.</p>
+          </div>
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Campos que llenan los investigadores</h2>
+          <p>Activa o desactiva lo que deben ver. Los cambios visuales ayudan a mantener el control sin entrar todavía al backend.</p>
+        </div>
+
+        <div class="card-body">
+          <div class="grid grid-2">
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Fecha y hora</strong>
+                  <small>Registro automático en captura.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Tipo</span>
+                <span class="badge">Obligatorio</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Investigador</strong>
+                  <small>Nombre del responsable del muestreo.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Tipo</span>
+                <span class="badge">Obligatorio</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Municipio</strong>
+                  <small>Selección controlada por catálogo.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Opciones permitidas</span>
+                <span class="badge">Catálogo</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Parcela</strong>
+                  <small>Identificador para ubicar cada lote.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Tipo</span>
+                <span class="badge">Obligatorio</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Híbrido</strong>
+                  <small>Variedad o material evaluado.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Tipo</span>
+                <span class="badge">Catálogo</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Ciclo</strong>
+                  <small>Temporal o riego.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Tipo</span>
+                <span class="badge">Básico</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Etapa fenológica</strong>
+                  <small>Ayuda a ordenar el estado del cultivo.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Tipo</span>
+                <span class="badge">Básico</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Altura de planta</strong>
+                  <small>Dato numérico de seguimiento.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Formato</span>
+                <span class="badge">Decimal</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Diámetro de tallo</strong>
+                  <small>Medición de vigor de la planta.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Formato</span>
+                <span class="badge">Decimal</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Número de hojas</strong>
+                  <small>Se puede activar solo en evaluaciones específicas.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Formato</span>
+                <span class="badge">Entero</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>NDVI</strong>
+                  <small>Dato opcional de análisis avanzado.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Estado</span>
+                <span class="badge">Opcional</span>
+              </div>
+            </div>
+
+            <div class="toggle-card">
+              <div class="toggle-top">
+                <div>
+                  <strong>Observaciones</strong>
+                  <small>Notas libres para condiciones de campo.</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="field-item">
+                <span>Uso</span>
+                <span class="badge">Libre</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="section">
+              <div class="section-head">
+                <div>
+                  <h2>Vista previa del formulario del investigador</h2>
+                  <p>Esta maqueta muestra cómo verían el formulario con la configuración actual.</p>
+                </div>
+                <span class="ok-text">Vista activa</span>
+              </div>
+
+              <div class="section-body">
+                <div class="preview">
+                  <div class="preview-head">
+                    <h3>Campos visibles para captura</h3>
+                    <p>La vista previa sirve para revisar rápidamente qué aparece antes de publicar cambios.</p>
+                  </div>
+                  <div class="preview-body">
+                    <div class="preview-grid">
+                      <div class="preview-field"><label>Fecha y hora</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Investigador</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Municipio</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Parcela</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Híbrido</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Ciclo</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Etapa fenológica</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Altura de planta</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Diámetro de tallo</label><div>Visible</div></div>
+                      <div class="preview-field"><label>Número de hojas</label><div>Visible</div></div>
+                      <div class="preview-field"><label>NDVI</label><div>Oculto</div></div>
+                      <div class="preview-field"><label>Observaciones</label><div>Visible</div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="actions">
+                  <button class="btn btn-primary" type="button">Guardar permisos</button>
+                  <button class="btn btn-secondary" type="button">Restablecer</button>
+                  <button class="btn btn-ok" type="button">Publicar cambios</button>
+                </div>
+
+                <div class="note">
+                  Los cambios quedan preparados para el formulario de investigadores.
+                  Más adelante, el backend podrá guardar estas preferencias por cuenta y rol.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  </div>
+  <footer-1></footer-1>
+</div>

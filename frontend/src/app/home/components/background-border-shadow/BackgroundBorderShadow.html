@@ -1,13 +1,13 @@
 <div
-  class="self-stretch w-[24rem] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg bg-color-white-solid border-color-grey-91 border-solid border-stroke-weight-1 box-border flex flex-col items-start max-w-full text-center text-[1.081rem] text-color-azure-11 font-font-family-font-1"
+  class="box-border flex w-[24rem] max-w-full flex-col items-start self-stretch rounded-lg border border-slate-200 bg-white text-center font-font-family-font-1 text-[1.081rem] text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
 >
   <div
-    class="w-[23.875rem] h-[12.594rem] flex flex-col items-start pt-[1.5rem] px-[1.5rem] pb-[1.506rem] box-border gap-[1rem]"
+    class="box-border flex h-[12.594rem] w-[23.875rem] flex-col items-start gap-[1rem] px-[1.5rem] pb-[1.506rem] pt-[1.5rem]"
     [style.height]="containerHeight()"
     [style.padding]="containerPadding()"
   >
     <img
-      class="w-[20.875rem] h-[3.5rem]"
+      class="h-[3.5rem] w-[20.875rem]"
       loading="lazy"
       alt=""
       [src]="container()"
@@ -16,7 +16,7 @@
       class="flex flex-col items-start gap-[0.462rem]"
       [style.gap]="frameDivGap()"
     >
-      <div class="w-[20.875rem] flex flex-col items-center">
+      <div class="flex w-[20.875rem] flex-col items-center">
         <b
           class="relative leading-[1.75rem]"
           [style.font-size]="interactiveMapAnalysisFontSize()"
@@ -24,7 +24,7 @@
         >
       </div>
       <div
-        class="flex flex-col items-center text-[0.8rem] text-color-azure-34"
+        class="flex flex-col items-center text-[0.8rem] text-slate-600 dark:text-slate-300"
         [style.width]="containerWidth()"
       >
         <div

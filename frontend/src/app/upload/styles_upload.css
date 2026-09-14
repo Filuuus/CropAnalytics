@@ -1,0 +1,493 @@
+:host {
+  display: contents;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.upload-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ca-bg);
+  color: var(--ca-text);
+}
+
+.role-toggle-bar,
+.app main,
+.app > header {
+  width: 100%;
+  max-width: 1280px;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+
+.role-toggle-bar {
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  color: var(--ca-text);
+}
+
+.role-toggle-bar span {
+  color: var(--ca-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.app {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.app > header {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.hero {
+  border: 1px solid var(--ca-border);
+  border-radius: 0.5rem;
+  background: var(--ca-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  overflow: hidden;
+}
+
+.hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.brand h1 {
+  margin: 0;
+  color: var(--ca-text);
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.brand p {
+  max-width: 52rem;
+  margin: 0.5rem 0 0;
+  color: var(--ca-text-muted);
+  line-height: 1.6;
+}
+
+.status,
+.ok-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(37 99 235 / 0.18);
+  border-radius: 999px;
+  background: rgb(37 99 235 / 0.08);
+  color: var(--ca-primary);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.app main {
+  flex: 1;
+  padding-top: 0;
+  padding-bottom: 2rem;
+}
+
+.layout,
+.top-grid,
+.split {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.layout {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+}
+
+.top-grid {
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.85fr);
+}
+
+.split {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+}
+
+.card,
+.section {
+  border: 1px solid var(--ca-border);
+  border-radius: 0.5rem;
+  background: var(--ca-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  overflow: hidden;
+}
+
+.card-head,
+.section-head,
+.preview-head {
+  border-bottom: 1px solid var(--ca-border);
+  background: var(--ca-surface-muted);
+  padding: 1rem;
+}
+
+.card-head h2,
+.section-head h2,
+.preview-head h3 {
+  margin: 0;
+  color: var(--ca-text);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.card-head p,
+.section-head p,
+.preview-head p,
+.summary-box p,
+.info-box p,
+.toggle-top small,
+.hint,
+.note {
+  color: var(--ca-text-muted);
+  line-height: 1.55;
+}
+
+.card-head p,
+.section-head p,
+.preview-head p {
+  margin: 0.375rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.card-body,
+.section-body,
+.preview-body {
+  padding: 1rem;
+}
+
+.profile,
+.filters,
+.helper-panel,
+.panel,
+.mini-list,
+.field-config {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.grid {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.summary-box,
+.info-box,
+.toggle-card,
+.preview,
+.preview-field,
+.field,
+.mini-item,
+.field-item {
+  border: 1px solid var(--ca-border);
+  border-radius: 0.5rem;
+  background: var(--ca-surface);
+}
+
+.summary-box,
+.info-box,
+.toggle-card,
+.field,
+.preview-field {
+  padding: 0.875rem;
+}
+
+.summary-box h3,
+.info-box h3,
+.toggle-top strong {
+  margin: 0 0 0.5rem;
+  color: var(--ca-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+}
+
+.stat,
+.note {
+  border: 1px solid var(--ca-border);
+  border-radius: 0.5rem;
+  background: var(--ca-surface-muted);
+  padding: 0.875rem;
+}
+
+.stat strong {
+  display: block;
+  color: var(--ca-primary);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.stat span,
+.field-item span,
+.mini-item span {
+  color: var(--ca-text-muted);
+  font-size: 0.875rem;
+}
+
+.pill-row,
+.chips,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pill,
+.chip,
+.badge,
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ca-border);
+  border-radius: 999px;
+  background: var(--ca-surface);
+  color: var(--ca-text);
+  padding: 0.45rem 0.7rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.pill.active,
+.chip,
+.badge,
+.tag {
+  border-color: rgb(37 99 235 / 0.18);
+  background: rgb(37 99 235 / 0.08);
+  color: var(--ca-primary);
+}
+
+.search,
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--ca-border);
+  border-radius: 0.375rem;
+  background: var(--ca-surface);
+  color: var(--ca-text);
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search::placeholder,
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ca-text-muted);
+  opacity: 0.75;
+}
+
+.search:focus,
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--ca-primary);
+}
+
+.field label,
+.preview-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--ca-text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.field textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.toggle-top,
+.mini-item,
+.field-item,
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.switch {
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+}
+
+.switch input {
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  background: var(--ca-border);
+  transition: background 0.2s ease;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.2);
+  transition: transform 0.2s ease;
+}
+
+.switch input:checked + .slider {
+  background: var(--ca-primary);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(1.25rem);
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.preview-field div {
+  color: var(--ca-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.actions {
+  margin-top: 1rem;
+}
+
+.btn {
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-primary,
+.btn-ok {
+  border-color: var(--ca-primary);
+  background: var(--ca-primary);
+  color: #fff;
+}
+
+.btn-primary:hover,
+.btn-ok:hover {
+  border-color: var(--ca-primary-strong);
+  background: var(--ca-primary-strong);
+}
+
+.btn-secondary,
+.btn-soft {
+  border-color: var(--ca-border);
+  background: var(--ca-surface);
+  color: var(--ca-text);
+}
+
+.btn-secondary:hover,
+.btn-soft:hover {
+  background: var(--ca-surface-muted);
+}
+
+.note {
+  margin-top: 1rem;
+  border-left: 4px solid var(--ca-primary);
+}
+
+.hidden-by-role {
+  opacity: 0.45;
+}
+
+@media (max-width: 1024px) {
+  .layout,
+  .top-grid,
+  .split,
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .stats,
+  .preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .role-toggle-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .brand h1 {
+    font-size: 1.6rem;
+  }
+
+  .hero-top,
+  .card-body,
+  .section-body,
+  .preview-body {
+    padding: 0.875rem;
+  }
+
+  .status,
+  .btn {
+    width: 100%;
+  }
+}

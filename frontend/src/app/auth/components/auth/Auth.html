@@ -1,0 +1,226 @@
+<div class="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+  <header-1></header-1>
+
+  <main class="flex flex-1 items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+    <section class="w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+      <div class="grid md:grid-cols-2">
+        <div
+          class="relative hidden flex-col overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-green-600 p-10 text-white md:flex">
+
+          <div class="absolute -right-14 -top-14 h-48 w-48 rounded-full bg-white/10"></div>
+          <div class="absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-white/10"></div>
+
+          <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/15 via-black/10 to-black/25"></div>
+
+            <section class="ca-scene ca-scene--full absolute inset-0">
+              <div class="ca-sky">
+                <div class="ca-sun"></div>
+                <div class="ca-cloud ca-cloud--1"></div>
+                <div class="ca-cloud ca-cloud--2"></div>
+                <div class="ca-cloud ca-cloud--3"></div>
+              </div>
+
+              <div class="ca-hills">
+                <div class="ca-hill ca-hill--back"></div>
+                <div class="ca-hill ca-hill--mid"></div>
+                <div class="ca-hill ca-hill--front"></div>
+              </div>
+
+              <div class="ca-field">
+                <div class="ca-rows ca-rows--1"></div>
+                <div class="ca-rows ca-rows--2"></div>
+                <div class="ca-dust"></div>
+              </div>
+
+              <div class="ca-walker">
+                <div class="elote" role="img" aria-label="Elote caminando">
+                  <div class="elote__shadow"></div>
+
+                  <div class="elote__body">
+                    <div class="elote__husks">
+                      <span class="husk husk--l"></span>
+                      <span class="husk husk--r"></span>
+                    </div>
+
+                    <div class="elote__cob">
+                      <div class="kernels"></div>
+                      <div class="shine"></div>
+
+                      <div class="face">
+                        <span class="eye eye--l"></span>
+                        <span class="eye eye--r"></span>
+                        <span class="mouth"></span>
+                        <span class="blush blush--l"></span>
+                        <span class="blush blush--r"></span>
+                      </div>
+                    </div>
+
+                    <div class="arms">
+                      <span class="arm arm--l"></span>
+                      <span class="arm arm--r"></span>
+                    </div>
+
+                    <div class="legs">
+                      <span class="leg leg--l"><i class="foot"></i></span>
+                      <span class="leg leg--r"><i class="foot"></i></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="relative z-10 max-w-md rounded-2xl border border-white/15 bg-white/10 p-6 text-slate-900 dark:text-white">
+            <p class="text-sm uppercase tracking-[0.2em] text-slate-700/80 dark:text-blue-100">
+              Sentineli
+            </p>
+
+            <h1 class="mt-4 text-4xl font-bold leading-tight text-slate-900 dark:text-white">
+              @if (isRegisterMode()) {
+              Crea tu cuenta
+              } @else {
+              Bienvenido de vuelta
+              }
+            </h1>
+
+            <p class="mt-4 text-base text-slate-700 dark:text-white/85">
+              @if (isRegisterMode()) {
+              Registra tu cuenta para comenzar a usar la plataforma de analitica agricola.
+            } @else {
+            Inicia sesion para continuar con tus analisis y reportes de cultivos.
+            }
+            </p>
+          </div>
+
+          <div class="flex-1"></div>
+        </div>
+
+        <div class="p-6 sm:p-10">
+          <div class="mx-auto w-full max-w-md">
+            <div class="mb-6">
+              <h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                @if (isRegisterMode()) {
+                Registro
+                } @else {
+                Login
+                }
+              </h2>
+              <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                @if (isRegisterMode()) {
+                Completa los datos para crear tu cuenta.
+                } @else {
+                Accede con tu correo y contraseña.
+                }
+              </p>
+            </div>
+
+            <div class="mb-6 flex rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
+              <button type="button" class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                [ngClass]="mode() === 'login'
+                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100'
+                  : 'text-slate-500 dark:text-slate-300'"
+                (click)="onSwitchMode('login')">
+                Login
+              </button>
+              <button type="button" class="flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                [ngClass]="mode() === 'register'
+                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100'
+                  : 'text-slate-500 dark:text-slate-300'"
+                (click)="onSwitchMode('register')">
+                Registro
+              </button>
+            </div>
+
+            <form [formGroup]="authForm" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+              @if (isRegisterMode()) {
+              <div>
+                <label for="name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Nombre completo</label>
+                <input id="name" type="text" formControlName="name" autocomplete="name"
+                  class="w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+                  [ngClass]="isControlInvalid('name')
+                    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-500/25'
+                    : 'border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-500/25'"
+                  placeholder="Ingresa tu nombre" />
+                @if (isControlInvalid('name')) {
+                <p class="mt-1 text-xs text-red-600 dark:text-red-300">Escribe un nombre valido (minimo 2 caracteres).</p>
+                }
+              </div>
+              }
+
+              <div>
+                <label for="email" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Correo electronico</label>
+                <input id="email" type="email" formControlName="email" autocomplete="email"
+                  class="w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+                  [ngClass]="isControlInvalid('email')
+                    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-500/25'
+                    : 'border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-500/25'"
+                  placeholder="correo@ejemplo.com" />
+                @if (isControlInvalid('email')) {
+                <p class="mt-1 text-xs text-red-600 dark:text-red-300">Ingresa un correo electronico valido.</p>
+                }
+              </div>
+
+              <div>
+                <label for="password" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Contraseña</label>
+                <input id="password" type="password" formControlName="password" autocomplete="current-password"
+                  class="w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+                  [ngClass]="isControlInvalid('password')
+                    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-500/25'
+                    : 'border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-500/25'"
+                  placeholder="Minimo 8 caracteres" />
+                @if (isControlInvalid('password')) {
+                <p class="mt-1 text-xs text-red-600 dark:text-red-300">La contraseña debe tener al menos 8 caracteres.</p>
+                }
+              </div>
+
+              <button type="submit"
+                class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus-visible:outline-blue-400"
+                [disabled]="loading()">
+                @if (loading()) {
+                Procesando...
+                } @else if (isRegisterMode()) {
+                Crear cuenta
+                } @else {
+                Iniciar sesion
+                }
+              </button>
+            </form>
+
+            <div class="my-5 flex items-center gap-3">
+              <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+              <span class="text-xs font-semibold uppercase text-slate-400">o</span>
+              <div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+            </div>
+
+            <div id="googleBtn" class="w-full overflow-hidden rounded-lg"></div>
+
+            @if (successNotice()) {
+            <div class="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-200">
+              {{ successNotice() }}
+            </div>
+            }
+
+            @if (errorNotice()) {
+            <div class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+              {{ errorNotice() }}
+            </div>
+            }
+
+            <p class="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
+              @if (isRegisterMode()) {
+              Ya tienes cuenta?
+              <a routerLink="/auth/login" class="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200">Inicia sesion</a>
+              } @else {
+              No tienes cuenta?
+              <a routerLink="/auth/register" class="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200">Registrate</a>
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer-1></footer-1>
+</div>

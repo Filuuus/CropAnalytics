@@ -1,7 +1,451 @@
-<div class="flex flex-col min-h-screen bg-gray-50">
+<div class="ca-page">
   <header-1></header-1>
-  <main class="flex-grow container mx-auto px-4 py-8">
-    <main-1></main-1>
-  </main>
+  <div class="ca-container flex flex-col gap-8">
+    <!-- Dashboard Content -->
+    <!-- Pass the globally selected and filtered variables to comparative components -->
+    <main-1
+      [selectedCiclos]="selectedCiclosObjects()"
+      [filteredCiclos]="filteredCiclos()"
+      [hibridosSeleccionados]="hibridosSeleccionados()"
+      [precioLeche]="precioLeche()"
+      (hybridToggled)="toggleSeleccion($event)"
+      (clearSelection)="limpiarSelecciones()"
+      (navigateHybrid)="enfocarEnTabla($event)"
+      class="w-full"
+    ></main-1>
+
+    <!-- Terrenos List (Removed and converted to Filter below) -->
+
+    <!-- Ciclos List -->
+    <section
+      class="ca-card pointer-events-auto overflow-visible"
+    >
+      <div class="p-4 sm:p-6">
+        <h3 class="mb-6 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+          Ciclos Agrícolas Table
+        </h3>
+
+        <div class="mb-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between relative z-50">
+          <div class="flex flex-col gap-3 text-sm text-slate-600 dark:text-slate-300 sm:flex-row sm:flex-wrap">
+            <!-- Filter by Terreno -->
+            <div class="relative flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <label class="font-medium text-slate-500 dark:text-slate-400">Ubicación:</label>
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown('location')"
+                  class="ca-control w-full pr-8 text-left sm:w-[200px]"
+                >
+                  {{ selectedLocation().length === 0 ? 'Todas' : selectedLocation().length + ' seleccionada(s)' }}
+                </button>
+                <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                @if (locationDropdownOpen()) {
+                  <div class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 sm:w-[200px]">
+                    <div class="p-2 flex flex-col gap-1">
+                      @for (op of estadoMunicipioOptions(); track op.label) {
+                        <label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
+                          <input 
+                            type="checkbox" 
+                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
+                            [checked]="isLocSelected(op.label)"
+                            (change)="toggleLocationSelection(op)"
+                          >
+                          <span class="truncate">{{ op.label }}</span>
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Filter by Year -->
+            <div class="relative flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <label class="font-medium text-slate-500 dark:text-slate-400">Año:</label>
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown('year')"
+                  class="ca-control w-full pr-8 text-left sm:w-[140px]"
+                >
+                  {{ selectedYear().length === 0 ? 'Todos' : selectedYear().length + ' seleccionado(s)' }}
+                </button>
+                <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                @if (yearDropdownOpen()) {
+                  <div class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 sm:w-[140px]">
+                    <div class="p-2 flex flex-col gap-1">
+                      @for (year of aniosDisponibles(); track year) {
+                        <label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
+                          <input 
+                            type="checkbox" 
+                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
+                            [checked]="isYearSelected(year)"
+                            (change)="toggleYearSelection(year)"
+                          >
+                          {{ year }}
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Filter by Brand -->
+            <div class="relative flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <label class="font-medium text-slate-500 dark:text-slate-400">Marca:</label>
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown('marca')"
+                  class="ca-control w-full pr-8 text-left sm:w-[160px]"
+                >
+                  {{ selectedMarca().length === 0 ? 'Todas' : selectedMarca().length + ' seleccionada(s)' }}
+                </button>
+                <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                @if (marcaDropdownOpen()) {
+                  <div class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 sm:w-[160px]">
+                    <div class="p-2 flex flex-col gap-1">
+                      @for (marca of marcasDisponibles; track marca) {
+                        <label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
+                          <input 
+                            type="checkbox" 
+                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
+                            [checked]="isMarcaSelected(marca)"
+                            (change)="toggleMarcaSelection(marca)"
+                          >
+                          <span class="truncate">{{ marca }}</span>
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Filter by Condición -->
+            <div class="relative flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <label class="font-medium text-slate-500 dark:text-slate-400">Condición:</label>
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown('condicion')"
+                  class="ca-control w-full pr-8 text-left sm:w-[160px]"
+                >
+                  {{ selectedCondicion().length === 0 ? 'Todas' : selectedCondicion().length + ' seleccionada(s)' }}
+                </button>
+                <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                @if (condicionDropdownOpen()) {
+                  <div class="absolute right-0 z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 sm:w-[180px]">
+                    <div class="p-2 flex flex-col gap-1">
+                      @for (cond of condicionesDisponibles; track cond) {
+                        <label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
+                          <input 
+                            type="checkbox" 
+                            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
+                            [checked]="isCondicionSelected(cond)"
+                            (change)="toggleCondicionSelection(cond)"
+                          >
+                          <span class="truncate">{{ cond }}</span>
+                        </label>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <button
+              (click)="limpiarFiltros()"
+              class="ml-0 self-start text-xs font-semibold text-slate-400 underline decoration-transparent transition-colors hover:text-red-500 hover:decoration-red-400 sm:ml-2 sm:self-center"
+              title="Restablecer todos los filtros"
+            >
+              Limpiar Filtros
+            </button>
+          </div>
+          <div class="relative flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div class="relative text-slate-500 focus-within:text-slate-700 dark:focus-within:text-slate-200">
+              <svg
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                (input)="onSearch($event)"
+                [value]="searchTerm()"
+                placeholder="Buscar..."
+                class="ca-control w-full pl-9 pr-12 sm:w-[220px]"
+              />
+            </div>
+            @if (searchTerm()) {
+              <button
+                (click)="limpiarBusqueda()"
+                class="ml-2 rounded-full p-1 text-slate-500 transition-colors hover:bg-slate-100/50 hover:text-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                title="Limpiar búsqueda"
+              >
+                <svg
+                  class="w-4 h-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            }
+            <button
+              class="rounded border border-transparent bg-slate-50 p-2 text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+              title="Descargar Reporte"
+            >
+              <svg
+                class="w-5 h-5"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-auto max-h-[600px] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-inner ca-scrollbar bg-slate-50/50 dark:bg-slate-950/20">
+          <!-- Selection & Control Header -->
+          <div class="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-2.5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+            <div class="flex items-center gap-2.5">
+              <input
+                type="checkbox"
+                [checked]="isAllFilteredSelected"
+                (change)="toggleAllSelection($event)"
+                class="h-4 w-4 cursor-pointer rounded border-slate-300 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500"
+                id="selectAllMain"
+              />
+              <label for="selectAllMain" class="text-xs font-black text-slate-700 dark:text-slate-200 cursor-pointer select-none tracking-wide">
+                SELECCIONAR TODOS ({{ filteredCiclos().length }} ciclos)
+              </label>
+            </div>
+            
+            <div class="flex items-center gap-3 self-end sm:self-auto">
+              <!-- Sort Selector -->
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Ordenar:</span>
+                <select 
+                  [value]="hibridoSortOption()" 
+                  (change)="hibridoSortOption.set($any($event.target).value)"
+                  class="text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-2.5 py-1 text-slate-600 dark:text-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-xs transition-colors"
+                >
+                  <option value="alphabetical">Alfabético</option>
+                  <option value="rms_desc">Mayor RMS</option>
+                </select>
+              </div>
+
+              <!-- Accordion Expand/Collapse All Button -->
+              <button 
+                (click)="toggleAllExpansionState()"
+                class="text-xs font-semibold text-slate-650 hover:text-slate-800 dark:text-gray-200 dark:hover:text-slate-100 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-655 rounded-full px-3 py-1 flex items-center gap-1.5 transition-all shadow-xs"
+              >
+                <span>{{ areAllHierarchyNodesExpanded ? 'Contraer Todos' : 'Expandir Todos' }}</span>
+              </button>
+
+              @if (selectedCiclosIds().size > 0) {
+                <button (click)="limpiarSelecciones()" 
+                        class="text-xs font-bold text-red-500 hover:text-red-650 dark:text-red-400 dark:hover:text-red-350 transition-colors">
+                  Limpiar ({{ selectedCiclosIds().size }})
+                </button>
+              }
+            </div>
+          </div>
+                    <!-- Accordion Hierarchy Container -->
+          <div class="divide-y divide-slate-200 dark:divide-slate-800/80">
+            @for (brandGroup of groupedHierarchy(); track brandGroup.marca) {
+              <div class="border-b border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950">
+                
+                <!-- Nivel 1: Marca Header -->
+                <div class="flex items-center justify-between px-4 py-3.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/50 dark:hover:bg-slate-800/50 transition-all duration-150 cursor-pointer border-l-4 border-l-slate-400 dark:border-l-slate-700"
+                     (click)="toggleMarcaExpansion(brandGroup.marca)">
+                  <div class="flex items-center gap-3" (click)="$event.stopPropagation()">
+                    <input
+                      type="checkbox"
+                      [checked]="isMarcaSelectedInHierarchy(brandGroup.hibridos)"
+                      (change)="toggleMarcaSelectionInHierarchy(brandGroup.hibridos, $event)"
+                      class="h-4 w-4 cursor-pointer rounded border-slate-300 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span class="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                      {{ brandGroup.marca }}
+                    </span>
+                  </div>
+                  
+                  <div class="flex items-center gap-3">
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold bg-white dark:bg-slate-900 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-800">
+                      {{ brandGroup.hibridos.length }} Híbridos
+                    </span>
+                    <svg
+                      class="h-4.5 w-4.5 text-slate-400 dark:text-slate-500 transition-transform duration-200"
+                      [class.rotate-180]="isMarcaExpanded(brandGroup.marca)"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                
+                <!-- Nivel 2: Híbridos List (Vertical Accordion) -->
+                @if (isMarcaExpanded(brandGroup.marca)) {
+                  <div class="divide-y divide-slate-100 dark:divide-slate-800/40 bg-slate-50/20 dark:bg-slate-900/10">
+                    @for (hyb of brandGroup.hibridos; track hyb.hibrido_nombre) {
+                      <div class="border-b border-slate-150/50 dark:border-slate-800/30 last:border-b-0">
+                        
+                        <!-- Fila de Híbrido: pl-8 indentation -->
+                        <div class="flex items-center justify-between pl-8 pr-4 py-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-all duration-150 cursor-pointer"
+                             (click)="toggleHierarchyHybridExpansion(brandGroup.marca, hyb.hibrido_nombre)">
+                          <div class="flex items-center gap-3" (click)="$event.stopPropagation()">
+                            <input
+                              type="checkbox"
+                              [checked]="isHybridSelected(brandGroup.marca, hyb.hibrido_nombre)"
+                              (change)="toggleHibridoSelection(brandGroup.marca, hyb.hibrido_nombre)"
+                              class="h-4 w-4 cursor-pointer rounded border-slate-300 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
+                            />
+                            <div class="flex flex-col">
+                              <span class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                                {{ hyb.hibrido_nombre }}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div class="flex-1 flex justify-end items-center gap-4 mr-4">
+                            <!-- Premium Milk2024 Projections Inline Summary (Always Visible) -->
+                            <span class="hidden md:inline-flex items-center gap-1.5 text-xs font-black text-slate-800 dark:text-gray-100 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-xs">
+                              <span>{{ calcularHibridoLecheHa(hyb) | number:'1.0-0' }} kg/ha</span>
+                            </span>
+                            <span class="hidden md:inline-flex items-center gap-1.5 text-xs font-black text-emerald-655 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-2.5 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900/30 shadow-xs">
+                              <span>${{ (calcularHibridoLecheHa(hyb) * precioLeche()) | number:'1.0-0' }} MXN/ha</span>
+                            </span>
+                          </div>
+
+                          <div class="flex items-center gap-3">
+                            <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                              {{ hyb.ciclos.length }} Ciclo(s)
+                            </span>
+                            <svg
+                              class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200"
+                              [class.rotate-180]="isHierarchyHybridExpanded(brandGroup.marca, hyb.hibrido_nombre)"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+
+                        <!-- Nivel 3: Ciclo/Entrada List: ml-8 / pl-12 indentation -->
+                        @if (isHierarchyHybridExpanded(brandGroup.marca, hyb.hibrido_nombre)) {
+                          <div class="bg-slate-100/30 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-800/40 divide-y divide-slate-100 dark:divide-slate-800/20">
+                            @for (c of hyb.ciclos; track c.id) {
+                              <div class="flex flex-col pl-14 pr-4 py-3 hover:bg-slate-200/35 dark:hover:bg-slate-800/40 transition-all duration-150">
+                                <div class="flex flex-wrap items-center justify-between gap-4">
+                                  <!-- Checkbox y detalles del ciclo -->
+                                  <div class="flex items-center gap-3">
+                                    <input
+                                      type="checkbox"
+                                      [checked]="selectedCiclosIds().has(c.id)"
+                                      (change)="toggleRowSelection(c.id)"
+                                      class="h-4 w-4 cursor-pointer rounded border-slate-300 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
+                                      [id]="'cycleCheck-' + c.id"
+                                    />
+                                    <label [for]="'cycleCheck-' + c.id" class="flex flex-wrap items-center gap-2 cursor-pointer select-none">
+                                      <span class="text-xs font-black text-slate-700 dark:text-slate-300 bg-slate-250 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                        Año {{ c.year }}
+                                      </span>
+                                      <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                        {{ c.terreno_estado }} - {{ c.terreno_municipio }}
+                                      </span>
+                                      <span class="text-[10px] font-bold text-slate-550 dark:text-gray-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                                        {{ c.condicion }}
+                                      </span>
+                                    </label>
+                                  </div>
+
+                                  <!-- Laboratorio Info: RMS, CNF, FDA, FDN, etc. -->
+                                  @if (c.laboratorio_info) {
+                                    <div class="flex flex-wrap items-center gap-3 text-[10px] font-bold">
+                                      @for (met of getValidLabMetrics(c.laboratorio_info); track met.key) {
+                                        <span class="bg-slate-100 dark:bg-slate-900 text-slate-655 dark:text-gray-300 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-lg">
+                                          {{ met.label }}: <strong class="text-slate-850 dark:text-gray-200 ml-0.5">{{ met.value | number:'1.1-2' }}{{ met.unit }}</strong>
+                                        </span>
+                                      }
+                                      <!-- Wisconsin Milk2024 calculation result -->
+                                      <span class="bg-blue-50 dark:bg-blue-950/20 text-blue-650 dark:text-blue-450 border border-blue-100/50 dark:border-blue-900/30 px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-xs">
+                                        Leche/ha: <strong class="text-blue-755 dark:text-blue-300">{{ calcularLecheHa(c) | number:'1.0-0' }} kg</strong>
+                                      </span>
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            } @empty {
+              <div class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                <div class="flex flex-col items-center gap-3">
+                  <svg
+                    class="h-8 w-8 text-slate-400 dark:text-slate-500 animate-pulse"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    ></path>
+                  </svg>
+                  <p class="font-black text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider">No hay híbridos registrados para los filtros seleccionados.</p>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
   <footer-1></footer-1>
 </div>

@@ -1,0 +1,202 @@
+<div class="upload-page">
+  <header-1></header-1>
+  <div class="role-toggle-bar">
+    <span>Modo Captura (Investigador)</span>
+    @if (authService.hasAnyRole(['JEFE', 'SADMIN'])) {
+    <button class="btn btn-soft" (click)="switchToJefe()">Cambiar a Jefe</button>
+    }
+  </div>
+  <div class="app">
+  <header>
+    <section class="hero">
+      <div class="hero-top">
+        <div class="brand">
+          <h1>Sentineli</h1>
+          <p>
+            Captura ágil para registros de siembra y cosecha de híbridos de maíz.
+            La interfaz está pensada para ser clara, rápida y cómoda en campo.
+          </p>
+        </div>
+        <div class="status">Formulario de investigador activo</div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <div class="top-grid">
+      <section class="card">
+        <div class="card-head">
+          <h2>Datos generales del registro</h2>
+          <p>Completa primero la información base para identificar el muestreo sin perder tiempo.</p>
+        </div>
+        <div class="card-body">
+          <div class="grid grid-2">
+            <div class="field">
+              <label for="fecha">Fecha y hora</label>
+              <input id="fecha" type="datetime-local" />
+              <div class="hint">Se puede dejar precargado al entrar al formulario.</div>
+            </div>
+
+            <div class="field">
+              <label for="investigador">Investigador</label>
+              <input id="investigador" type="text" placeholder="Nombre completo" />
+            </div> 
+
+            <div class="field">
+              <label for="municipio">Municipio</label>
+              <select id="municipio">
+                <option value="">Selecciona una opción</option>
+                <option>Lagos de Moreno</option>
+                <option>San Juan de los Lagos</option>
+                <option>Jalostotitlán</option>
+                <option>Valle de Guadalupe</option>
+                <option>Tepatitlán</option>
+                <option>Acatic</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="parcela">Parcela</label>
+              <input id="parcela" type="text" placeholder="Nombre o identificador de la parcela" />
+              <div class="hint">Este campo no es opcional. Ayuda a ubicar cada registro con precisión.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="card-head">
+          <h2>Guía rápida</h2>
+          <p>Todo lo necesario para llenar el registro sin tropiezos.</p>
+        </div>
+        <div class="card-body helper-panel">
+          <div class="info-box">
+            <h3>Flujo recomendado</h3>
+            <p>Llena primero los datos generales, después los datos agronómicos y al final las observaciones.</p>
+          </div>
+
+          <div class="info-box">
+            <h3>Campos clave</h3>
+            <div class="chips">
+              <span class="chip">Municipio</span>
+              <span class="chip">Parcela</span>
+              <span class="chip">Híbrido</span>
+              <span class="chip">Etapa</span>
+              <span class="chip">Rendimiento</span>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <h3>Estado del registro</h3>
+            <div class="mini-list">
+              <div class="mini-item"><strong>Captura</strong><span class="tag">Pendiente</span></div>
+              <div class="mini-item"><strong>Revisión</strong><span class="tag">Por enviar</span></div>
+              <div class="mini-item"><strong>Gráficas</strong><span class="tag">Disponible</span></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Datos agronómicos y de campo</h2>
+        <p>Campos organizados para que el investigador lea de arriba hacia abajo sin sentir que el formulario “muerde”.</p>
+      </div>
+
+      <div class="section-body">
+        <div class="grid grid-3">
+          <div class="field">
+            <label for="hibrido">Híbrido</label>
+            <select id="hibrido">
+              <option value="">Selecciona</option>
+              <option>Híbrido 1</option>
+              <option>Híbrido 2</option>
+              <option>Experimental</option>
+              <option>Otro</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="ciclo">Ciclo</label>
+            <select id="ciclo">
+              <option value="">Selecciona</option>
+              <option>Temporal</option>
+              <option>Riego</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="etapa">Etapa fenológica</label>
+            <select id="etapa">
+              <option value="">Selecciona</option>
+              <option>Emergencia</option>
+              <option>Vegetativo</option>
+              <option>Floración</option>
+              <option>Llenado de grano</option>
+              <option>Madurez</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="altura">Altura de planta (cm)</label>
+            <input id="altura" type="number" step="0.1" placeholder="Ej. 120.5" />
+          </div>
+
+          <div class="field">
+            <label for="tallo">Diámetro de tallo (cm)</label>
+            <input id="tallo" type="number" step="0.1" placeholder="Ej. 2.4" />
+          </div>
+
+          <div class="field">
+            <label for="hojas">Número de hojas</label>
+            <input id="hojas" type="number" step="1" placeholder="Ej. 14" />
+          </div>
+
+          <div class="field">
+            <label for="ndvi">NDVI</label>
+            <input id="ndvi" type="number" step="0.01" placeholder="Ej. 0.78" />
+          </div>
+
+          <div class="field">
+            <label for="humedad">Humedad del suelo (%)</label>
+            <input id="humedad" type="number" step="0.1" placeholder="Ej. 32.5" />
+          </div>
+
+          <div class="field">
+            <label for="temp">Temperatura ambiente (°C)</label>
+            <input id="temp" type="number" step="0.1" placeholder="Ej. 28.3" />
+          </div>
+
+          <div class="field">
+            <label for="lluvia">Precipitación (mm)</label>
+            <input id="lluvia" type="number" step="0.1" placeholder="Ej. 12.8" />
+          </div>
+
+          <div class="field">
+            <label for="rendimiento">Rendimiento estimado (t/ha)</label>
+            <input id="rendimiento" type="number" step="0.1" placeholder="Ej. 8.7" />
+          </div>
+
+          <div class="field">
+            <label for="observaciones">Observaciones</label>
+            <textarea id="observaciones" placeholder="Condiciones del muestreo, incidencias, plagas, clima, notas de campo..."></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="button">Guardar registro</button>
+          <button class="btn btn-secondary" type="button">Limpiar campos</button>
+          <button class="btn btn-soft" type="button">Enviar a gráficas</button>
+        </div>
+
+        <div class="note">
+          Esta versión prioriza una captura rápida con jerarquía visual clara, controles grandes y etiquetas sencillas.
+          Más adelante se puede conectar con backend, validaciones y almacenamiento.
+        </div>
+      </div>
+    </section>
+  </main>
+  </div>
+  <footer-1></footer-1>
+</div>

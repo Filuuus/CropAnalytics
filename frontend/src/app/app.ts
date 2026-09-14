@@ -1,12 +1,15 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject, signal } from "@angular/core";
+import { RouterOutlet } from "@angular/router";
+
+import { ThemeService } from "./shared/services/theme.service";
 
 @Component({
-  selector: 'app-root',
+  selector: "app-root",
   imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  templateUrl: "./app.html",
+  styleUrl: "./app.css",
 })
 export class App {
-  protected readonly title = signal('frontend');
+  protected readonly title = signal("frontend");
+  private readonly themeService = inject(ThemeService);
 }
