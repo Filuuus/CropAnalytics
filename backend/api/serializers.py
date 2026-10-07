@@ -5,7 +5,6 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from .models import Terreno, Ciclo, ResultadoLaboratorio, DatoClimatico, Municipio, Hibrido
 from .auth_utils import create_user_with_auto_role, is_initial_jefe
 
@@ -156,14 +155,12 @@ class MunicipioSerializer(serializers.ModelSerializer):
         model = Municipio
         fields = ['id', 'nombre', 'estado_nombre']
 
-# Este serializador especial convierte el Terreno en un GeoJSON perfecto para mapas
-class TerrenoGeoSerializer(GeoFeatureModelSerializer):
+class TerrenoSerializer(serializers.ModelSerializer):
     municipio_info = MunicipioSerializer(source='municipio', read_only=True)
 
     class Meta:
         model = Terreno
-        geo_field = 'ubicacion_geo' # Le dice a DRF cuál es la coordenada
-        fields = ['id', 'altitud', 'municipio_info']
+        fields = ['id', 'latitud_gps', 'longitud_gps', 'altitud', 'municipio_info']
 
 class ResultadoLaboratorioSerializer(serializers.ModelSerializer):
     class Meta:

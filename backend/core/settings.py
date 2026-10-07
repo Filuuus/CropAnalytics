@@ -16,9 +16,6 @@ import dj_database_url
 from dotenv import load_dotenv
 from datetime import timedelta
 
-# GDAL_LIBRARY_PATH = "/opt/homebrew/opt/gdal/lib/libgdal.dylib"
-# GEOS_LIBRARY_PATH = "/opt/homebrew/opt/geos/lib/libgeos_c.dylib"
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -49,9 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
-    'django.contrib.gis',
     'rest_framework',
-    'rest_framework_gis',
     'rest_framework.authtoken',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
@@ -104,14 +99,14 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
-        engine='django.contrib.gis.db.backends.postgis'
+        engine='django.db.backends.postgresql'
     )
 }
 
 # Fallback: If DATABASE_URL is None, use individual environment variables
 if not os.environ.get('DATABASE_URL'):
     DATABASES['default'] = {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('POSTGRES_DB', 'crop_analytics'),
         'USER': os.environ.get('POSTGRES_USER', 'usuario_maiz'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'password_seguro_dev'),
