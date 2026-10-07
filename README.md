@@ -3,7 +3,7 @@
 Welcome to the CropAnalytics project. This document provides the necessary instructions to get the application up and running on your local machine.
 
 ## Prerequisites
-- Docker and Docker Compose (for the local PostGIS database)
+- Docker and Docker Compose (for the local PostgreSQL database)
 - Python 3.10+
 - Node.js (v20+)
 - Angular CLI
@@ -11,7 +11,7 @@ Welcome to the CropAnalytics project. This document provides the necessary instr
 ## Local Environment Setup
 
 ### 1. Start the Database Layer
-The project relies on a PostGIS database. Ensure your Docker daemon is running, then spin up the database and pgAdmin containers:
+The project relies on a PostgreSQL database. Ensure your Docker daemon is running, then spin up the database and pgAdmin containers:
 ```bash
 docker compose up -d
 ```
@@ -42,6 +42,13 @@ Finally, start the backend server:
 python manage.py runserver
 ```
 The Django API will be accessible at `http://localhost:8000`.
+
+#### Soil analysis data (SMAP)
+The `/soil-analysis` page estimates soil moisture with a frozen LSTM model (`backend/api/ml/`). It needs the NASA AppEEARS exports for the 11 Jalisco reference plots, which are not versioned. Place them in `backend/data/`:
+- `CropAnalytics-BOB-SMAP-2024-SPL3SMP-E-006-results.csv`
+- `CropAnalytics-BOB-Weather-2024-DAYMET-004-results.csv`
+
+Without them, `/api/recomendacion-humedad/` responds with `503`.
 
 ### 3. Frontend Setup (Angular)
 In a new terminal window, navigate to the frontend folder and install the dependencies:

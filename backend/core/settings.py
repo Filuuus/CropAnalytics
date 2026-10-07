@@ -224,3 +224,22 @@ REST_AUTH = {
     'JWT_AUTH_HTTPONLY': False,  # Set to True for better security if frontend supports it
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer', # Ensure this exists
 }
+
+# ---------------------------------------------------------------------------
+# ML Pipeline settings
+# ---------------------------------------------------------------------------
+# SMAP master CSV (already downloaded from NASA AppEEARS/Earthdata)
+ML_SMAP_MASTER_CSV = os.path.join(
+    BASE_DIR, "data",
+    "CropAnalytics-BOB-SMAP-2024-SPL3SMP-E-006-results.csv"
+)
+
+# Daymet meteorological CSV (2024, 11 Jalisco plots — all columns present)
+# Columns: ID, Latitude, Longitude, Date, DAYMET_004_prcp, DAYMET_004_tmax, DAYMET_004_tmin
+_daymet_default = os.path.join(
+    BASE_DIR, "data",
+    "CropAnalytics-BOB-Weather-2024-DAYMET-004-results.csv"
+)
+ML_DAYMET_CSV = os.environ.get("ML_DAYMET_CSV", _daymet_default) \
+    if os.path.exists(os.environ.get("ML_DAYMET_CSV", _daymet_default)) \
+    else None

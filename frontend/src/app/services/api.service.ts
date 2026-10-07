@@ -53,4 +53,22 @@ export class ApiService {
         }
         return this.http.get(`${this.baseUrl}/mapa-estadisticas/${queryString}`);
     }
+
+    recomendacionHumedad(datos: {
+        lat: number;
+        lon: number;
+        extension_ha: number;
+        has_irrigation: boolean;
+        year?: number;
+        precio_ensilaje?: number;
+        precio_leche?: number;
+        costo_produccion?: number;
+        costo_transporte?: number;
+    }): Observable<any> {
+        return this.http.post(`${this.baseUrl}/recomendacion-humedad/`, datos);
+    }
+
+    getSoilMoisturePlots(): Observable<any> {
+        return this.http.get(`${this.baseUrl}/soil-moisture/plots/`);
+    }
 }

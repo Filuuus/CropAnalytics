@@ -16,6 +16,9 @@ from .views import (
     EstadoListView,
     MunicipioListView,
     MapaEstadisticasView,
+    SoilMoistureAnalysisView,
+    PlotListView,
+    RecomendacionHumedadView,
 )
 
 # El Router de DRF crea automáticamente las URLs para listar y ver detalles
@@ -37,5 +40,10 @@ urlpatterns = [
     path('estados/', EstadoListView.as_view(), name='estados-list'),
     path('municipios/', MunicipioListView.as_view(), name='municipios-list'),
     path('mapa-estadisticas/', MapaEstadisticasView.as_view(), name='mapa-estadisticas'),
+    # Soil Moisture ML Pipeline
+    path('soil-moisture/', SoilMoistureAnalysisView.as_view(), name='soil-moisture-analysis'),
+    path('soil-moisture/plots/', PlotListView.as_view(), name='soil-moisture-plots'),
+    # Soil-moisture-aware hybrid recommendation
+    path('recomendacion-humedad/', RecomendacionHumedadView.as_view(), name='recomendacion-humedad'),
     path('', include(router.urls)),
 ]

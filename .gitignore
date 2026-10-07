@@ -94,11 +94,12 @@ frontend/.angular/cache
 .locofy
 locofy.config.json
 
-<<<<<<< HEAD
-# Ignorar datos locales y CSVs
-data/*
-!data/README.md
+# Datos locales / NASA CSVs
+backend/data/*.csv
 *.csv
-=======
+
+# Entorno virtual legacy
 backend/venv312
->>>>>>> feature/Analytics
+
+# Referencias externas (proyecto TxSON — no forma parte del entregable)
+references/
