@@ -3,6 +3,7 @@ import { Router } from "@angular/router";
 import { Header } from "../../../shared/components/header/Header";
 import { Main } from "../main/Main";
 import { Footer } from "../../../shared/components/footer/Footer";
+import { MapView } from "../map-view/MapView";
 import { ApiService } from "../../../services/api.service";
 import { CommonModule } from "@angular/common";
 
@@ -15,7 +16,7 @@ export interface GroupedHibrido {
 
 @Component({
   selector: "analytics",
-  imports: [CommonModule, Header, Main, Footer],
+  imports: [CommonModule, Header, Main, Footer, MapView],
   templateUrl: "./Analytics.html",
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { "[style.display]": "'contents'" },
@@ -46,16 +47,18 @@ export class Analytics implements OnInit {
 
   // Derived Filter Options
   estadoMunicipioOptions = computed(() => {
-    // Unique pairs of "Estado - Municipio"
+    // Create unique pairs of "Estado - Municipio" from ciclos data
     const map = new Map<string, number[]>();
-    for (const t of this.terrenos()) {
-      const info = t.municipio_info;
-      if (info) {
-        const label = `${info.estado_nombre} - ${info.nombre}`;
+    
+    for (const ciclo of this.ciclos()) {
+      if (ciclo.terreno_estado && ciclo.terreno_municipio) {
+        const label = `${ciclo.terreno_estado} - ${ciclo.terreno_municipio}`;
         if (!map.has(label)) {
           map.set(label, []);
         }
-        map.get(label)!.push(t.id);
+        if (!map.get(label)!.includes(ciclo.terreno)) {
+          map.get(label)!.push(ciclo.terreno);
+        }
       }
     }
 

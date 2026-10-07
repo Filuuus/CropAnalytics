@@ -167,8 +167,12 @@ class CicloViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CicloSerializer
 
     def get_queryset(self):
-        # Cargamos hibrido y laboratorio de antemano para máxima velocidad
-        queryset = Ciclo.objects.select_related('hibrido', 'laboratorio').all()
+        # Cargamos hibrido, laboratorio y datos del terreno (municipio y estado) para máxima velocidad
+        queryset = Ciclo.objects.select_related(
+            'hibrido',
+            'laboratorio',
+            'terreno__municipio__estado'
+        ).all()
         
         # Permitir filtrar por ID de terreno desde la URL
         terreno_id = self.request.query_params.get('terreno', None)
@@ -176,7 +180,7 @@ class CicloViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(terreno_id=terreno_id)
         return queryset
 
-from django.db.models import Avg
+from django.db.models import Avg, Count, Sum
 from .utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_ensilaje
 from .utils.geospatial_estimator import aplicar_ajuste_geoespacial
 from .utils.location_recommender import (
@@ -306,13 +310,26 @@ class OptimizarSemillaView(APIView):
             except Exception:
                 pass
 
-        from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max, Case, When
+        from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max, Case, When, Count
         import datetime
 
+        # Primero verificar si hay ciclos con el régimen hídrico solicitado
+        ciclos_count = Ciclo.objects.filter(condicion__iexact=regimen_hidrico).count()
+        
+        if ciclos_count == 0:
+            return Response(
+                {'detail': f'No se encontraron ciclos con régimen hídrico "{regimen_hidrico}".'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         # Agrupar y promediar en una sola consulta ORM de alto rendimiento
-        ciclos_stats = Ciclo.objects.filter(condicion__iexact=regimen_hidrico) \
-            .values('hibrido__id', 'hibrido__nombre', 'hibrido__marca') \
+        # Solo incluir ciclos que tengan resultados de laboratorio
+        ciclos_stats = Ciclo.objects.filter(
+            condicion__iexact=regimen_hidrico,
+            laboratorio__isnull=False
+        ).values('hibrido__id', 'hibrido__nombre', 'hibrido__marca') \
             .annotate(
+                count_ciclos=Count('id'),
                 avg_ms=Avg('laboratorio__ms'),
                 avg_cp=Avg('laboratorio__pc'),
                 avg_ee=Avg('laboratorio__gc'),
@@ -342,6 +359,13 @@ class OptimizarSemillaView(APIView):
                 # Fechas extremas para calcular las ventanas
                 min_siembra=Min('fecha_siembra'),
                 max_siembra=Max('fecha_siembra')
+            ).filter(count_ciclos__gt=0)
+
+        # Verificar si hay híbridos con datos de laboratorio
+        if not ciclos_stats.exists():
+            return Response(
+                {'detail': f'No se encontraron híbridos con resultados de laboratorio bajo el régimen hídrico "{regimen_hidrico}". Por favor, asegúrate de que existan ciclos con datos de laboratorio cargados.'},
+                status=status.HTTP_404_NOT_FOUND
             )
 
         ranking = []
@@ -695,3 +719,93 @@ class MunicipioListView(APIView):
             return Response(municipios, status=status.HTTP_200_OK)
         
         return Response(list(municipios), status=status.HTTP_200_OK)
+
+
+class MapaEstadisticasView(APIView):
+    """
+    Endpoint para obtener estadísticas geográficas agregadas por municipio
+    para visualización en mapa interactivo.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from django.db.models import Q
+        
+        # Obtener parámetros de filtro opcionales
+        year = request.query_params.get('year')
+        marca = request.query_params.get('marca')
+        condicion = request.query_params.get('condicion')
+        
+        # Construir queryset base
+        queryset = Ciclo.objects.select_related(
+            'terreno__municipio__estado',
+            'hibrido',
+            'laboratorio'
+        ).all()
+        
+        # Aplicar filtros si existen
+        if year:
+            queryset = queryset.filter(year=int(year))
+        if marca:
+            queryset = queryset.filter(hibrido__marca__iexact=marca)
+        if condicion:
+            queryset = queryset.filter(condicion__iexact=condicion)
+        
+        # Agrupar por municipio y calcular estadísticas
+        municipios_stats = queryset.values(
+            'terreno__municipio__id',
+            'terreno__municipio__nombre',
+            'terreno__municipio__estado__nombre'
+        ).annotate(
+            total_ciclos=Count('id'),
+            avg_rms=Avg('laboratorio__rms'),
+            avg_ms=Avg('laboratorio__ms'),
+            avg_pc=Avg('laboratorio__pc'),
+            avg_fdn=Avg('laboratorio__fdn'),
+            # Calcular coordenadas promedio del municipio
+            avg_lat=Avg('terreno__latitud_gps'),
+            avg_lon=Avg('terreno__longitud_gps')
+        ).filter(total_ciclos__gt=0)
+        
+        # Formatear respuesta para el mapa
+        features = []
+        for stat in municipios_stats:
+            # Calcular producción de leche promedio usando la fórmula simplificada
+            avg_rms = stat['avg_rms'] or 20.0
+            avg_ms = stat['avg_ms'] or 35.0
+            avg_pc = stat['avg_pc'] or 8.5
+            avg_fdn = stat['avg_fdn'] or 42.0
+            
+            # Fórmula simplificada de Wisconsin MILK2024
+            nel = max(0.0, (0.703 * ((avg_ms / 100.0) * 4.409)) - 0.19)
+            leche_ton = (nel * 311.4) + 120.0
+            leche_ha = leche_ton * avg_rms
+            
+            feature = {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [
+                        float(stat['avg_lon']) if stat['avg_lon'] else -103.5,
+                        float(stat['avg_lat']) if stat['avg_lat'] else 20.7
+                    ]
+                },
+                'properties': {
+                    'municipio_id': stat['terreno__municipio__id'],
+                    'municipio': stat['terreno__municipio__nombre'],
+                    'estado': stat['terreno__municipio__estado__nombre'],
+                    'total_ciclos': stat['total_ciclos'],
+                    'avg_rms': round(float(stat['avg_rms'] or 0), 2),
+                    'avg_ms': round(float(stat['avg_ms'] or 0), 2),
+                    'avg_pc': round(float(stat['avg_pc'] or 0), 2),
+                    'avg_fdn': round(float(stat['avg_fdn'] or 0), 2),
+                    'leche_ha': round(leche_ha, 2)
+                }
+            }
+            features.append(feature)
+        
+        # Retornar en formato GeoJSON
+        return Response({
+            'type': 'FeatureCollection',
+            'features': features
+        }, status=status.HTTP_200_OK)

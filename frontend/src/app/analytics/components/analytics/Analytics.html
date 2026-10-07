@@ -16,6 +16,18 @@
 
     <!-- Terrenos List (Removed and converted to Filter below) -->
 
+    <!-- Interactive Map Section -->
+    <section class="ca-card pointer-events-auto overflow-visible">
+      <div class="p-3 sm:p-4">
+        <map-view
+          [filteredCiclos]="filteredCiclos()"
+          [selectedYear]="selectedYear()"
+          [selectedMarca]="selectedMarca()"
+          [selectedCondicion]="selectedCondicion()"
+        ></map-view>
+      </div>
+    </section>
+
     <!-- Ciclos List -->
     <section
       class="ca-card pointer-events-auto overflow-visible"
