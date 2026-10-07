@@ -63,6 +63,14 @@ export class MapView implements OnInit, AfterViewInit, OnDestroy {
 
   private initMap(): void {
     try {
+      const mapElement = document.getElementById('map');
+      if (!mapElement) {
+        console.error('Map element not found!');
+        this.error.set('Elemento del mapa no encontrado');
+        this.isLoading.set(false);
+        return;
+      }
+      
       // Initialize map centered on Los Altos de Jalisco region
       // Coordinates adjusted for better coverage of Los Altos municipalities
       this.map = L.map('map', {
