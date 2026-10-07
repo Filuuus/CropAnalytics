@@ -2,7 +2,6 @@
 
 import django.contrib.auth.models
 import django.contrib.auth.validators
-import django.contrib.gis.db.models.fields
 import django.db.models.deletion
 import django.utils.timezone
 from django.db import migrations, models
@@ -135,7 +134,6 @@ class Migration(migrations.Migration):
                 ('latitud_gps', models.FloatField(help_text='Coordenada Y')),
                 ('longitud_gps', models.FloatField(help_text='Coordenada X')),
                 ('altitud', models.FloatField(blank=True, null=True)),
-                ('ubicacion_geo', django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326)),
                 ('municipio', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='terrenos', to='api.municipio')),
             ],
         ),

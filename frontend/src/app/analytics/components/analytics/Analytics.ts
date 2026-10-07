@@ -49,7 +49,7 @@ export class Analytics implements OnInit {
     // Unique pairs of "Estado - Municipio"
     const map = new Map<string, number[]>();
     for (const t of this.terrenos()) {
-      const info = t.properties?.municipio_info;
+      const info = t.municipio_info;
       if (info) {
         const label = `${info.estado_nombre} - ${info.nombre}`;
         if (!map.has(label)) {
@@ -278,7 +278,7 @@ export class Analytics implements OnInit {
     this.apiService.getTerrenos().subscribe({
       next: (data) => {
         console.log('Terrenos:', data);
-        this.terrenos.set(data.features || data);
+        this.terrenos.set(data);
       },
       error: (error) => console.error('Error al obtener Terrenos:', error)
     });

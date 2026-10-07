@@ -18,7 +18,7 @@ from .serializers import (
     GoogleLoginSerializer,
     LoginSerializer,
     RegisterSerializer,
-    TerrenoGeoSerializer,
+    TerrenoSerializer,
     UserRoleUpdateSerializer,
     UserSerializer,
 )
@@ -156,7 +156,7 @@ class TerrenoViewSet(viewsets.ReadOnlyModelViewSet):
     """
     permission_classes = [AllowAny]
     queryset = Terreno.objects.select_related('municipio__estado').all()
-    serializer_class = TerrenoGeoSerializer
+    serializer_class = TerrenoSerializer
 
 class CicloViewSet(viewsets.ReadOnlyModelViewSet):
     """
