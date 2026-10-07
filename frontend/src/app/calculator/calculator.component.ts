@@ -19,8 +19,13 @@ export class CalculatorComponent {
 
   form: FormGroup = this.fb.group({
     regimen_hidrico: ['Riego', [Validators.required]],
+    estado_id: [null],
+    municipio_id: [null],
     hectareas: [1, [Validators.required, Validators.min(0.01)]],
-    precio_leche: [10.50, [Validators.required, Validators.min(0.01)]]
+    precio_leche: [10.50, [Validators.required, Validators.min(0.01)]],
+    precio_ensilaje: [2800, [Validators.required, Validators.min(0)]],
+    costo_produccion: [1800, [Validators.required, Validators.min(0)]],
+    costo_transporte: [150, [Validators.required, Validators.min(0)]]
   });
 
   ranking: any[] = [];
@@ -30,6 +35,53 @@ export class CalculatorComponent {
   hibridoSeleccionado: any = null;
   hibridoA: any = null;
   hibridoB: any = null;
+  
+  // Location data
+  estados: any[] = [];
+  municipios: any[] = [];
+  loadingEstados: boolean = false;
+  loadingMunicipios: boolean = false;
+
+  ngOnInit(): void {
+    this.loadEstados();
+    
+    // Watch for estado changes to load municipios
+    this.form.get('estado_id')?.valueChanges.subscribe(estadoId => {
+      this.form.patchValue({ municipio_id: null });
+      this.municipios = [];
+      if (estadoId) {
+        this.loadMunicipios(estadoId);
+      }
+    });
+  }
+
+  loadEstados(): void {
+    this.loadingEstados = true;
+    this.apiService.getEstados().subscribe({
+      next: (data) => {
+        this.estados = data;
+        this.loadingEstados = false;
+      },
+      error: (err) => {
+        console.error('Error loading estados:', err);
+        this.loadingEstados = false;
+      }
+    });
+  }
+
+  loadMunicipios(estadoId: number): void {
+    this.loadingMunicipios = true;
+    this.apiService.getMunicipios(estadoId).subscribe({
+      next: (data) => {
+        this.municipios = data;
+        this.loadingMunicipios = false;
+      },
+      error: (err) => {
+        console.error('Error loading municipios:', err);
+        this.loadingMunicipios = false;
+      }
+    });
+  }
 
   submit(): void {
     if (this.form.valid) {
@@ -41,10 +93,26 @@ export class CalculatorComponent {
       this.hibridoA = null;
       this.hibridoB = null;
 
-      // Extrae únicamente los parámetros que el backend necesita
-      const { regimen_hidrico } = this.form.value;
+      // Extrae los parámetros que el backend necesita
+      const { regimen_hidrico, estado_id, municipio_id, precio_leche, precio_ensilaje, costo_produccion, costo_transporte } = this.form.value;
 
-      this.apiService.optimizarSemilla({ regimen_hidrico }).subscribe({
+      const payload: any = {
+        regimen_hidrico,
+        precio_leche,
+        precio_ensilaje,
+        costo_produccion,
+        costo_transporte
+      };
+
+      // Add location parameters if selected
+      if (estado_id) {
+        payload.estado_id = estado_id;
+      }
+      if (municipio_id) {
+        payload.municipio_id = municipio_id;
+      }
+
+      this.apiService.optimizarSemilla(payload).subscribe({
         next: (res) => {
           this.ranking = res;
           this.loading = false;
@@ -173,13 +241,65 @@ export class CalculatorComponent {
     }
     return null;
   }
+  // Helper methods for confidence display
+  getConfidenceClass(confianza: any): string {
+    if (!confianza) return 'bg-slate-100 dark:bg-slate-800';
+    const color = confianza.color_indicador || 'gray';
+    const colorMap: { [key: string]: string } = {
+      'green': 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500 dark:border-emerald-500/80',
+      'blue': 'bg-blue-50 dark:bg-blue-950/20 border-blue-500 dark:border-blue-500/80',
+      'yellow': 'bg-amber-50 dark:bg-amber-950/20 border-amber-500 dark:border-amber-500/80',
+      'red': 'bg-rose-50 dark:bg-rose-950/20 border-rose-500 dark:border-rose-500/80'
+    };
+    return colorMap[color] || 'bg-slate-100 dark:bg-slate-800';
+  }
+
+  getConfidenceIcon(nivel: string): string {
+    const iconMap: { [key: string]: string } = {
+      'Excelente': '✅',
+      'Buena': '👍',
+      'Moderada': '⚠️',
+      'Baja': '❌'
+    };
+    return iconMap[nivel] || '❓';
+  }
+
+  getConfidenceTextClass(confianza: any): string {
+    if (!confianza) return 'text-slate-700 dark:text-slate-300';
+    const color = confianza.color_indicador || 'gray';
+    const colorMap: { [key: string]: string } = {
+      'green': 'text-emerald-700 dark:text-emerald-300',
+      'blue': 'text-blue-700 dark:text-blue-300',
+      'yellow': 'text-amber-700 dark:text-amber-300',
+      'red': 'text-rose-700 dark:text-rose-300'
+    };
+    return colorMap[color] || 'text-slate-700 dark:text-slate-300';
+  }
+
+  getScenarioName(scenario: string): string {
+    const nameMap: { [key: string]: string } = {
+      'venta': 'Vender Ensilaje',
+      'uso_propio': 'Usar en Lechería',
+      'compra': 'Comprar Ensilaje'
+    };
+    return nameMap[scenario] || scenario;
+  }
+
+  selectedScenario: string = 'venta';
+
 
   resetForm(): void {
     this.form.reset({
       regimen_hidrico: 'Riego',
+      estado_id: null,
+      municipio_id: null,
       hectareas: 1,
-      precio_leche: 10.50
+      precio_leche: 10.50,
+      precio_ensilaje: 2800,
+      costo_produccion: 1800,
+      costo_transporte: 150
     });
+    this.municipios = [];
     this.ranking = [];
     this.selectedHibridoIndex = 0;
     this.hibridoSeleccionado = null;

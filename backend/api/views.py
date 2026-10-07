@@ -177,8 +177,14 @@ class CicloViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 from django.db.models import Avg
-from .utils.milk_calculator import calcular_metricas_milk2024
-from .models import Hibrido, ResultadoLaboratorio
+from .utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_ensilaje
+from .utils.geospatial_estimator import aplicar_ajuste_geoespacial
+from .utils.location_recommender import (
+    calcular_relevancia_regional,
+    aplicar_relevancia_regional_a_confianza,
+    obtener_ubicacion_desde_municipio
+)
+from .models import Hibrido, ResultadoLaboratorio, Terreno, Estado, Municipio
 
 class CalcularProductorView(APIView):
     permission_classes = [AllowAny]
@@ -238,6 +244,16 @@ class CalcularProductorView(APIView):
 
         # Calcular métricas MILK2024
         resultados = calcular_metricas_milk2024(datos)
+        
+        # Calcular valor económico del ensilaje (opcional, basado en parámetros del request)
+        precios_mercado = {
+            'ensilaje_ton_ms': float(request.data.get('precio_ensilaje', 2800.0)),
+            'leche_litro': float(request.data.get('precio_leche', 10.50)),
+            'costo_produccion': float(request.data.get('costo_produccion', 1800.0)),
+            'transporte': float(request.data.get('costo_transporte', 150.0))
+        }
+        
+        analisis_economico = calcular_valor_ensilaje(datos, resultados, precios_mercado)
 
         return Response({
             'hibrido': {
@@ -256,7 +272,8 @@ class CalcularProductorView(APIView):
                 'starch': datos['starch'],
                 'starch_d': datos['starch_d']
             },
-            **resultados
+            **resultados,
+            'analisis_economico': analisis_economico
         }, status=status.HTTP_200_OK)
 
 class OptimizarSemillaView(APIView):
@@ -264,6 +281,10 @@ class OptimizarSemillaView(APIView):
 
     def post(self, request):
         regimen_hidrico = request.data.get('regimen_hidrico')
+        
+        # Parámetros de ubicación opcionales
+        estado_id = request.data.get('estado_id')
+        municipio_id = request.data.get('municipio_id')
 
         if not regimen_hidrico:
             return Response(
@@ -276,6 +297,14 @@ class OptimizarSemillaView(APIView):
                 {'detail': 'regimen_hidrico debe ser "Riego" o "Temporal".'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        # Obtener coordenadas si se proporciona municipio
+        latitud, longitud, altitud = None, None, None
+        if municipio_id:
+            try:
+                latitud, longitud, altitud = obtener_ubicacion_desde_municipio(int(municipio_id))
+            except Exception:
+                pass
 
         from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max, Case, When
         import datetime
@@ -398,8 +427,36 @@ class OptimizarSemillaView(APIView):
 
             # Calcular métricas MILK2024
             resultados = calcular_metricas_milk2024(datos)
+            
+            # Calcular relevancia regional si se proporcionó ubicación
+            relevancia_regional = None
+            if municipio_id or estado_id:
+                relevancia_regional = calcular_relevancia_regional(
+                    hibrido_id=item['hibrido__id'],
+                    estado_id=int(estado_id) if estado_id else None,
+                    municipio_id=int(municipio_id) if municipio_id else None,
+                    latitud=latitud,
+                    longitud=longitud,
+                    altitud=altitud
+                )
+                
+                # Ajustar confianza basada en relevancia regional
+                if relevancia_regional and 'confianza' in resultados:
+                    resultados['confianza'] = aplicar_relevancia_regional_a_confianza(
+                        resultados['confianza'],
+                        relevancia_regional
+                    )
+            
+            # Calcular análisis económico del ensilaje
+            precios_mercado = {
+                'ensilaje_ton_ms': float(request.data.get('precio_ensilaje', 2800.0)),
+                'leche_litro': float(request.data.get('precio_leche', 10.50)),
+                'costo_produccion': float(request.data.get('costo_produccion', 1800.0)),
+                'transporte': float(request.data.get('costo_transporte', 150.0))
+            }
+            analisis_economico = calcular_valor_ensilaje(datos, resultados, precios_mercado)
 
-            ranking.append({
+            hibrido_data = {
                 'hibrido': {
                     'id': item['hibrido__id'],
                     'nombre': item['hibrido__nombre'],
@@ -423,10 +480,218 @@ class OptimizarSemillaView(APIView):
                 'regimen_hidrico': regimen_hidrico,
                 'factor_supervivencia': round(factor_supervivencia, 4),
                 'rendimiento_real_esperado': round(rendimiento_real_esperado, 2),
-                **resultados
-            })
+                **resultados,
+                'analisis_economico': analisis_economico
+            }
+            
+            # Agregar relevancia regional si está disponible
+            if relevancia_regional:
+                hibrido_data['relevancia_regional'] = relevancia_regional
+            
+            ranking.append(hibrido_data)
 
-        # Ordenar ranking por leche_ha descendente
-        ranking.sort(key=lambda x: x['leche_ha'], reverse=True)
+        # Ordenar ranking por leche_ha descendente, considerando relevancia regional si está disponible
+        if municipio_id or estado_id:
+            # Ordenar por combinación de leche_ha y relevancia regional
+            ranking.sort(
+                key=lambda x: (
+                    x.get('relevancia_regional', {}).get('score', 50) * 0.3 +  # 30% peso a relevancia
+                    (x['leche_ha'] / max(r['leche_ha'] for r in ranking) * 100) * 0.7  # 70% peso a producción
+                ),
+                reverse=True
+            )
+        else:
+            # Ordenar solo por leche_ha si no hay ubicación
+            ranking.sort(key=lambda x: x['leche_ha'], reverse=True)
 
         return Response(ranking, status=status.HTTP_200_OK)
+
+class CalcularProductorGeoView(APIView):
+    """
+    Endpoint mejorado que incluye ajustes geoespaciales basados en la ubicación del terreno.
+    Permite al productor obtener estimaciones más precisas considerando factores geográficos.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        hibrido_id = request.data.get('hibrido_id')
+        yield_dm = request.data.get('yield_dm')
+        terreno_id = request.data.get('terreno_id')
+        
+        # Coordenadas opcionales si no se proporciona terreno_id
+        latitud = request.data.get('latitud')
+        longitud = request.data.get('longitud')
+        altitud = request.data.get('altitud')
+
+        if not hibrido_id or yield_dm is None:
+            return Response(
+                {'detail': 'hibrido_id y yield_dm son campos obligatorios.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            yield_dm = float(yield_dm)
+        except ValueError:
+            return Response(
+                {'detail': 'yield_dm debe ser un número válido.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Buscar el híbrido
+        try:
+            if isinstance(hibrido_id, int) or (isinstance(hibrido_id, str) and hibrido_id.isdigit()):
+                hibrido = Hibrido.objects.get(id=int(hibrido_id))
+            else:
+                hibrido = Hibrido.objects.get(nombre__iexact=str(hibrido_id))
+        except Hibrido.DoesNotExist:
+            return Response(
+                {'detail': f'Híbrido con ID o nombre "{hibrido_id}" no encontrado.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Obtener coordenadas del terreno o usar las proporcionadas
+        if terreno_id:
+            try:
+                terreno = Terreno.objects.get(id=terreno_id)
+                latitud = terreno.latitud_gps
+                longitud = terreno.longitud_gps
+                altitud = terreno.altitud
+                ubicacion_info = {
+                    'terreno_id': terreno.id,
+                    'municipio': terreno.municipio.nombre,
+                    'estado': terreno.municipio.estado.nombre
+                }
+            except Terreno.DoesNotExist:
+                return Response(
+                    {'detail': f'Terreno con ID {terreno_id} no encontrado.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        elif latitud is not None and longitud is not None:
+            try:
+                latitud = float(latitud)
+                longitud = float(longitud)
+                altitud = float(altitud) if altitud is not None else None
+                ubicacion_info = {
+                    'coordenadas_personalizadas': True,
+                    'latitud': latitud,
+                    'longitud': longitud,
+                    'altitud': altitud
+                }
+            except (ValueError, TypeError):
+                return Response(
+                    {'detail': 'Las coordenadas deben ser números válidos.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            return Response(
+                {'detail': 'Debe proporcionar terreno_id o coordenadas (latitud, longitud).'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Obtener promedios bromatológicos del híbrido
+        averages = ResultadoLaboratorio.objects.filter(ciclo__hibrido=hibrido).aggregate(
+            avg_ms=Avg('ms'),
+            avg_pc=Avg('pc'),
+            avg_gc=Avg('gc'),
+            avg_cen=Avg('cen'),
+            avg_fdn=Avg('fdn')
+        )
+
+        # Preparar datos para el calculador
+        datos = {
+            'ms': averages['avg_ms'] or 35.0,
+            'cp': averages['avg_pc'] or 8.5,
+            'ee': averages['avg_gc'] or 3.2,
+            'ash': averages['avg_cen'] or 4.0,
+            'ndf': averages['avg_fdn'] or 42.0,
+            'ndfd': 58.0,
+            'undf240': 15.0,
+            'starch': 30.0,
+            'starch_d': 75.0,
+            'yield_dm': yield_dm,
+        }
+
+        # Calcular métricas MILK2024 base
+        resultados_base = calcular_metricas_milk2024(datos)
+
+        # Aplicar ajuste geoespacial
+        ajuste_geo = aplicar_ajuste_geoespacial(
+            rendimiento_base=yield_dm,
+            latitud=latitud,
+            longitud=longitud,
+            altitud=altitud
+        )
+
+        # Recalcular con rendimiento ajustado
+        datos_ajustados = datos.copy()
+        datos_ajustados['yield_dm'] = ajuste_geo['rendimiento_ajustado']
+        resultados_ajustados = calcular_metricas_milk2024(datos_ajustados)
+
+        return Response({
+            'hibrido': {
+                'id': hibrido.id,
+                'nombre': hibrido.nombre,
+                'marca': hibrido.marca
+            },
+            'ubicacion': ubicacion_info,
+            'valores_bromatologicos_promedio': {
+                'ms': round(datos['ms'], 2),
+                'cp': round(datos['cp'], 2),
+                'ee': round(datos['ee'], 2),
+                'ash': round(datos['ash'], 2),
+                'ndf': round(datos['ndf'], 2),
+                'ndfd': datos['ndfd'],
+                'undf240': datos['undf240'],
+                'starch': datos['starch'],
+                'starch_d': datos['starch_d']
+            },
+            'estimacion_base': {
+                **resultados_base,
+                'yield_dm': yield_dm
+            },
+            'ajuste_geoespacial': ajuste_geo,
+            'estimacion_ajustada': {
+                **resultados_ajustados,
+                'yield_dm': ajuste_geo['rendimiento_ajustado']
+            }
+        }, status=status.HTTP_200_OK)
+
+class EstadoListView(APIView):
+    """
+    Lista todos los estados disponibles en la base de datos.
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        estados = Estado.objects.all().order_by('nombre').values('id', 'nombre')
+        return Response(list(estados), status=status.HTTP_200_OK)
+
+
+class MunicipioListView(APIView):
+    """
+    Lista municipios filtrados por estado.
+    Si no se proporciona estado_id, devuelve todos los municipios.
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        estado_id = request.query_params.get('estado_id')
+        
+        if estado_id:
+            municipios = Municipio.objects.filter(
+                estado_id=estado_id
+            ).order_by('nombre').values('id', 'nombre', 'estado_id')
+        else:
+            municipios = Municipio.objects.all().select_related('estado').order_by('estado__nombre', 'nombre')
+            municipios = [
+                {
+                    'id': m.id,
+                    'nombre': m.nombre,
+                    'estado_id': m.estado_id,
+                    'estado_nombre': m.estado.nombre
+                }
+                for m in municipios
+            ]
+            return Response(municipios, status=status.HTTP_200_OK)
+        
+        return Response(list(municipios), status=status.HTTP_200_OK)
