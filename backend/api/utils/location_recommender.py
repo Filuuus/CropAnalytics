@@ -3,8 +3,29 @@ Sistema de Recomendación de Híbridos Basado en Ubicación Geográfica
 Integra datos históricos regionales con el sistema de confianza MILK2024
 """
 from typing import Dict, List, Optional, Any, Tuple
-from django.db.models import Count, Avg, Q
+from collections import defaultdict
+from django.db.models import Avg
 from .geospatial_estimator import calcular_distancia_haversine, clasificar_zona_climatica
+
+
+def cargar_historial_regional(hibrido_ids):
+    """Carga el historial de todos los híbridos con una sola consulta."""
+    from ..models import Ciclo
+
+    historial = defaultdict(list)
+    ciclos = Ciclo.objects.filter(hibrido_id__in=hibrido_ids).values(
+        'hibrido_id', 'terreno__municipio_id', 'terreno__municipio__estado_id',
+        'terreno__latitud_gps', 'terreno__longitud_gps', 'terreno__altitud',
+        'laboratorio__rms',
+    ).order_by('pk')
+    for ciclo in ciclos.iterator():
+        historial[ciclo['hibrido_id']].append(ciclo)
+    return historial
+
+
+def _rendimiento_promedio(ciclos):
+    valores = [c['laboratorio__rms'] for c in ciclos if c['laboratorio__rms'] is not None]
+    return sum(valores) / len(valores) if valores else 0.0
 
 
 def calcular_relevancia_regional(
@@ -13,7 +34,8 @@ def calcular_relevancia_regional(
     municipio_id: Optional[int] = None,
     latitud: Optional[float] = None,
     longitud: Optional[float] = None,
-    altitud: Optional[float] = None
+    altitud: Optional[float] = None,
+    historial: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
     Calcula la relevancia regional de un híbrido para una ubicación específica.
@@ -35,7 +57,8 @@ def calcular_relevancia_regional(
     Returns:
         Diccionario con score de relevancia regional y detalles
     """
-    from ..models import Ciclo, Terreno, Municipio, Estado
+    if historial is None:
+        historial = cargar_historial_regional([hibrido_id])[hibrido_id]
     
     # Inicializar scores
     score_local = 0.0
@@ -49,19 +72,12 @@ def calcular_relevancia_regional(
     
     # 1. ANÁLISIS LOCAL (40%) - Mismo municipio
     if municipio_id:
-        ciclos_locales = Ciclo.objects.filter(
-            hibrido_id=hibrido_id,
-            terreno__municipio_id=municipio_id
-        ).select_related('laboratorio')
-        
-        muestras_locales = ciclos_locales.count()
-        
+        ciclos_locales = [c for c in historial if c['terreno__municipio_id'] == municipio_id]
+        muestras_locales = len(ciclos_locales)
+
         if muestras_locales > 0:
-            # Calcular rendimiento promedio local
-            rendimiento_local = ciclos_locales.aggregate(
-                avg_rms=Avg('laboratorio__rms')
-            )['avg_rms'] or 0.0
-            
+            rendimiento_local = _rendimiento_promedio(ciclos_locales)
+
             # Score basado en cantidad de muestras y rendimiento
             # Más muestras = mayor confianza
             if muestras_locales >= 10:
@@ -82,21 +98,17 @@ def calcular_relevancia_regional(
     # 2. ANÁLISIS REGIONAL (30%) - Mismo estado o estados cercanos
     if estado_id:
         # Ciclos en el mismo estado
-        ciclos_estado = Ciclo.objects.filter(
-            hibrido_id=hibrido_id,
-            terreno__municipio__estado_id=estado_id
-        ).exclude(
-            terreno__municipio_id=municipio_id if municipio_id else None
-        ).select_related('laboratorio', 'terreno')
-        
-        muestras_estado = ciclos_estado.count()
+        ciclos_estado = [
+            c for c in historial
+            if c['terreno__municipio__estado_id'] == estado_id
+            and c['terreno__municipio_id'] != municipio_id
+        ]
+        muestras_estado = len(ciclos_estado)
         muestras_regionales = muestras_estado
-        
+
         if muestras_estado > 0:
-            rendimiento_estado = ciclos_estado.aggregate(
-                avg_rms=Avg('laboratorio__rms')
-            )['avg_rms'] or 0.0
-            
+            rendimiento_estado = _rendimiento_promedio(ciclos_estado)
+
             # Score basado en muestras regionales
             if muestras_estado >= 20:
                 score_regional = 100.0
@@ -114,13 +126,13 @@ def calcular_relevancia_regional(
                 score_regional *= 0.9
             
             # Calcular distancia promedio si tenemos coordenadas
-            if latitud and longitud:
+            if latitud is not None and longitud is not None:
                 distancias = []
                 for ciclo in ciclos_estado[:20]:  # Limitar a 20 para performance
-                    if ciclo.terreno.latitud_gps and ciclo.terreno.longitud_gps:
+                    if ciclo['terreno__latitud_gps'] and ciclo['terreno__longitud_gps']:
                         dist = calcular_distancia_haversine(
                             latitud, longitud,
-                            ciclo.terreno.latitud_gps, ciclo.terreno.longitud_gps
+                            ciclo['terreno__latitud_gps'], ciclo['terreno__longitud_gps']
                         )
                         distancias.append(dist)
                 
@@ -134,23 +146,21 @@ def calcular_relevancia_regional(
                         score_regional *= 0.85
     
     # 3. ANÁLISIS CLIMÁTICO (20%) - Similitud de zona climática
-    if latitud and altitud:
+    if latitud is not None and altitud is not None:
         clasificacion = clasificar_zona_climatica(latitud, altitud)
         
         # Obtener zonas climáticas de ciclos históricos del híbrido
-        ciclos_hibrido = Ciclo.objects.filter(
-            hibrido_id=hibrido_id
-        ).select_related('terreno')[:50]
-        
+        ciclos_hibrido = historial[:50]
+
         zonas_compatibles = 0
         total_zonas = 0
         
         for ciclo in ciclos_hibrido:
-            if ciclo.terreno.latitud_gps and ciclo.terreno.altitud:
+            if ciclo['terreno__latitud_gps'] and ciclo['terreno__altitud']:
                 total_zonas += 1
                 clasificacion_ciclo = clasificar_zona_climatica(
-                    ciclo.terreno.latitud_gps,
-                    ciclo.terreno.altitud
+                    ciclo['terreno__latitud_gps'],
+                    ciclo['terreno__altitud']
                 )
                 
                 # Comparar zonas
@@ -168,15 +178,11 @@ def calcular_relevancia_regional(
         score_climatico = 50.0  # Neutral sin datos de ubicación
     
     # 4. ANÁLISIS DE ALTITUD (10%) - Compatibilidad de altitud
-    if altitud:
+    if altitud is not None:
         # Obtener rango de altitudes donde el híbrido ha sido probado
-        altitudes_hibrido = Ciclo.objects.filter(
-            hibrido_id=hibrido_id,
-            terreno__altitud__isnull=False
-        ).values_list('terreno__altitud', flat=True)
-        
-        if altitudes_hibrido:
-            altitudes_list = list(altitudes_hibrido)
+        altitudes_list = [c['terreno__altitud'] for c in historial if c['terreno__altitud'] is not None]
+
+        if altitudes_list:
             alt_min = min(altitudes_list)
             alt_max = max(altitudes_list)
             alt_promedio = sum(altitudes_list) / len(altitudes_list)
@@ -352,19 +358,9 @@ def obtener_ubicacion_desde_municipio(municipio_id: int) -> Tuple[Optional[float
     # Obtener promedio de coordenadas de terrenos en el municipio
     terrenos = Terreno.objects.filter(municipio_id=municipio_id)
     
-    if terrenos.exists():
-        stats = terrenos.aggregate(
-            avg_lat=Avg('latitud_gps'),
-            avg_lon=Avg('longitud_gps'),
-            avg_alt=Avg('altitud')
-        )
-        
-        return (
-            stats['avg_lat'],
-            stats['avg_lon'],
-            stats['avg_alt']
-        )
-    
-    return (None, None, None)
-
-# Made with Bob
+    stats = terrenos.aggregate(
+        avg_lat=Avg('latitud_gps'),
+        avg_lon=Avg('longitud_gps'),
+        avg_alt=Avg('altitud')
+    )
+    return stats['avg_lat'], stats['avg_lon'], stats['avg_alt']

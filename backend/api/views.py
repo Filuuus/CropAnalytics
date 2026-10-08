@@ -203,6 +203,7 @@ from .utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_en
 from .utils.geospatial_estimator import aplicar_ajuste_geoespacial
 from .utils.location_recommender import (
     calcular_relevancia_regional,
+    cargar_historial_regional,
     aplicar_relevancia_regional_a_confianza,
     obtener_ubicacion_desde_municipio
 )
@@ -307,6 +308,18 @@ class OptimizarSemillaView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Validar los identificadores antes de consultar el historial regional.
+        try:
+            estado_id = int(estado_id) if estado_id is not None else None
+            municipio_id = int(municipio_id) if municipio_id is not None else None
+            if (estado_id is not None and estado_id <= 0) or (municipio_id is not None and municipio_id <= 0):
+                raise ValueError
+        except (ValueError, TypeError, OverflowError):
+            return Response(
+                {'detail': 'estado_id y municipio_id deben ser enteros positivos.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # Obtener coordenadas si se proporciona municipio
         latitud, longitud, altitud = None, None, None
         if municipio_id:
@@ -363,11 +376,16 @@ class OptimizarSemillaView(APIView):
             ).filter(count_ciclos__gt=0)
 
         # Verificar si hay híbridos con datos de laboratorio
-        if not ciclos_stats.exists():
+        ciclos_stats = list(ciclos_stats)
+        if not ciclos_stats:
             return Response(
                 {'detail': f'No se encontraron híbridos con resultados de laboratorio bajo el régimen hídrico "{regimen_hidrico}". Por favor, asegúrate de que existan ciclos con datos de laboratorio cargados.'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+        historial_regional = cargar_historial_regional(
+            [item['hibrido__id'] for item in ciclos_stats]
+        ) if municipio_id or estado_id else {}
 
         ranking = []
         MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
@@ -445,7 +463,8 @@ class OptimizarSemillaView(APIView):
                     municipio_id=int(municipio_id) if municipio_id else None,
                     latitud=latitud,
                     longitud=longitud,
-                    altitud=altitud
+                    altitud=altitud,
+                    historial=historial_regional[item['hibrido__id']]
                 )
                 
                 # Ajustar confianza basada en relevancia regional

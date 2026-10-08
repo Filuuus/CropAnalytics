@@ -488,7 +488,8 @@ export class Main implements AfterViewInit {
           const baseColor = this.hybridColors[c.hibrido_nombre] || '#2563EB';
 
           if (hasSelection) {
-            colors.push(isSelected ? '#10B981' : 'rgba(74, 85, 104, 0.25)');
+            // Solid colors avoid alpha blending washing out the 3D markers on light backgrounds.
+            colors.push(isSelected ? '#059669' : '#64748B');
           } else {
             colors.push(baseColor);
           }
@@ -510,7 +511,7 @@ export class Main implements AfterViewInit {
       marker: {
         size: 5,
         color: colors,
-        opacity: 0.8
+        opacity: hasSelection ? 1 : 0.8
       }
     }];
   });
@@ -982,4 +983,3 @@ export class Main implements AfterViewInit {
     }
   }
 }
-
