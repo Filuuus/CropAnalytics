@@ -15,6 +15,7 @@ testem.log
 # Variables de entorno
 .env
 .env.*
+!.env.example
 
 # Configuración de IA y Tokens (Locofy/Gemini)
 .gemini/settings.json
@@ -94,12 +95,17 @@ frontend/.angular/cache
 .locofy
 locofy.config.json
 
-# Datos locales / NASA CSVs
+# Datos locales / NASA CSVs y estado de solicitudes a AppEEARS
 backend/data/*.csv
+backend/data/*.json
 *.csv
 
 # Entorno virtual legacy
 backend/venv312
 
-# Referencias externas (proyecto TxSON — no forma parte del entregable)
+# Referencias externas, no forman parte del entregable: datos TxSON para reentrenar,
+# reportes del hackathon IBM y respaldos locales de la base de datos
 references/
+
+# Documentación del proyecto modular (borradores, nombres del equipo, ligas de Lucidchart)
+docs/

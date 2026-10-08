@@ -186,3 +186,21 @@ class SoilMoisturePlot(models.Model):
 
     def __str__(self):
         return f"SoilMoisture({self.plot_id}, {self.analysis_date})"
+
+
+# --- 8. PANORAMA DE HUMEDAD POR CELDA ---
+class PanoramaCelda(models.Model):
+    """
+    Panorama de humedad de una celda SMAP de 9 km (api/ml/celdas_altos.json),
+    calculado con `manage.py calcular_panorama` sobre el historial 2015-2025.
+    `resumen` es la salida de api.ml.panorama.resumir_celda.
+    """
+    celda_id = models.CharField(max_length=20, unique=True)
+    anio_inicio = models.IntegerField()
+    anio_fin = models.IntegerField()
+    modelo = models.CharField(max_length=30)
+    resumen = models.JSONField()
+    calculado_en = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Panorama({self.celda_id}, {self.anio_inicio}-{self.anio_fin})"

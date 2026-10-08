@@ -1,7 +1,6 @@
 import { Routes } from "@angular/router";
 
 import HomeRoutes from "./home/Home.routes";
-import DashboardRoutes from "./dashboard/Dashboard.routes";
 import AnalyticsRoutes from "./analytics/Analytics.routes";
 import AuthRoutes from "./auth/Auth.routes";
 import { authGuard } from "./auth/guards/auth.guard";

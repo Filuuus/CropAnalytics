@@ -121,7 +121,7 @@
                   <button type="button" class="ca-button-secondary" (click)="toggleStatus(user)">
                     {{ user.is_active ? 'Inhabilitar' : 'Activar' }}
                   </button>
-                  <button type="button" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-400" (click)="deleteUser(user)">
+                  <button type="button" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500 dark:hover:bg-red-400" [disabled]="user.is_initial_jefe" (click)="deleteUser(user)">
                     Eliminar
                   </button>
                 </div>

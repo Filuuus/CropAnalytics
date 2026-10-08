@@ -1,9 +1,11 @@
-def calcular_factor_confianza(datos: dict, resultados_intermedios: dict) -> dict:
+import math
+
+
+def calcular_factor_confianza(datos: dict) -> dict:
     """
     Calcula el factor de confianza de las estimaciones basado en:
-    1. Completitud de datos de entrada
-    2. Coherencia de valores nutricionales
-    3. Validez de rangos esperados para ensilaje de maíz
+    1. Completitud de datos de entrada (y uso de valores por defecto)
+    2. Validez de rangos esperados para ensilaje de maíz
     
     Retorna un diccionario con el factor de confianza (0-100) y justificación detallada.
     """
@@ -76,16 +78,6 @@ def calcular_factor_confianza(datos: dict, resultados_intermedios: dict) -> dict
         confianza_base -= penalizacion
         penalizaciones.append(f"Valores por defecto utilizados: {', '.join(fallbacks_usados)} (-{penalizacion}%)")
     
-    # Validar coherencia energética
-    nel = resultados_intermedios.get('nel', 0.0)
-    if nel > 0:
-        if nel < 1.3:
-            confianza_base -= 5
-            advertencias.append(f"NEL baja ({nel:.2f} Mcal/kg), puede indicar forraje de baja calidad")
-        elif nel > 1.8:
-            confianza_base -= 5
-            advertencias.append(f"NEL alta ({nel:.2f} Mcal/kg), verificar datos de entrada")
-    
     # Asegurar que la confianza no sea negativa
     confianza_final = max(0.0, min(100.0, confianza_base))
     
@@ -130,84 +122,131 @@ def _generar_justificacion(confianza: float, nivel: str, penalizaciones: list, a
     
     return justificacion
 
+# Valores estándar de Wisconsin para lo que el laboratorio no mide (o viene vacío).
+# ndfd, undf240, starch y starch_d nunca vienen en nuestros datos de laboratorio.
+FALLBACKS_MILK2024 = {
+    'ms': 35.0,
+    'cp': 8.5,
+    'ee': 3.2,
+    'ash': 4.0,
+    'ndf': 42.0,
+    'ndfd': 58.0,
+    'undf240': 15.0,
+    'starch': 30.0,
+    'starch_d': 75.0,
+}
+
+
+def datos_milk2024(ms, pc, gc, cen, fdn, cnf, yield_dm) -> dict:
+    """
+    Única forma de armar la entrada de MILK2024 a partir de columnas de
+    ResultadoLaboratorio (% de MS). Valores None o 0 se reemplazan por FALLBACKS_MILK2024.
+
+    El almidón no se mide: se usa el estándar de 30 %, pero nunca mayor que los
+    CNF de la muestra (el almidón es parte de los carbohidratos no fibrosos).
+    """
+    medidos = {'ms': ms, 'cp': pc, 'ee': gc, 'ash': cen, 'ndf': fdn}
+    datos = {k: medidos.get(k) or v for k, v in FALLBACKS_MILK2024.items()}
+    if cnf:
+        datos['starch'] = min(datos['starch'], cnf)
+    datos['yield_dm'] = yield_dm
+    return datos
+
+
+# Dieta basal fija de la hoja MILK2024_Metric (filas 11-34). Son entradas de la hoja,
+# no de cada muestra; si se cambia la dieta basal hay que volver a copiarlas.
+_BASAL_NDF = 26.302827108433732      # F22
+_BASAL_NDFD = 44.72756746987951      # G22
+_BASAL_CP = 20.796848192771083       # J22
+_BASAL_RDP = 12.341358837349397      # L22
+_BASAL_DRUP = 6.740797047168674      # M22
+_BASAL_FA = 5.068452590361446        # U17
+_BASAL_DE_CORREGIDA = 2.4670242929741555  # U32 (DE basal × 70 % de inclusión)
+_INCLUSION_CS = 0.30                 # AA10: ensilaje = 30 % de la MS de la dieta
+_DIETA_ADF = 19.0                    # AU10
+_PRODUCCION_LECHE = 52.0             # AU13 (kg/d)
+_NEL_MANTENIMIENTO = 14.33           # AN11 (Mcal/d)
+_NEL_GANANCIA_PESO = 2.8             # AN14 (Mcal/d)
+_NEL_POR_KG_LECHE = 0.74             # AR20 (Mcal/kg)
+
+
 def calcular_metricas_milk2024(datos: dict) -> dict:
     """
-    Motor de cálculo oficial del modelo MILK2024 (Universidad de Wisconsin / NASEM 2021).
-    Estima con precisión científica el valor energético y rendimiento lechero para ensilaje de maíz.
-    Todos los inputs nutricionales deben estar en base a % de Materia Seca (DM).
-    
-    Incluye factor de confianza para evaluar la calidad de las estimaciones.
+    MILK2024 (Universidad de Wisconsin), copia celda por celda de la hoja
+    MILK2024_Metric (fila 38) con NDFD a 30 h y valores ya corregidos por ceniza.
+    Entradas en % de MS; yield_dm en t MS/ha (= Mg/ha). Validado contra las 89
+    muestras de ejemplo de la hoja en api/tests.py.
     """
-    # 1. Extracción de Entradas con fallback seguro a 0.0
-    ms: float = max(0.0, float(datos.get('ms', 0.0)))
-    cp: float = max(0.0, float(datos.get('cp', 0.0)))
-    ee: float = max(0.0, float(datos.get('ee', 0.0)))
-    ash: float = max(0.0, float(datos.get('ash', 0.0)))
-    ndf: float = max(0.0, float(datos.get('ndf', 0.0)))
-    ndfd: float = max(0.0, float(datos.get('ndfd', 0.0)))
-    undf240: float = max(0.0, float(datos.get('undf240', 0.0)))
-    starch: float = max(0.0, float(datos.get('starch', 0.0)))
-    starch_d: float = max(0.0, float(datos.get('starch_d', 0.0)))
-    yield_dm: float = max(0.0, float(datos.get('yield_dm', 0.0))) # Toneladas MS / Hectárea
+    starch = float(datos['starch'])      # D
+    starch_d = float(datos['starch_d'])  # E (7 h, % del almidón)
+    ee = float(datos['ee'])              # F
+    cp = float(datos['cp'])              # G
+    ndf = float(datos['ndf'])            # H (NDFom)
+    ndfd = float(datos['ndfd'])          # I (30 h, % NDFom)
+    undf240 = float(datos['undf240'])    # J (% MS)
+    ash = float(datos['ash'])            # K
+    yield_dm = max(0.0, float(datos.get('yield_dm') or 0.0))  # C
 
-    # 2. Ecuaciones Oficiales de Fracciones Nutricionales Digestibles
+    # Almidón: tasa de degradación desde starchD 7 h y digestibilidad total (Ferraretto 2013)
+    starch_kd = 100 * ((math.log(100 - starch_d) - 4.6052) / -6)        # L
+    tt_starch_d = 82.224 + 0.185 * (100 * (starch_kd / (starch_kd + 12)))  # M
 
-    # Ácidos Grasos (FA) - Ecuación heredada de MILK2006 optimizada por NASEM 2021
-    fa: float = max(0.0, ee - 1.0)
-    d_fa: float = fa * 0.73 # Digestibilidad estandarizada del 73%
+    # FDN: modelo de dos pozas con uNDF240 como fracción indigestible (+10 % en intestino grueso)
+    undf_pct_ndf = undf240 / (ndf / 100)                                   # N
+    if ndfd + undf_pct_ndf >= 100:                                         # O
+        undf_pct_ndf = 99.9 - ndfd
+    ndf_kd = 100 * ((math.log((100 - undf_pct_ndf) - ndfd) - 4.6052) / -27)  # P
+    tt_ndfd = (100 - undf_pct_ndf) * (1.1 * (ndf_kd / (ndf_kd + 3.36)))    # Q
 
-    # Materia Orgánica Residual (ROM) - Reemplaza al carbohidrato no fibroso (NFC) de MILK2006
-    rom: float = max(0.0, 100.0 - (ash + ndf + starch + fa + cp))
-    d_rom: float = rom * 0.91 # Digestibilidad estandarizada del 91% (Tebbe et al., 2017)
+    rdp = cp * 0.77                                                        # S
+    drup = (cp * 0.33) * 0.7                                               # T
+    fa = ee - 1                                                            # U
+    rom = 100 - ash - starch - ndf - fa - cp                               # V
 
-    # Proteína Cruda Digestible (dCP) - Coeficiente NASEM para ensilajes
-    d_cp: float = cp * 0.70
+    # Consumo de MS (NASEM 2021, efectos de la ración); FDN y NDFD de la dieta
+    ndf_dieta = _BASAL_NDF * 0.7 + ndf * 0.3
+    ndfd_dieta = _BASAL_NDFD * 0.7 + ndfd * 0.3
+    dmi = (12 - 0.107 * ndf_dieta + 8.17 * (_DIETA_ADF / ndf_dieta)
+           + 0.0253 * ndfd_dieta
+           - 0.328 * ((_DIETA_ADF / ndf_dieta) - 0.602) * (ndfd_dieta - 48.3)
+           + 0.225 * _PRODUCCION_LECHE
+           + 0.0039 * (ndfd_dieta - 48.3) * (_PRODUCCION_LECHE - 33.1))      # AT
 
-    # Almidón Digestible (dStarch) - Basado en la desaparición enzimática ruminal a las 7h
-    d_starch: float = starch * (starch_d / 100.0)
+    cp_consumo = ((cp * 0.3 + _BASAL_CP * 0.7) / 100) * dmi                # W
+    rdp_consumo = ((rdp * 0.3 + _BASAL_RDP * 0.7) / 100) * dmi             # X
+    drup_consumo = ((drup * 0.3 + _BASAL_DRUP * 0.7) / 100) * dmi          # Y
 
-    # Fibra Digestible (dNDF) - Corrección del modelo mecanicista de dos piscinas (Rumen + Hindgut 10%)
-    d_ndf_rumen: float = ndf * (ndfd / 100.0)
-    remanente_fibra_digestible: float = max(0.0, ndf - d_ndf_rumen - undf240)
-    d_ndf: float = d_ndf_rumen + (remanente_fibra_digestible * 0.10)
+    # Energía digestible del ensilaje (calores de combustión NASEM 2021)
+    d_ndf = ndf * (tt_ndfd / 100)
+    d_starch = starch * (tt_starch_d / 100)
+    d_fa = fa * 0.73
+    d_cp = rdp + drup
+    d_rom = rom * 0.91
+    de_cs = 0.042 * d_ndf + 0.0423 * d_starch + 0.094 * d_fa + 0.0565 * d_cp + 0.04 * d_rom  # Z
+    de_cs_corregida = de_cs * _INCLUSION_CS                                # AA
+    de_dieta = de_cs_corregida + _BASAL_DE_CORREGIDA                       # AB
 
-    # 3. Balance Energético NASEM 2021 / MILK2024
+    # Pérdidas endógenas fecales, urinarias y de metano -> ME -> NEL (NASEM 2021)
+    fmcp = (300 * 0.2) / dmi                                               # AC
+    mfcp = 11.62 + 0.134 * ndf_dieta                                       # AD
+    de_neta = de_dieta - 0.00565 * mfcp - 0.00565 * fmcp - 0.004 * 34.3   # AE
+    adcp = ((rdp_consumo + drup_consumo) - (mfcp * dmi / 1000 + fmcp * dmi / 1000)) / cp_consumo  # AH
+    un = (((cp_consumo * adcp) - 1.65) * 1000) / 6.25                      # AI
+    energia_orina = (0.0146 * un) / dmi                                    # AJ
+    energia_gas = (0.294 * dmi - 0.347 * (fa * 0.3 + _BASAL_FA * 0.7) + 0.0409 * ndf_dieta) / dmi  # AK
+    me = de_neta - energia_gas - energia_orina                             # AL
+    nel_dieta = 0.66 * me                                                  # AM
+    nel_leche = nel_dieta * dmi - _NEL_MANTENIMIENTO - _NEL_GANANCIA_PESO  # AN
 
-    # Nutrientes Digestibles Totales (% TDN) - Factor multiplicador de 2.25 para la densidad grasa
-    tdn: float = d_cp + d_rom + (d_fa * 2.25) + d_starch + d_ndf
+    # Parte de la NEL para leche que aporta el ensilaje
+    nel_cs = nel_leche * (de_cs_corregida / de_dieta)                      # AP (Mcal/d)
+    leche_cs = nel_cs / _NEL_POR_KG_LECHE                                  # AR (kg/d)
+    dmi_cs = dmi * _INCLUSION_CS                                           # AV
+    leche_ton = leche_cs / dmi_cs * 1000                                   # AW (kg leche / t MS)
+    leche_ha = yield_dm * leche_ton                                        # AX
+    nel = nel_cs / dmi_cs  # Mcal NEL por kg de MS de ensilaje (la hoja no lo reporta así)
 
-    # Energía Digestible (DE Mcal/kg)
-    de: float = (tdn / 100.0) * 4.409
-
-    # Energía Neta de Lactancia (NEL Mcal/kg)
-    nel: float = max(0.0, (0.703 * de) - 0.19)
-
-    # 4. Proyecciones Biológicas del Modelo Predictivo de Wisconsin
-
-    # Leche por Tonelada de Materia Seca (kg de leche / Ton DM)
-    leche_ton: float = (nel * 311.4) + 120.0
-
-    # Leche por Hectárea (kg de leche / ha)
-    leche_ha: float = leche_ton * yield_dm
-
-    # Preparar resultados intermedios para el cálculo de confianza
-    resultados_intermedios = {
-        'fa': fa,
-        'rom': rom,
-        'd_cp': d_cp,
-        'd_rom': d_rom,
-        'd_fa': d_fa,
-        'd_starch': d_starch,
-        'd_ndf': d_ndf,
-        'tdn': tdn,
-        'de': de,
-        'nel': nel,
-        'leche_ton': leche_ton,
-        'leche_ha': leche_ha
-    }
-    
-    # Calcular factor de confianza
-    confianza_info = calcular_factor_confianza(datos, resultados_intermedios)
+    confianza_info = calcular_factor_confianza(datos)
 
     return {
         'fa': round(fa, 3),
@@ -217,9 +256,9 @@ def calcular_metricas_milk2024(datos: dict) -> dict:
         'd_fa': round(d_fa, 3),
         'd_starch': round(d_starch, 3),
         'd_ndf': round(d_ndf, 3),
-        'tdn': round(tdn, 2),
-        'de': round(de, 3),
+        'de': round(de_cs, 3),
         'nel': round(nel, 3),
+        'dmi': round(dmi, 2),
         'leche_ton': round(leche_ton, 2),
         'leche_ha': round(leche_ha, 2),
         'confianza': confianza_info
@@ -252,7 +291,6 @@ def calcular_valor_ensilaje(datos: dict, resultados_milk: dict, precios: dict = 
     yield_dm = datos.get('yield_dm', 0.0)  # Toneladas MS por hectárea
     leche_ha = resultados_milk.get('leche_ha', 0.0)  # kg leche por hectárea
     leche_ton = resultados_milk.get('leche_ton', 0.0)  # kg leche por tonelada MS
-    nel = resultados_milk.get('nel', 0.0)  # Mcal/kg
     
     # ESCENARIO 1: Productor que VENDE ensilaje
     ingreso_venta_bruto = yield_dm * precio_ensilaje_ton_ms

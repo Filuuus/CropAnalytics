@@ -29,6 +29,7 @@ export class SoilAnalysisComponent implements OnInit, AfterViewInit, OnDestroy {
   // ── Map ──────────────────────────────────────────────────────────────────
   private map: L.Map | null = null;
   private pinMarker: L.Marker | null = null;
+  private snappedMarker: L.CircleMarker | null = null;
   private smapMarkers: L.LayerGroup | null = null;
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -175,7 +176,8 @@ export class SoilAnalysisComponent implements OnInit, AfterViewInit, OnDestroy {
         // Mark snapped plot on map
         if (res.snapped_plot && this.map) {
           const p = res.snapped_plot;
-          L.circleMarker([p.lat, p.lon], {
+          this.snappedMarker?.remove();
+          this.snappedMarker = L.circleMarker([p.lat, p.lon], {
             radius: 12,
             fillColor: '#10b981',
             color: '#065f46',
@@ -209,6 +211,8 @@ export class SoilAnalysisComponent implements OnInit, AfterViewInit, OnDestroy {
     this.error = null;
     this.pinMarker?.remove();
     this.pinMarker = null;
+    this.snappedMarker?.remove();
+    this.snappedMarker = null;
     this.cdr.detectChanges();
   }
 

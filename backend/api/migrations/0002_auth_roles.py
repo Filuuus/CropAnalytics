@@ -27,7 +27,9 @@ def normalize_existing_users(apps, schema_editor):
 def create_initial_sadmin(apps, schema_editor):
     User = apps.get_model('api', 'UsuarioCustom')
     email = os.environ.get('SADMIN_EMAIL', 'sadmin@cropanalytics.local').lower().strip()
-    password = os.environ.get('SADMIN_PASSWORD', 'CropAnalyticsSadmin123!')
+    # Sin SADMIN_PASSWORD la cuenta queda sin contraseña usable; asignarla con
+    # `python manage.py changepassword <SADMIN_EMAIL>`. Nunca poner un default en el repo.
+    password = os.environ.get('SADMIN_PASSWORD') or None
     name = os.environ.get('SADMIN_NAME', 'Super Administrador')
 
     user = User.objects.filter(role='SADMIN').first() or User.objects.filter(email=email).first()

@@ -124,38 +124,9 @@ export class Main implements AfterViewInit {
   clearSelection = output<void>();
   navigateHybrid = output<string>();
 
-  // Ecuaciones de Wisconsin Milk2024 adaptadas al frontend de forma simple
+  // MILK2024 se calcula solo en el backend (api/utils/milk_calculator.py)
   calcularLecheHa(ciclo: any): number {
-    const lab = ciclo.laboratorio_info;
-    if (!lab) return 0;
-    
-    const ms = lab.ms || 35.0;
-    const cp = lab.pc || 8.5;
-    const ee = lab.gc || 3.2;
-    const ash = lab.cen || 4.0;
-    const ndf = lab.fdn || 42.0;
-    const starch = lab.cnf || 30.0;
-    const rms = lab.rms || 20.0; // rms es el rendimiento de materia seca en t/ha
-    
-    const ndfd = 58.0;
-    const undf240 = 15.0;
-    const starch_d = 75.0;
-
-    const fa = Math.max(0.0, ee - 1.0);
-    const d_fa = fa * 0.73;
-    const rom = Math.max(0.0, 100.0 - (ash + ndf + starch + fa + cp));
-    const d_rom = rom * 0.91;
-    const d_cp = cp * 0.70;
-    const d_starch = starch * (starch_d / 100.0);
-    const d_ndf_rumen = ndf * (ndfd / 100.0);
-    const remanente_fibra_digestible = Math.max(0.0, ndf - d_ndf_rumen - undf240);
-    const d_ndf = d_ndf_rumen + (remanente_fibra_digestible * 0.10);
-
-    const tdn = d_cp + d_rom + (d_fa * 2.25) + d_starch + d_ndf;
-    const de = (tdn / 100.0) * 4.409;
-    const nel = Math.max(0.0, (0.703 * de) - 0.19);
-    const leche_ton = (nel * 311.4) + 120.0;
-    return leche_ton * rms;
+    return ciclo.leche_ha ?? 0;
   }
 
   // Group selected cycles by hybrid and compute consolidations
@@ -517,7 +488,8 @@ export class Main implements AfterViewInit {
           const baseColor = this.hybridColors[c.hibrido_nombre] || '#2563EB';
 
           if (hasSelection) {
-            colors.push(isSelected ? '#10B981' : 'rgba(74, 85, 104, 0.25)');
+            // Solid colors avoid alpha blending washing out the 3D markers on light backgrounds.
+            colors.push(isSelected ? '#059669' : '#64748B');
           } else {
             colors.push(baseColor);
           }
@@ -539,7 +511,7 @@ export class Main implements AfterViewInit {
       marker: {
         size: 5,
         color: colors,
-        opacity: 0.8
+        opacity: hasSelection ? 1 : 0.8
       }
     }];
   });
@@ -1011,4 +983,3 @@ export class Main implements AfterViewInit {
     }
   }
 }
-

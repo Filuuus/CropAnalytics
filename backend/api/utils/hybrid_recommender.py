@@ -28,7 +28,7 @@ using a simplified FAO-56 water-productivity relationship:
 Where:
   Ky  = yield response factor for maize (≈ 1.25, FAO Irrigation Paper 33)
   ETa/ETc ≈ growing_mean_sm / field_capacity_sm  (proxy, bounded [0,1])
-  field_capacity_sm = 0.30 m³/m³  (typical for Jalisco highland soils)
+  field_capacity_sm = SM_HUMEDO (ml_engine)
 
 This is a first-order approximation; it doesn't replace a full water-balance
 model, but gives a physically grounded adjustment visible to the user.
@@ -42,30 +42,17 @@ from typing import Optional
 from django.conf import settings
 from django.db.models import Avg, Count, StdDev
 
+from ..ml.ml_engine import SM_HUMEDO
 from ..ml.plot_registry import JALISCO_PLOTS
 from ..ml.soil_moisture_forecast import get_annual_profile, summarise_profile
-from ..utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_ensilaje
+from ..utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_ensilaje, datos_milk2024
 from ..utils.geospatial_estimator import calcular_distancia_haversine
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-_FIELD_CAPACITY_SM = 0.30    # m³/m³ — typical Jalisco highland Vertisol
 _KY_MAIZE          = 1.25    # FAO-56 yield response factor, grain maize
 _YIELD_FALLBACK    = 18.0    # ton DM/ha — used when no DB records exist
-
-# MILK2024 bromatological fallbacks (Wisconsin standard values)
-_BROM_FALLBACKS = {
-    "ms":       35.0,
-    "cp":        8.5,
-    "ee":        3.2,
-    "ash":       4.0,
-    "ndf":      42.0,
-    "ndfd":     58.0,
-    "undf240":  15.0,
-    "starch":   30.0,
-    "starch_d": 75.0,
-}
 
 # Scoring weights — sum to 1.0
 # Each component is min-max normalised across the current candidate set,
@@ -104,27 +91,9 @@ def _sm_yield_factor(growing_mean_sm: float) -> float:
     Return a multiplier [0.30, 1.05] that adjusts historical yield for the
     estimated soil moisture conditions of the user's plot.
     """
-    eta_etc = min(1.0, growing_mean_sm / _FIELD_CAPACITY_SM)
+    eta_etc = min(1.0, growing_mean_sm / SM_HUMEDO)
     factor = 1.0 - _KY_MAIZE * (1.0 - eta_etc)
     return round(max(0.30, min(1.05, factor)), 4)
-
-
-# ---------------------------------------------------------------------------
-# Build MILK2024 payload from DB averages
-# ---------------------------------------------------------------------------
-def _brom_payload(lab_agg: dict, yield_dm_adjusted: float) -> dict:
-    return {
-        "ms":       lab_agg.get("avg_ms")  or _BROM_FALLBACKS["ms"],
-        "cp":       lab_agg.get("avg_pc")  or _BROM_FALLBACKS["cp"],
-        "ee":       lab_agg.get("avg_gc")  or _BROM_FALLBACKS["ee"],
-        "ash":      lab_agg.get("avg_cen") or _BROM_FALLBACKS["ash"],
-        "ndf":      lab_agg.get("avg_fdn") or _BROM_FALLBACKS["ndf"],
-        "ndfd":     _BROM_FALLBACKS["ndfd"],
-        "undf240":  _BROM_FALLBACKS["undf240"],
-        "starch":   _BROM_FALLBACKS["starch"],
-        "starch_d": _BROM_FALLBACKS["starch_d"],
-        "yield_dm": yield_dm_adjusted,
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +168,8 @@ def recomendar_hibridos(
 
     # 4. Query hybrids matching the irrigation condition
     condicion = "Riego" if has_irrigation else "Temporal"
-    sm_factor = _sm_yield_factor(sm_summary["growing_mean_sm"])
+    # Con riego el agua no la limita la humedad de temporal estimada por SMAP.
+    sm_factor = 1.0 if has_irrigation else _sm_yield_factor(sm_summary["growing_mean_sm"])
 
     ciclos_qs = (
         Ciclo.objects
@@ -217,6 +187,7 @@ def recomendar_hibridos(
             avg_gc         = Avg("laboratorio__gc"),
             avg_cen        = Avg("laboratorio__cen"),
             avg_fdn        = Avg("laboratorio__fdn"),
+            avg_cnf        = Avg("laboratorio__cnf"),
             avg_yield_dm   = Avg("laboratorio__rms"),
             std_yield_dm   = StdDev("laboratorio__rms"),   # for yield consistency
             avg_dff        = Avg("laboratorio__dff"),
@@ -247,22 +218,16 @@ def recomendar_hibridos(
         total_yield = round(adj_yield * extension_ha, 2)
 
         # Yield consistency: CV = std/mean; 1-CV bounded [0,1].
-        # With n=1 there is no std → treat as average consistency (0.5) so
+        # With n=1 there is no std → assume a typical CV of 0.20 (consistency 0.8) so
         # single-cycle hybrids neither get rewarded nor punished for stability.
         std_y = float(item["std_yield_dm"] or 0.0)
         n_cy  = item["n_ciclos"] or 1
         cv    = (std_y / hist_yield) if (hist_yield > 0 and n_cy > 1) else 0.20
         consistency = round(max(0.0, min(1.0, 1.0 - cv)), 4)
 
-        brom = _brom_payload(
-            {
-                "avg_ms":  item["avg_ms"],
-                "avg_pc":  item["avg_pc"],
-                "avg_gc":  item["avg_gc"],
-                "avg_cen": item["avg_cen"],
-                "avg_fdn": item["avg_fdn"],
-            },
-            adj_yield,
+        brom = datos_milk2024(
+            item["avg_ms"], item["avg_pc"], item["avg_gc"],
+            item["avg_cen"], item["avg_fdn"], item["avg_cnf"], adj_yield,
         )
 
         milk = calcular_metricas_milk2024(brom)
@@ -298,15 +263,36 @@ def recomendar_hibridos(
             "_consistency": consistency,         # yield stability
         })
 
-    # 6. Normalise each signal across the candidate set (min-max → [0, 1])
-    #    then compute weighted composite score.
-    def _minmax(vals: list[float]) -> list[float]:
-        lo, hi = min(vals), max(vals)
-        rng = hi - lo
-        if rng < 1e-9:
-            return [0.5] * len(vals)
-        return [(v - lo) / rng for v in vals]
+    ranking = _puntuar(candidates, suitability, has_irrigation)
 
+    return {
+        "snapped_plot":    {**plot, "distance_km": dist_km},
+        "sm_profile":      sm_summary,
+        "sm_warning":      sm_warning,
+        "condicion":       condicion,
+        "year":            year,
+        "extension_ha":    extension_ha,
+        "ranking":         ranking,
+        "nota_proyeccion": _nota_proyeccion(year, profile.is_real_data),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Composite score
+# ---------------------------------------------------------------------------
+def _minmax(vals: list[float]) -> list[float]:
+    lo, hi = min(vals), max(vals)
+    rng = hi - lo
+    if rng < 1e-9:
+        return [0.5] * len(vals)
+    return [(v - lo) / rng for v in vals]
+
+
+def _puntuar(candidates: list[dict], suitability: float, has_irrigation: bool) -> list[dict]:
+    """
+    Normalise each signal across the candidate set (min-max → [0, 1]), apply the
+    weights for the moisture band and return the ranking sorted best-first.
+    """
     lt_norms   = _minmax([c["_leche_ton"]   for c in candidates])
     y_norms    = _minmax([c["_adj_yield"]   for c in candidates])
     ndf_norms  = _minmax([-c["_ndf"]        for c in candidates])   # inverted: lower NDF → higher score
@@ -315,7 +301,10 @@ def recomendar_hibridos(
     # Under drought (suitability < 45) shift weight FROM yield TOWARD nutritional quality
     # and consistency — a more digestible, stable hybrid matters more when water is scarce.
     # Under ideal conditions (≥ 55) shift toward raw yield — more biomass wins.
-    if suitability < 45:
+    # With irrigation the rainfed suitability does not apply → base weights.
+    if has_irrigation:
+        w_quality, w_yield, w_ndf, w_consistency = _W_QUALITY, _W_YIELD, _W_NDF, _W_CONSISTENCY
+    elif suitability < 45:
         w_quality     = _W_QUALITY     + 0.10   # 0.40 — reward high leche_ton
         w_yield       = _W_YIELD       - 0.15   # 0.20 — yield less decisive under drought
         w_ndf         = _W_NDF         + 0.10   # 0.30 — lower NDF = better under water stress
@@ -350,17 +339,7 @@ def recomendar_hibridos(
         ranking.append(entry)
 
     ranking.sort(key=lambda x: x["score"], reverse=True)
-
-    return {
-        "snapped_plot":    {**plot, "distance_km": dist_km},
-        "sm_profile":      sm_summary,
-        "sm_warning":      sm_warning,
-        "condicion":       condicion,
-        "year":            year,
-        "extension_ha":    extension_ha,
-        "ranking":         ranking,
-        "nota_proyeccion": _nota_proyeccion(year, profile.is_real_data),
-    }
+    return ranking
 
 
 def _nota_proyeccion(year: int, is_real: bool) -> Optional[str]:
