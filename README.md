@@ -65,6 +65,22 @@ The `/soil-analysis` page estimates soil moisture with a frozen LSTM model (`bac
 
 Without them, `/api/recomendacion-humedad/` responds with `503`.
 
+#### Soil-moisture outlook (2015–2025, 311 cells)
+The outlook covers the 9 km SMAP cells within 40 km of the field trials (`api/ml/celdas_altos.json`).
+It needs a NASA Earthdata account; put `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` in `backend/.env`.
+Submit the AppEEARS request (4 tasks, under AppEEARS' size limit), then download and merge the CSVs into `backend/data/`:
+```bash
+python manage.py solicitar_appeears
+```
+```bash
+python manage.py solicitar_appeears --descargar
+```
+Preview the outlook without touching the database:
+```bash
+python manage.py calcular_panorama --vista-previa panorama.json
+```
+Saving it (`calcular_panorama` without the flag) needs the `PanoramaCelda` table from migration `0003`, which is only applied to the shared database after merging to `main`.
+
 ### 4. Frontend Setup (Angular)
 In a new terminal window, navigate to the frontend folder and install the dependencies:
 ```bash
