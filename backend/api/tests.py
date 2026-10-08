@@ -129,3 +129,20 @@ class LstmBatchTests(SimpleTestCase):
                 w = np.vstack([np.zeros((E.LOOKBACK, E.N_FEATURES), np.float32), X[:t]])[-E.LOOKBACK:]
                 esperado.append(float(model(torch.from_numpy(w)[None])[0, -1, 0]) * 0.31 + 0.04)
         np.testing.assert_allclose(E._lstm_predict(model, X, None), np.clip(esperado, 0.01, 0.70), atol=1e-6)
+
+
+class CeldasEaseGridTests(SimpleTestCase):
+    def test_pixel_igual_al_de_appeears(self):
+        from .ml.celdas import centro, fila_col
+        # (lat, lon) -> (Line_Y, Sample_X) que reportó AppEEARS para SPL3SMP_E 9 km en 2024
+        referencia = [
+            (20.740333, -102.834666, 524, 826), (21.479897, -102.280986, 514, 832),
+            (21.131055, -102.454666, 519, 830), (21.2645, -102.036666, 517, 835),
+            (21.393667, -102.341833, 515, 831), (20.951, -102.168, 521, 833),
+            (21.042833, -102.949666, 520, 825), (20.876222, -102.715194, 522, 827),
+            (21.047, -102.623333, 520, 828), (20.753597, -103.113566, 524, 823),
+            (20.6945, -102.5865, 525, 829),
+        ]
+        for lat, lon, fila, col in referencia:
+            self.assertEqual(fila_col(lat, lon), (fila, col))
+            self.assertEqual(fila_col(*centro(fila, col)), (fila, col))
