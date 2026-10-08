@@ -125,7 +125,7 @@ class LstmBatchTests(SimpleTestCase):
         X = np.random.default_rng(0).random((30, E.N_FEATURES), dtype=np.float32)
         esperado = []
         with torch.no_grad():
-            for t in range(len(X)):  # ventana de 14 días terminando en t, con ceros al inicio
-                w = np.vstack([np.zeros((E.LOOKBACK, E.N_FEATURES), np.float32), X[:t + 1]])[-E.LOOKBACK:]
+            for t in range(len(X)):  # los 14 días ANTERIORES a t (como en el entrenamiento), ceros al inicio
+                w = np.vstack([np.zeros((E.LOOKBACK, E.N_FEATURES), np.float32), X[:t]])[-E.LOOKBACK:]
                 esperado.append(float(model(torch.from_numpy(w)[None])[0, -1, 0]) * 0.31 + 0.04)
         np.testing.assert_allclose(E._lstm_predict(model, X, None), np.clip(esperado, 0.01, 0.70), atol=1e-6)

@@ -332,10 +332,12 @@ def _lstm_predict(
     matching the production_estimation.py output stage exactly.
     Falls back to a clipped linear rescale when no scaler is available.
     """
-    # Zero-pad the first LOOKBACK-1 days so every day t gets the window [t-13, t]
-    padded  = np.vstack([np.zeros((LOOKBACK - 1, N_FEATURES), dtype=np.float32),
+    # Training paired the window [t-14, t-1] with day t (train_and_freeze.py), so
+    # day t gets the 14 days BEFORE it; zero-pad the start of the series.
+    n       = len(X_scaled)
+    padded  = np.vstack([np.zeros((LOOKBACK, N_FEATURES), dtype=np.float32),
                          X_scaled.astype(np.float32)])
-    windows = np.lib.stride_tricks.sliding_window_view(padded, LOOKBACK, axis=0)
+    windows = np.lib.stride_tricks.sliding_window_view(padded, LOOKBACK, axis=0)[:n]
     windows = np.ascontiguousarray(windows.transpose(0, 2, 1))   # (n, 14, 4)
 
     with torch.no_grad():

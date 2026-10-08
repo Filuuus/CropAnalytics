@@ -41,12 +41,8 @@ If `SADMIN_PASSWORD` was empty when migrating, the super admin has no usable pas
 python manage.py changepassword sadmin@cropanalytics.local
 ```
 
-Run the tests (Django creates and drops a temporary `test_` database on your Postgres):
-```bash
-python manage.py test api
-```
-
-Or without Postgres running, on a throwaway SQLite file:
+Run the tests on a throwaway SQLite file. Don't run them against the shared DigitalOcean
+database: Django would create and drop a `test_` database on that cluster.
 ```bash
 DATABASE_URL=sqlite:///test.sqlite3 python manage.py test api
 ```
