@@ -1,29 +1,21 @@
 from django.contrib.auth import get_user_model
-from django.db import transaction
 
 
-def assign_default_role_for_new_user():
+def create_user(*, name, email, password=None, provider='local', avatar=None):
+    # Toda cuenta nueva es INVESTIGADOR; el SADMIN (o un JEFE) asciende desde
+    # /users-management. Antes el primer registro se volvía JEFE, y como el
+    # registro es público, en una instalación nueva cualquiera podía tomarlo.
     User = get_user_model()
-    list(User.objects.select_for_update().filter(role=User.Role.SADMIN).values_list('id', flat=True))
-    has_non_sadmin = User.objects.select_for_update().exclude(role=User.Role.SADMIN).exists()
-    return User.Role.INVESTIGADOR if has_non_sadmin else User.Role.JEFE
-
-
-@transaction.atomic
-def create_user_with_auto_role(*, name, email, password=None, provider='local', avatar=None):
-    User = get_user_model()
-    role = assign_default_role_for_new_user()
     email = email.lower().strip()
-    username = email
     user = User(
-        username=username,
+        username=email,
         email=email,
         first_name=name.strip(),
-        role=role,
+        role=User.Role.INVESTIGADOR,
         provider=provider,
         avatar=avatar,
         is_active=True,
-        es_investigador=(role == User.Role.INVESTIGADOR),
+        es_investigador=True,
     )
     if password:
         user.set_password(password)

@@ -291,7 +291,6 @@ def calcular_valor_ensilaje(datos: dict, resultados_milk: dict, precios: dict = 
     yield_dm = datos.get('yield_dm', 0.0)  # Toneladas MS por hectárea
     leche_ha = resultados_milk.get('leche_ha', 0.0)  # kg leche por hectárea
     leche_ton = resultados_milk.get('leche_ton', 0.0)  # kg leche por tonelada MS
-    nel = resultados_milk.get('nel', 0.0)  # Mcal/kg
     
     # ESCENARIO 1: Productor que VENDE ensilaje
     ingreso_venta_bruto = yield_dm * precio_ensilaje_ton_ms

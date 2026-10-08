@@ -57,6 +57,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -99,6 +100,11 @@ _COL_ID      = "ID"
 _COL_DATE    = "Date"
 _COL_SM_SMAP = "SPL3SMP_E_006_Soil_Moisture_Retrieval_Data_AM_soil_moisture"
 _FILL_VAL    = -9999.0
+
+# Únicos umbrales de humedad (m³/m³) del proyecto. Definidos por el equipo para
+# los Altos de Jalisco; no están validados con mediciones de campo.
+SM_SECO   = 0.12   # por debajo: estrés hídrico
+SM_HUMEDO = 0.30   # por encima: exceso; también se usa como proxy de capacidad de campo
 
 _WEIGHTS_DIR    = Path(__file__).parent / "weights"
 _WEIGHTS_PATH   = _WEIGHTS_DIR / "lstm_soil_moisture.pt"
@@ -319,44 +325,37 @@ def _lstm_predict(
     target_scaler,
 ) -> np.ndarray:
     """
-    Run LSTM with a 14-day look-back window over the full time series.
+    Run LSTM with a 14-day look-back window over the full time series,
+    all windows in a single batched forward pass.
 
     Uses target_scaler.inverse_transform() to recover physical m³/m³,
     matching the production_estimation.py output stage exactly.
     Falls back to a clipped linear rescale when no scaler is available.
     """
-    n     = len(X_scaled)
-    preds = np.zeros(n, dtype=np.float32)
+    # Zero-pad the first LOOKBACK-1 days so every day t gets the window [t-13, t]
+    padded  = np.vstack([np.zeros((LOOKBACK - 1, N_FEATURES), dtype=np.float32),
+                         X_scaled.astype(np.float32)])
+    windows = np.lib.stride_tricks.sliding_window_view(padded, LOOKBACK, axis=0)
+    windows = np.ascontiguousarray(windows.transpose(0, 2, 1))   # (n, 14, 4)
 
     with torch.no_grad():
-        for t in range(n):
-            start  = max(0, t - LOOKBACK + 1)
-            window = X_scaled[start: t + 1]                # (≤14, 4)
-            pad    = LOOKBACK - len(window)
-            if pad > 0:
-                window = np.vstack(
-                    [np.zeros((pad, N_FEATURES), dtype=np.float32), window]
-                )
-            x   = torch.from_numpy(window.astype(np.float32)).unsqueeze(0)  # (1,14,4)
-            out = model(x)                                  # (1, 14, 1)
-            raw = float(out[0, -1, 0].item())
+        raw = model(torch.from_numpy(windows))[:, -1, 0].numpy()  # (n,)
 
-            if target_scaler is not None:
-                physical = float(
-                    target_scaler.inverse_transform([[raw]])[0, 0]
-                )
-            else:
-                # Approximate inverse: assume TxSON SWC_5 range ≈ [0.04, 0.35]
-                physical = raw * 0.31 + 0.04
+    if target_scaler is not None:
+        physical = target_scaler.inverse_transform(raw.reshape(-1, 1)).ravel()
+    else:
+        # Approximate inverse: assume TxSON SWC_5 range ≈ [0.04, 0.35]
+        physical = raw * 0.31 + 0.04
 
-            preds[t] = float(np.clip(physical, 0.01, 0.70))
-
-    return preds
+    return np.clip(physical, 0.01, 0.70).astype(np.float32)
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+# ponytail: per-process cache keyed by file paths; restart the server after
+# replacing the SMAP/Daymet CSVs. Callers must treat the result as read-only.
+@lru_cache(maxsize=64)
 def run_inference(
     smap_id: str,
     master_csv_path: str,
@@ -386,8 +385,8 @@ def run_inference(
         mean_sm         : float
         min_sm          : float
         max_sm          : float
-        dry_days        : int   (sm < 0.15)
-        wet_days        : int   (sm > 0.35)
+        dry_days        : int   (sm < SM_SECO)
+        wet_days        : int   (sm > SM_HUMEDO)
         valid_smap_days : int   days with a real SMAP retrieval
         has_daymet      : bool  True when Daymet features were used
         model_backend   : str   "lstm_frozen" | "smap_smoothed"
@@ -408,9 +407,6 @@ def run_inference(
     # 2. Gap-fill SMAP (ffill → bfill, same as production_estimation.py line 83)
     sm_filled = _ffill_bfill(raw_sm, fallback=0.22).astype(np.float32)
 
-    # 3. Hann smooth (noise reduction — SMAP L3 standard practice)
-    sm_smooth = _smooth(sm_filled, window=7)
-
     # 4. Load Daymet (if available)
     has_daymet = False
     daymet: dict[str, dict] = {}
@@ -420,8 +416,9 @@ def run_inference(
 
     means = _load_feature_means()
 
-    # 5. Build 4-feature matrix
-    X_raw = _build_feature_matrix(dates, sm_smooth, daymet, means)
+    # 5. Build 4-feature matrix. The LSTM was trained on gap-filled raw SMAP,
+    #    so it gets the same here (not the smoothed series).
+    X_raw = _build_feature_matrix(dates, sm_filled, daymet, means)
 
     # 6. Load model + scalers
     model, feat_scaler, target_scaler = _load_artifacts()
@@ -441,8 +438,8 @@ def run_inference(
         sm_final      = _lstm_predict(model, X_scaled, target_scaler)
         backend_label = "lstm_frozen"
     else:
-        # SMAP-only fallback: smoothed satellite series is the physical estimate
-        sm_final      = sm_smooth
+        # SMAP-only fallback: Hann-smoothed satellite series is the physical estimate
+        sm_final      = _smooth(sm_filled, window=7)
         backend_label = "smap_smoothed"
 
     sm_list = [round(float(v), 4) for v in sm_final]
@@ -460,8 +457,8 @@ def run_inference(
         "mean_sm":         round(float(np.mean(sm_final)), 4),
         "min_sm":          round(float(np.min(sm_final)),  4),
         "max_sm":          round(float(np.max(sm_final)),  4),
-        "dry_days":        int(np.sum(sm_final < 0.15)),
-        "wet_days":        int(np.sum(sm_final > 0.35)),
+        "dry_days":        int(np.sum(sm_final < SM_SECO)),
+        "wet_days":        int(np.sum(sm_final > SM_HUMEDO)),
         "valid_smap_days": valid_count,
         "has_daymet":      has_daymet,
         "model_backend":   backend_label,

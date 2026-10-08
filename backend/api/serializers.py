@@ -6,7 +6,7 @@ from google.oauth2 import id_token
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Terreno, Ciclo, ResultadoLaboratorio, DatoClimatico, Municipio, Hibrido
-from .auth_utils import create_user_with_auto_role, is_initial_jefe
+from .auth_utils import create_user, is_initial_jefe
 from .utils.milk_calculator import calcular_metricas_milk2024, datos_milk2024
 
 User = get_user_model()
@@ -43,7 +43,7 @@ class RegisterSerializer(serializers.Serializer):
         return email
 
     def create(self, validated_data):
-        return create_user_with_auto_role(
+        return create_user(
             name=validated_data['name'],
             email=validated_data['email'],
             password=validated_data['password'],
@@ -121,7 +121,7 @@ class GoogleLoginSerializer(serializers.Serializer):
                 user.save(update_fields=['provider', 'avatar'])
             return user
 
-        return create_user_with_auto_role(
+        return create_user(
             name=payload.get('name') or email.split('@')[0],
             email=email,
             provider=User.Provider.GOOGLE,

@@ -29,11 +29,9 @@ import math
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .ml_engine import run_inference
+from .ml_engine import SM_HUMEDO, SM_SECO, run_inference
 
 BASELINE_YEAR = 2024
-_SM_DRY_THRESHOLD  = 0.12   # m³/m³ — stress threshold (recalibrated for Jalisco highlands)
-_SM_WET_THRESHOLD  = 0.30   # m³/m³ — field-capacity proxy (Jalisco Vertisol)
 
 
 @dataclass
@@ -153,8 +151,8 @@ def summarise_profile(profile: AnnualProfile) -> dict:
     ]
 
     growing_mean = round(sum(growing_sm) / len(growing_sm), 4) if growing_sm else profile.mean_sm
-    growing_dry  = sum(1 for v in growing_sm if v < _SM_DRY_THRESHOLD)
-    growing_wet  = sum(1 for v in growing_sm if v > _SM_WET_THRESHOLD)
+    growing_dry  = sum(1 for v in growing_sm if v < SM_SECO)
+    growing_wet  = sum(1 for v in growing_sm if v > SM_HUMEDO)
 
     # Stress index: fraction of growing-season days below threshold
     stress_index = round(growing_dry / len(growing_sm), 3) if growing_sm else 0.5

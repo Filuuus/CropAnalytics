@@ -115,14 +115,14 @@ class UserAdminViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         user = self.get_object()
+        if is_initial_jefe(user):
+            return Response(
+                {'detail': 'El primer JEFE del sistema no puede eliminarse.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if user.role == User.Role.JEFE and active_jefe_count(exclude_user=user) == 0:
             return Response(
                 {'detail': 'No se puede eliminar al ultimo JEFE activo.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if user.pk == request.user.pk and user.role == User.Role.JEFE and active_jefe_count(exclude_user=user) == 0:
-            return Response(
-                {'detail': 'No puedes eliminarte si eso deja el sistema sin JEFE.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().destroy(request, *args, **kwargs)
@@ -794,7 +794,7 @@ from datetime import date
 from django.conf import settings
 
 from .ml.plot_registry import JALISCO_PLOTS, snap_to_nearest_plot
-from .ml.ml_engine import run_inference
+from .ml.ml_engine import SM_HUMEDO, SM_SECO, run_inference
 from .models import SoilMoisturePlot
 
 
@@ -805,12 +805,8 @@ def _corn_recommendation(mean_sm: float, dry_days: int, wet_days: int,
                           min_sm: float, max_sm: float) -> dict:
     """
     Baseline hybrid-corn advisory derived from the estimated annual
-    soil-moisture profile.
-
-    Thresholds are based on published FAO-56 and TxSON research values:
-      • optimal range: 0.20–0.35 m³/m³
-      • stress threshold: < 0.15 m³/m³
-      • waterlogging risk: > 0.40 m³/m³
+    soil-moisture profile. Uses the project thresholds SM_SECO / SM_HUMEDO
+    (ml_engine); 0.20 marks the upper edge of the marginal band.
     """
     year_days = 366  # 2024 was a leap year
 
@@ -818,13 +814,13 @@ def _corn_recommendation(mean_sm: float, dry_days: int, wet_days: int,
     excess_pct = round(wet_days / year_days * 100, 1)
 
     # Irrigation scheduling advice
-    if mean_sm < 0.15:
+    if mean_sm < SM_SECO:
         irrigation = "Alto riesgo de estrés hídrico. Se recomienda riego suplementario cada 5–7 días durante fases vegetativas."
         regimen = "Riego"
     elif mean_sm < 0.20:
         irrigation = "Humedad marginal. Monitoreo semanal recomendado; activar riego si sm < 0.18 m³/m³."
         regimen = "Riego"
-    elif mean_sm <= 0.35:
+    elif mean_sm <= SM_HUMEDO:
         irrigation = "Humedad óptima para maíz. Riego de precisión en floración (R1-R3) únicamente."
         regimen = "Temporal"
     else:
