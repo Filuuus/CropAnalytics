@@ -149,16 +149,24 @@ class CeldasEaseGridTests(SimpleTestCase):
 
 
 class SolicitudAppeearsTests(SimpleTestCase):
-    def test_formato_de_la_solicitud(self):
-        from datetime import date
-        from .management.commands.solicitar_appeears import CAPAS, construir_tarea
-        celdas = [{'id': 'M09_524_826', 'lat': 20.739166, 'lon': -102.837137}]
-        t = construir_tarea(celdas, date(2015, 4, 1), date(2025, 12, 31), 'prueba')
-        self.assertEqual(t['task_type'], 'point')
-        self.assertEqual(t['params']['dates'], [{'startDate': '04-01-2015', 'endDate': '12-31-2025'}])  # MM-DD-AAAA
-        self.assertEqual(len(t['params']['layers']), len(CAPAS))
-        self.assertEqual(t['params']['coordinates'][0],
-                         {'id': 'M09_524_826', 'category': 'altos', 'latitude': 20.739166, 'longitude': -102.837137})
+    def test_tareas_bajo_el_limite_y_sin_huecos(self):
+        from datetime import date, datetime, timedelta
+        from .management.commands.solicitar_appeears import CAPAS, MAX_VALORES, dividir_tareas
+        celdas = [{'id': f'M09_{i}', 'lat': 21.0, 'lon': -102.5} for i in range(311)]
+        tareas = dividir_tareas(celdas, date(2015, 4, 1), date(2025, 12, 31), 'prueba')
+        leer = lambda t, k: datetime.strptime(t['params']['dates'][0][k], '%m-%d-%Y').date()  # MM-DD-AAAA
+        for producto in {p for p, _ in CAPAS}:
+            propias = [t for t in tareas if t['params']['layers'][0]['product'] == producto]
+            self.assertTrue(all({l['product'] for l in t['params']['layers']} == {producto} for t in propias))
+            self.assertEqual(leer(propias[0], 'startDate'), date(2015, 4, 1))
+            self.assertEqual(leer(propias[-1], 'endDate'), date(2025, 12, 31))
+            for a, b in zip(propias, propias[1:]):
+                self.assertEqual(leer(b, 'startDate'), leer(a, 'endDate') + timedelta(days=1))
+            for t in propias:
+                dias = (leer(t, 'endDate') - leer(t, 'startDate')).days + 1
+                self.assertLessEqual(len(celdas) * len(t['params']['layers']) * dias, MAX_VALORES)
+        self.assertEqual(tareas[0]['params']['coordinates'][0],
+                         {'id': 'M09_0', 'category': 'altos', 'latitude': 21.0, 'longitude': -102.5})
 
 
 class PanoramaTests(SimpleTestCase):
