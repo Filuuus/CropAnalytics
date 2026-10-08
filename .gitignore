@@ -108,4 +108,4 @@ backend/venv312
 references/
 
 # Documentación del proyecto modular (borradores, nombres del equipo, ligas de Lucidchart)
-docs/
+/docs
