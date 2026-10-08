@@ -99,6 +99,7 @@ _DAYMET_COLS = {
 _COL_ID      = "ID"
 _COL_DATE    = "Date"
 _COL_SM_SMAP = "SPL3SMP_E_006_Soil_Moisture_Retrieval_Data_AM_soil_moisture"
+_COL_SM_SMAP_PM = "SPL3SMP_E_006_Soil_Moisture_Retrieval_Data_PM_soil_moisture_pm"
 _FILL_VAL    = -9999.0
 
 # Únicos umbrales de humedad (m³/m³) del proyecto. Definidos por el equipo para
@@ -200,6 +201,7 @@ def _read_smap_csv(master_csv_path: str) -> dict[str, list[tuple[str, float]]]:
     """
     Parse the SMAP master CSV.
     Returns {plot_id: [(date_str, sm_value_or_nan), …]} sorted by date.
+    Days without an AM retrieval use the PM pass when the CSV includes it.
     """
     data: dict[str, list[tuple[str, float]]] = {}
     path = Path(master_csv_path)
@@ -211,12 +213,15 @@ def _read_smap_csv(master_csv_path: str) -> dict[str, list[tuple[str, float]]]:
         for row in reader:
             plot_id  = row[_COL_ID].strip()
             date_str = row[_COL_DATE].strip()
-            try:
-                val = float(row[_COL_SM_SMAP].strip())
-            except (ValueError, KeyError):
-                val = np.nan
-            if val == _FILL_VAL:
-                val = np.nan
+            val = np.nan
+            for col in (_COL_SM_SMAP, _COL_SM_SMAP_PM):
+                try:
+                    v = float(row[col].strip())
+                except (ValueError, KeyError, AttributeError):
+                    continue
+                if v != _FILL_VAL:
+                    val = v
+                    break
             data.setdefault(plot_id, []).append((date_str, val))
 
     for pid in data:
@@ -224,24 +229,20 @@ def _read_smap_csv(master_csv_path: str) -> dict[str, list[tuple[str, float]]]:
     return data
 
 
-def _read_daymet_csv(daymet_csv_path: str, plot_id: str) -> dict[str, dict]:
+def _read_daymet_all(daymet_csv_path: str) -> dict[str, dict[str, dict]]:
     """
     Parse a Daymet AppEEARS CSV (same format as references/datasets/NASA_Weather/).
-    Returns {date_str: {Precipitation, T_Max, T_Min}} for the requested plot_id.
+    Returns {plot_id: {date_str: {Precipitation, T_Max, T_Min}}}.
     """
-    result = {}
+    result: dict[str, dict[str, dict]] = {}
     path = Path(daymet_csv_path)
     if not path.exists():
         return result
 
     with open(path, newline="", encoding="utf-8") as fh:
-        reader = csv.DictReader(fh)
-        for row in reader:
-            if row.get(_COL_ID, "").strip() != plot_id:
-                continue
-            date_str = row[_COL_DATE].strip()
+        for row in csv.DictReader(fh):
             try:
-                result[date_str] = {
+                result.setdefault(row[_COL_ID].strip(), {})[row[_COL_DATE].strip()] = {
                     "Precipitation": float(row[_DAYMET_COLS["prcp"]]),
                     "T_Max":         float(row[_DAYMET_COLS["tmax"]]),
                     "T_Min":         float(row[_DAYMET_COLS["tmin"]]),
@@ -249,6 +250,11 @@ def _read_daymet_csv(daymet_csv_path: str, plot_id: str) -> dict[str, dict]:
             except (ValueError, KeyError):
                 pass
     return result
+
+
+def _read_daymet_csv(daymet_csv_path: str, plot_id: str) -> dict[str, dict]:
+    """{date_str: {Precipitation, T_Max, T_Min}} for one plot_id."""
+    return _read_daymet_all(daymet_csv_path).get(plot_id, {})
 
 
 # ---------------------------------------------------------------------------
@@ -355,6 +361,33 @@ def _lstm_predict(
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+def estimar_humedad(dates: list[str], raw_sm: np.ndarray, daymet: dict[str, dict]) -> tuple[np.ndarray, str]:
+    """
+    Daily soil-moisture estimate for one series: gap-fill SMAP, build the
+    features and run the frozen LSTM (or the smoothed-SMAP fallback).
+    Returns (sm_final, model_backend).
+    """
+    # Gap-fill SMAP (ffill → bfill, same as production_estimation.py line 83).
+    # The LSTM was trained on gap-filled raw SMAP, so it gets the same here.
+    sm_filled = _ffill_bfill(raw_sm, fallback=0.22).astype(np.float32)
+    X_raw = _build_feature_matrix(dates, sm_filled, daymet, _load_feature_means())
+
+    model, feat_scaler, target_scaler = _load_artifacts()
+    if model is None or not _WEIGHTS_PATH.exists():
+        # SMAP-only fallback: Hann-smoothed satellite series is the physical estimate
+        return _smooth(sm_filled, window=7), "smap_smoothed"
+
+    if feat_scaler is not None:
+        X_scaled = feat_scaler.transform(X_raw).astype(np.float32)
+    else:
+        # Approximate normalisation with known TxSON training ranges
+        _feat_min = np.array([0.0,  -5.0, -20.0, 0.0],  dtype=np.float32)
+        _feat_max = np.array([60.0,  45.0,  30.0, 0.6], dtype=np.float32)
+        X_scaled  = np.clip(
+            (X_raw - _feat_min) / (_feat_max - _feat_min + 1e-8), 0.0, 1.0
+        ).astype(np.float32)
+    return _lstm_predict(model, X_scaled, target_scaler), "lstm_frozen"
+
 # ponytail: per-process cache keyed by file paths; restart the server after
 # replacing the SMAP/Daymet CSVs. Callers must treat the result as read-only.
 @lru_cache(maxsize=64)
@@ -406,43 +439,15 @@ def run_inference(
     raw_sm      = np.array([r[1] for r in plot_rows], dtype=np.float64)
     valid_count = int(np.sum(~np.isnan(raw_sm)))
 
-    # 2. Gap-fill SMAP (ffill → bfill, same as production_estimation.py line 83)
-    sm_filled = _ffill_bfill(raw_sm, fallback=0.22).astype(np.float32)
-
-    # 4. Load Daymet (if available)
+    # 2. Load Daymet (if available)
     has_daymet = False
     daymet: dict[str, dict] = {}
     if daymet_csv_path:
         daymet     = _read_daymet_csv(daymet_csv_path, smap_id)
         has_daymet = len(daymet) > 0
 
-    means = _load_feature_means()
-
-    # 5. Build 4-feature matrix. The LSTM was trained on gap-filled raw SMAP,
-    #    so it gets the same here (not the smoothed series).
-    X_raw = _build_feature_matrix(dates, sm_filled, daymet, means)
-
-    # 6. Load model + scalers
-    model, feat_scaler, target_scaler = _load_artifacts()
-
-    if model is not None and _WEIGHTS_PATH.exists():
-        # Scale features with the TxSON-calibrated scaler (or fallback MinMax)
-        if feat_scaler is not None:
-            X_scaled = feat_scaler.transform(X_raw).astype(np.float32)
-        else:
-            # Approximate normalisation with known TxSON training ranges
-            _feat_min = np.array([0.0,  -5.0, -20.0, 0.0],  dtype=np.float32)
-            _feat_max = np.array([60.0,  45.0,  30.0, 0.6], dtype=np.float32)
-            X_scaled  = np.clip(
-                (X_raw - _feat_min) / (_feat_max - _feat_min + 1e-8), 0.0, 1.0
-            ).astype(np.float32)
-
-        sm_final      = _lstm_predict(model, X_scaled, target_scaler)
-        backend_label = "lstm_frozen"
-    else:
-        # SMAP-only fallback: Hann-smoothed satellite series is the physical estimate
-        sm_final      = _smooth(sm_filled, window=7)
-        backend_label = "smap_smoothed"
+    # 3. Gap-fill, features and LSTM
+    sm_final, backend_label = estimar_humedad(dates, raw_sm, daymet)
 
     sm_list = [round(float(v), 4) for v in sm_final]
 

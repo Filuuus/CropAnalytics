@@ -146,3 +146,39 @@ class CeldasEaseGridTests(SimpleTestCase):
         for lat, lon, fila, col in referencia:
             self.assertEqual(fila_col(lat, lon), (fila, col))
             self.assertEqual(fila_col(*centro(fila, col)), (fila, col))
+
+
+class SolicitudAppeearsTests(SimpleTestCase):
+    def test_formato_de_la_solicitud(self):
+        from datetime import date
+        from .management.commands.solicitar_appeears import CAPAS, construir_tarea
+        celdas = [{'id': 'M09_524_826', 'lat': 20.739166, 'lon': -102.837137}]
+        t = construir_tarea(celdas, date(2015, 4, 1), date(2025, 12, 31), 'prueba')
+        self.assertEqual(t['task_type'], 'point')
+        self.assertEqual(t['params']['dates'], [{'startDate': '04-01-2015', 'endDate': '12-31-2025'}])  # MM-DD-AAAA
+        self.assertEqual(len(t['params']['layers']), len(CAPAS))
+        self.assertEqual(t['params']['coordinates'][0],
+                         {'id': 'M09_524_826', 'category': 'altos', 'latitude': 20.739166, 'longitude': -102.837137})
+
+
+class PanoramaTests(SimpleTestCase):
+    def test_inicio_de_lluvias_y_racha_seca(self):
+        from datetime import date, timedelta
+        import numpy as np
+        from .ml.panorama import resumir_celda
+        # Tres años secos (0.10) que se humedecen (0.30) desde una fecha conocida hasta el 31 oct;
+        # en 2018 una racha seca de 12 días cae en la floración (inicio + 75 días).
+        humedo_desde = {2017: date(2017, 6, 20), 2018: date(2018, 7, 1), 2019: date(2019, 6, 25)}
+        fechas = [date(2017, 1, 1) + timedelta(days=i) for i in range(365 * 3)]
+        sm = np.array([0.30 if humedo_desde[f.year] <= f <= date(f.year, 10, 31) else 0.10 for f in fechas])
+        sequia = date(2018, 7, 4) + timedelta(days=70)
+        sm[[i for i, f in enumerate(fechas) if sequia <= f < sequia + timedelta(days=12)]] = 0.10
+
+        r = resumir_celda(fechas, sm)
+        # La media de 7 días cruza 50 al 4.º día húmedo
+        self.assertEqual(r['inicio_lluvias']['por_anio'], {'2017': '2017-06-23', '2018': '2018-07-04', '2019': '2019-06-28'})
+        self.assertEqual((r['inicio_lluvias']['temprana'], r['inicio_lluvias']['tardia']), ('06-23', '07-04'))
+        self.assertEqual(r['sequia_floracion']['por_anio'], {'2017': False, '2018': True, '2019': False})
+        self.assertEqual(r['sequia_floracion']['probabilidad'], 0.33)
+        self.assertEqual(r['bandas']['p50'][date(2017, 8, 15).timetuple().tm_yday - 1], 100.0)  # agosto: húmedo
+        self.assertEqual(r['bandas']['p50'][14], 0.0)                                           # enero: seco
