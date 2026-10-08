@@ -15,6 +15,7 @@ testem.log
 # Variables de entorno
 .env
 .env.*
+!.env.example
 
 # Configuración de IA y Tokens (Locofy/Gemini)
 .gemini/settings.json

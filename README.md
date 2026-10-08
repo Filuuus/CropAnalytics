@@ -10,13 +10,19 @@ Welcome to the CropAnalytics project. This document provides the necessary instr
 
 ## Local Environment Setup
 
-### 1. Start the Database Layer
-The project relies on a PostgreSQL database. Ensure your Docker daemon is running, then spin up the database and pgAdmin containers:
+### 1. Environment variables
+Copy the template and fill in the values (at least `POSTGRES_PASSWORD` and `SADMIN_PASSWORD`):
 ```bash
-docker compose up -d
+cp backend/.env.example backend/.env
 ```
 
-### 2. Backend Setup (Django)
+### 2. Start the Database Layer
+The project relies on a PostgreSQL database. Ensure your Docker daemon is running, then spin up the database and pgAdmin containers (Compose reads the variables from `backend/.env`):
+```bash
+docker compose --env-file backend/.env up -d
+```
+
+### 3. Backend Setup (Django)
 The backend requires setting up a virtual environment and installing dependencies:
 ```bash
 cd backend
@@ -25,11 +31,19 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Run the database migrations:
+Run the database migrations (they are versioned; do not run `makemigrations` unless you changed `models.py`):
 ```bash
-python manage.py makemigrations api
-python manage.py makemigrations
 python manage.py migrate
+```
+
+If `SADMIN_PASSWORD` was empty when migrating, the super admin has no usable password. Set one with:
+```bash
+python manage.py changepassword sadmin@cropanalytics.local
+```
+
+Run the tests (no database needed):
+```bash
+python manage.py test api
 ```
 
 **Important:** Populate the initial datasets to guarantee the analytics page displays values:
@@ -50,7 +64,7 @@ The `/soil-analysis` page estimates soil moisture with a frozen LSTM model (`bac
 
 Without them, `/api/recomendacion-humedad/` responds with `503`.
 
-### 3. Frontend Setup (Angular)
+### 4. Frontend Setup (Angular)
 In a new terminal window, navigate to the frontend folder and install the dependencies:
 ```bash
 cd frontend
@@ -58,6 +72,3 @@ npm install
 npm start
 ```
 The Angular application will be running on your designated localhost port.
-
-## Note on Environment Variables
-Ensure that you have your local `.env` files set up based on any `.env.example` templates if they exist in the root or component directories.

@@ -44,7 +44,7 @@ from django.db.models import Avg, Count, StdDev
 
 from ..ml.plot_registry import JALISCO_PLOTS
 from ..ml.soil_moisture_forecast import get_annual_profile, summarise_profile
-from ..utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_ensilaje
+from ..utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_ensilaje, datos_milk2024
 from ..utils.geospatial_estimator import calcular_distancia_haversine
 
 # ---------------------------------------------------------------------------
@@ -53,19 +53,6 @@ from ..utils.geospatial_estimator import calcular_distancia_haversine
 _FIELD_CAPACITY_SM = 0.30    # m³/m³ — typical Jalisco highland Vertisol
 _KY_MAIZE          = 1.25    # FAO-56 yield response factor, grain maize
 _YIELD_FALLBACK    = 18.0    # ton DM/ha — used when no DB records exist
-
-# MILK2024 bromatological fallbacks (Wisconsin standard values)
-_BROM_FALLBACKS = {
-    "ms":       35.0,
-    "cp":        8.5,
-    "ee":        3.2,
-    "ash":       4.0,
-    "ndf":      42.0,
-    "ndfd":     58.0,
-    "undf240":  15.0,
-    "starch":   30.0,
-    "starch_d": 75.0,
-}
 
 # Scoring weights — sum to 1.0
 # Each component is min-max normalised across the current candidate set,
@@ -107,24 +94,6 @@ def _sm_yield_factor(growing_mean_sm: float) -> float:
     eta_etc = min(1.0, growing_mean_sm / _FIELD_CAPACITY_SM)
     factor = 1.0 - _KY_MAIZE * (1.0 - eta_etc)
     return round(max(0.30, min(1.05, factor)), 4)
-
-
-# ---------------------------------------------------------------------------
-# Build MILK2024 payload from DB averages
-# ---------------------------------------------------------------------------
-def _brom_payload(lab_agg: dict, yield_dm_adjusted: float) -> dict:
-    return {
-        "ms":       lab_agg.get("avg_ms")  or _BROM_FALLBACKS["ms"],
-        "cp":       lab_agg.get("avg_pc")  or _BROM_FALLBACKS["cp"],
-        "ee":       lab_agg.get("avg_gc")  or _BROM_FALLBACKS["ee"],
-        "ash":      lab_agg.get("avg_cen") or _BROM_FALLBACKS["ash"],
-        "ndf":      lab_agg.get("avg_fdn") or _BROM_FALLBACKS["ndf"],
-        "ndfd":     _BROM_FALLBACKS["ndfd"],
-        "undf240":  _BROM_FALLBACKS["undf240"],
-        "starch":   _BROM_FALLBACKS["starch"],
-        "starch_d": _BROM_FALLBACKS["starch_d"],
-        "yield_dm": yield_dm_adjusted,
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +168,8 @@ def recomendar_hibridos(
 
     # 4. Query hybrids matching the irrigation condition
     condicion = "Riego" if has_irrigation else "Temporal"
-    sm_factor = _sm_yield_factor(sm_summary["growing_mean_sm"])
+    # Con riego el agua no la limita la humedad de temporal estimada por SMAP.
+    sm_factor = 1.0 if has_irrigation else _sm_yield_factor(sm_summary["growing_mean_sm"])
 
     ciclos_qs = (
         Ciclo.objects
@@ -217,6 +187,7 @@ def recomendar_hibridos(
             avg_gc         = Avg("laboratorio__gc"),
             avg_cen        = Avg("laboratorio__cen"),
             avg_fdn        = Avg("laboratorio__fdn"),
+            avg_cnf        = Avg("laboratorio__cnf"),
             avg_yield_dm   = Avg("laboratorio__rms"),
             std_yield_dm   = StdDev("laboratorio__rms"),   # for yield consistency
             avg_dff        = Avg("laboratorio__dff"),
@@ -254,15 +225,9 @@ def recomendar_hibridos(
         cv    = (std_y / hist_yield) if (hist_yield > 0 and n_cy > 1) else 0.20
         consistency = round(max(0.0, min(1.0, 1.0 - cv)), 4)
 
-        brom = _brom_payload(
-            {
-                "avg_ms":  item["avg_ms"],
-                "avg_pc":  item["avg_pc"],
-                "avg_gc":  item["avg_gc"],
-                "avg_cen": item["avg_cen"],
-                "avg_fdn": item["avg_fdn"],
-            },
-            adj_yield,
+        brom = datos_milk2024(
+            item["avg_ms"], item["avg_pc"], item["avg_gc"],
+            item["avg_cen"], item["avg_fdn"], item["avg_cnf"], adj_yield,
         )
 
         milk = calcular_metricas_milk2024(brom)

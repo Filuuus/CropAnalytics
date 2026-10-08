@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, finalize, shareReplay, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -61,8 +61,12 @@ export class AuthService {
       .pipe(tap((response) => this.setSession(response)));
   }
 
+  // Un solo refresh en vuelo: con ROTATE + BLACKLIST en el backend, dos refresh
+  // paralelos con el mismo token hacen que el segundo falle y cierre la sesión.
+  private refreshInFlight: Observable<{ access: string; refresh?: string }> | null = null;
+
   refreshAccessToken(): Observable<{ access: string; refresh?: string }> {
-    return this.http
+    this.refreshInFlight ??= this.http
       .post<{ access: string; refresh?: string }>(`${environment.apiUrl}/auth/token/refresh/`, {
         refresh: this.getRefreshToken(),
       })
@@ -75,7 +79,10 @@ export class AuthService {
             this.refreshToken.set(response.refresh);
           }
         }),
+        finalize(() => (this.refreshInFlight = null)),
+        shareReplay(1),
       );
+    return this.refreshInFlight;
   }
 
   loadCurrentUser(): Observable<AuthUser> {

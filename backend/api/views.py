@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.contrib.auth import get_user_model
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -24,6 +25,23 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+
+def _precios_mercado(request):
+    """Precios del request con defaults (MXN); 400 si alguno no es numérico."""
+    defaults = {
+        'precio_ensilaje': ('ensilaje_ton_ms', 2800.0),
+        'precio_leche': ('leche_litro', 10.50),
+        'costo_produccion': ('costo_produccion', 1800.0),
+        'costo_transporte': ('transporte', 150.0),
+    }
+    precios = {}
+    for campo, (clave, default) in defaults.items():
+        try:
+            precios[clave] = float(request.data.get(campo, default))
+        except (TypeError, ValueError):
+            raise ValidationError({campo: 'Debe ser un número válido.'})
+    return precios
 
 
 class RegisterView(APIView):
@@ -181,7 +199,7 @@ class CicloViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 from django.db.models import Avg, Count, Sum
-from .utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_ensilaje
+from .utils.milk_calculator import calcular_metricas_milk2024, calcular_valor_ensilaje, datos_milk2024
 from .utils.geospatial_estimator import aplicar_ajuste_geoespacial
 from .utils.location_recommender import (
     calcular_relevancia_regional,
@@ -229,33 +247,20 @@ class CalcularProductorView(APIView):
             avg_pc=Avg('pc'),
             avg_gc=Avg('gc'),
             avg_cen=Avg('cen'),
-            avg_fdn=Avg('fdn')
+            avg_fdn=Avg('fdn'),
+            avg_cnf=Avg('cnf'),
         )
 
-        # Armar el payload para el calculador con fallbacks seguros
-        datos = {
-            'ms': averages['avg_ms'] or 35.0,
-            'cp': averages['avg_pc'] or 8.5,
-            'ee': averages['avg_gc'] or 3.2,
-            'ash': averages['avg_cen'] or 4.0,
-            'ndf': averages['avg_fdn'] or 42.0,
-            'ndfd': 58.0,       # Fallbacks estándar de Wisconsin MILK2024
-            'undf240': 15.0,
-            'starch': 30.0,
-            'starch_d': 75.0,
-            'yield_dm': yield_dm,
-        }
+        datos = datos_milk2024(
+            averages['avg_ms'], averages['avg_pc'], averages['avg_gc'],
+            averages['avg_cen'], averages['avg_fdn'], averages['avg_cnf'], yield_dm,
+        )
 
         # Calcular métricas MILK2024
         resultados = calcular_metricas_milk2024(datos)
         
         # Calcular valor económico del ensilaje (opcional, basado en parámetros del request)
-        precios_mercado = {
-            'ensilaje_ton_ms': float(request.data.get('precio_ensilaje', 2800.0)),
-            'leche_litro': float(request.data.get('precio_leche', 10.50)),
-            'costo_produccion': float(request.data.get('costo_produccion', 1800.0)),
-            'transporte': float(request.data.get('costo_transporte', 150.0))
-        }
+        precios_mercado = _precios_mercado(request)
         
         analisis_economico = calcular_valor_ensilaje(datos, resultados, precios_mercado)
 
@@ -310,7 +315,7 @@ class OptimizarSemillaView(APIView):
             except Exception:
                 pass
 
-        from django.db.models import Avg, F, ExpressionWrapper, fields, Value, FloatField, Min, Max, Case, When, Count
+        from django.db.models import Avg, F, ExpressionWrapper, fields, Min, Max, Case, When, Count
         import datetime
 
         # Primero verificar si hay ciclos con el régimen hídrico solicitado
@@ -335,6 +340,7 @@ class OptimizarSemillaView(APIView):
                 avg_ee=Avg('laboratorio__gc'),
                 avg_ash=Avg('laboratorio__cen'),
                 avg_ndf=Avg('laboratorio__fdn'),
+                avg_cnf=Avg('laboratorio__cnf'),
                 avg_dff=Avg('laboratorio__dff'),
                 tasa_supervivencia=Avg(
                     Case(
@@ -344,11 +350,6 @@ class OptimizarSemillaView(APIView):
                     )
                 ),
                 rendimiento_promedio=Avg('laboratorio__rms'),
-                # Constantes de fallbacks mockeadas como anotaciones Value del ORM
-                avg_ndfd=Value(58.0, output_field=fields.FloatField()),
-                avg_undf240=Value(15.0, output_field=fields.FloatField()),
-                avg_starch=Value(30.0, output_field=fields.FloatField()),
-                avg_starch_d=Value(75.0, output_field=fields.FloatField()),
                 # Duración del ciclo en la base de datos
                 avg_duracion=Avg(
                     ExpressionWrapper(
@@ -375,11 +376,6 @@ class OptimizarSemillaView(APIView):
             return f"{d.day} de {MESES[d.month - 1]}"
 
         for item in ciclos_stats:
-            avg_ms = item['avg_ms'] or 35.0
-            avg_pc = item['avg_cp'] or 8.5
-            avg_gc = item['avg_ee'] or 3.2
-            avg_cen = item['avg_ash'] or 4.0
-            avg_fdn = item['avg_ndf'] or 42.0
             avg_dff = item['avg_dff'] or 65.0
             tasa_supervivencia = item['tasa_supervivencia']
             rendimiento_promedio = item['rendimiento_promedio'] or 20.0
@@ -389,13 +385,10 @@ class OptimizarSemillaView(APIView):
             else:
                 factor_supervivencia = 1.0
 
-            # Calcular el rendimiento real esperado: promedio_historico * factor_supervivencia
-            rendimiento_real_esperado = float(rendimiento_promedio) * factor_supervivencia
-            
-            avg_ndfd = item['avg_ndfd']
-            avg_undf240 = item['avg_undf240']
-            avg_starch = item['avg_starch']
-            avg_starch_d = item['avg_starch_d']
+            # RMS ya es el rendimiento medido a la cosecha (solo plantas cosechadas);
+            # multiplicarlo por la supervivencia contaría dos veces las pérdidas.
+            # factor_supervivencia se reporta solo como información.
+            rendimiento_real_esperado = float(rendimiento_promedio)
 
             # Calcular duración del ciclo promedio con fallbacks según tipo de datos devuelto por la BD
             avg_dur = item['avg_duracion']
@@ -435,19 +428,10 @@ class OptimizarSemillaView(APIView):
             end_cosecha = end_siembra + datetime.timedelta(days=duracion_promedio)
             ventana_cosecha = f"{format_date(start_cosecha)} - {format_date(end_cosecha)}"
 
-            # Preparar payload para MILK2024
-            datos = {
-                'ms': avg_ms,
-                'cp': avg_pc,
-                'ee': avg_gc,
-                'ash': avg_cen,
-                'ndf': avg_fdn,
-                'ndfd': avg_ndfd,
-                'undf240': avg_undf240,
-                'starch': avg_starch,
-                'starch_d': avg_starch_d,
-                'yield_dm': rendimiento_real_esperado,
-            }
+            datos = datos_milk2024(
+                item['avg_ms'], item['avg_cp'], item['avg_ee'],
+                item['avg_ash'], item['avg_ndf'], item['avg_cnf'], rendimiento_real_esperado,
+            )
 
             # Calcular métricas MILK2024
             resultados = calcular_metricas_milk2024(datos)
@@ -472,12 +456,7 @@ class OptimizarSemillaView(APIView):
                     )
             
             # Calcular análisis económico del ensilaje
-            precios_mercado = {
-                'ensilaje_ton_ms': float(request.data.get('precio_ensilaje', 2800.0)),
-                'leche_litro': float(request.data.get('precio_leche', 10.50)),
-                'costo_produccion': float(request.data.get('costo_produccion', 1800.0)),
-                'transporte': float(request.data.get('costo_transporte', 150.0))
-            }
+            precios_mercado = _precios_mercado(request)
             analisis_economico = calcular_valor_ensilaje(datos, resultados, precios_mercado)
 
             hibrido_data = {
@@ -487,15 +466,15 @@ class OptimizarSemillaView(APIView):
                     'marca': item['hibrido__marca']
                 },
                 'valores_bromatologicos_promedio': {
-                    'ms': round(avg_ms, 2),
-                    'cp': round(avg_pc, 2),
-                    'ee': round(avg_gc, 2),
-                    'ash': round(avg_cen, 2),
-                    'ndf': round(avg_fdn, 2),
-                    'ndfd': avg_ndfd,
-                    'undf240': avg_undf240,
-                    'starch': avg_starch,
-                    'starch_d': avg_starch_d
+                    'ms': round(datos['ms'], 2),
+                    'cp': round(datos['cp'], 2),
+                    'ee': round(datos['ee'], 2),
+                    'ash': round(datos['ash'], 2),
+                    'ndf': round(datos['ndf'], 2),
+                    'ndfd': datos['ndfd'],
+                    'undf240': datos['undf240'],
+                    'starch': datos['starch'],
+                    'starch_d': datos['starch_d']
                 },
                 'dff_promedio': round(avg_dff, 1),
                 'duracion_ciclo_promedio': duracion_promedio,
@@ -517,10 +496,11 @@ class OptimizarSemillaView(APIView):
         # Ordenar ranking por leche_ha descendente, considerando relevancia regional si está disponible
         if municipio_id or estado_id:
             # Ordenar por combinación de leche_ha y relevancia regional
+            max_leche = max(r['leche_ha'] for r in ranking) or 1.0
             ranking.sort(
                 key=lambda x: (
                     x.get('relevancia_regional', {}).get('score', 50) * 0.3 +  # 30% peso a relevancia
-                    (x['leche_ha'] / max(r['leche_ha'] for r in ranking) * 100) * 0.7  # 70% peso a producción
+                    (x['leche_ha'] / max_leche * 100) * 0.7  # 70% peso a producción
                 ),
                 reverse=True
             )
@@ -618,22 +598,14 @@ class CalcularProductorGeoView(APIView):
             avg_pc=Avg('pc'),
             avg_gc=Avg('gc'),
             avg_cen=Avg('cen'),
-            avg_fdn=Avg('fdn')
+            avg_fdn=Avg('fdn'),
+            avg_cnf=Avg('cnf'),
         )
 
-        # Preparar datos para el calculador
-        datos = {
-            'ms': averages['avg_ms'] or 35.0,
-            'cp': averages['avg_pc'] or 8.5,
-            'ee': averages['avg_gc'] or 3.2,
-            'ash': averages['avg_cen'] or 4.0,
-            'ndf': averages['avg_fdn'] or 42.0,
-            'ndfd': 58.0,
-            'undf240': 15.0,
-            'starch': 30.0,
-            'starch_d': 75.0,
-            'yield_dm': yield_dm,
-        }
+        datos = datos_milk2024(
+            averages['avg_ms'], averages['avg_pc'], averages['avg_gc'],
+            averages['avg_cen'], averages['avg_fdn'], averages['avg_cnf'], yield_dm,
+        )
 
         # Calcular métricas MILK2024 base
         resultados_base = calcular_metricas_milk2024(datos)
@@ -745,6 +717,8 @@ class MapaEstadisticasView(APIView):
         
         # Aplicar filtros si existen
         if year:
+            if not year.isdigit():
+                raise ValidationError({'year': 'Debe ser un año numérico.'})
             queryset = queryset.filter(year=int(year))
         if marca:
             queryset = queryset.filter(hibrido__marca__iexact=marca)
@@ -761,26 +735,24 @@ class MapaEstadisticasView(APIView):
             avg_rms=Avg('laboratorio__rms'),
             avg_ms=Avg('laboratorio__ms'),
             avg_pc=Avg('laboratorio__pc'),
+            avg_gc=Avg('laboratorio__gc'),
+            avg_cen=Avg('laboratorio__cen'),
             avg_fdn=Avg('laboratorio__fdn'),
+            avg_cnf=Avg('laboratorio__cnf'),
             # Calcular coordenadas promedio del municipio
             avg_lat=Avg('terreno__latitud_gps'),
             avg_lon=Avg('terreno__longitud_gps')
         ).filter(total_ciclos__gt=0)
-        
+
         # Formatear respuesta para el mapa
         features = []
         for stat in municipios_stats:
-            # Calcular producción de leche promedio usando la fórmula simplificada
-            avg_rms = stat['avg_rms'] or 20.0
-            avg_ms = stat['avg_ms'] or 35.0
-            avg_pc = stat['avg_pc'] or 8.5
-            avg_fdn = stat['avg_fdn'] or 42.0
-            
-            # Fórmula simplificada de Wisconsin MILK2024
-            nel = max(0.0, (0.703 * ((avg_ms / 100.0) * 4.409)) - 0.19)
-            leche_ton = (nel * 311.4) + 120.0
-            leche_ha = leche_ton * avg_rms
-            
+            datos = datos_milk2024(
+                stat['avg_ms'], stat['avg_pc'], stat['avg_gc'],
+                stat['avg_cen'], stat['avg_fdn'], stat['avg_cnf'], stat['avg_rms'] or 0.0,
+            )
+            leche_ha = calcular_metricas_milk2024(datos)['leche_ha']
+
             feature = {
                 'type': 'Feature',
                 'geometry': {
@@ -1151,12 +1123,7 @@ class RecomendacionHumedadView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        precios = {
-            "ensilaje_ton_ms": float(request.data.get("precio_ensilaje",  2800.0)),
-            "leche_litro":     float(request.data.get("precio_leche",       10.50)),
-            "costo_produccion": float(request.data.get("costo_produccion", 1800.0)),
-            "transporte":      float(request.data.get("costo_transporte",   150.0)),
-        }
+        precios = _precios_mercado(request)
 
         try:
             result = recomendar_hibridos(
